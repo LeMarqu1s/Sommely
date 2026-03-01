@@ -1,12 +1,12 @@
 /**
  * Optimise une image base64 avant envoi à l'API OpenAI.
  * Réduit la taille = moins de tokens = réponse plus rapide.
- * Conserve une qualité suffisante pour la lecture de textes (étiquettes, cartes).
+ * 1024px + 0.75 : bon compromis vitesse/qualité pour étiquettes.
  */
 export async function optimizeImageForAI(
   base64: string,
-  maxSize = 1280,
-  quality = 0.82
+  maxSize = 1024,
+  quality = 0.75
 ): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();

@@ -4,6 +4,7 @@ import { canAccessFeature } from '../utils/subscription';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, ArrowLeft, Wine, Star, AlertCircle, RotateCcw } from 'lucide-react';
 import { optimizeImageForAI } from '../lib/imageOptimize';
+import { fetchOpenAI } from '../lib/openai';
 
 // ─── TYPES ────────────────────────────────────────────────
 
@@ -230,33 +231,25 @@ export function MenuScanner() {
 
     try {
       const optimized = await optimizeImageForAI(base64, 1536, 0.82);
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
-      const response = await fetch('/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content: 'Tu es un sommelier expert et analyste prix du marché du vin. Tu réponds UNIQUEMENT en JSON valide.',
-            },
-            {
-              role: 'user',
-              content: [
-                { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${optimized}`, detail: 'high' } },
-                { type: 'text', text: MENU_ANALYSIS_PROMPT },
-              ],
-            },
-          ],
-          max_tokens: 2000,
-          temperature: 0.1,
-          response_format: { type: 'json_object' },
-        }),
+      const response = await fetchOpenAI({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: 'Tu es un sommelier expert et analyste prix du marché du vin. Tu réponds UNIQUEMENT en JSON valide.',
+          },
+          {
+            role: 'user',
+            content: [
+              { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${optimized}`, detail: 'high' } },
+              { type: 'text', text: MENU_ANALYSIS_PROMPT },
+            ],
+          },
+        ],
+        max_tokens: 2000,
+        temperature: 0.1,
+        response_format: { type: 'json_object' },
       });
 
       clearInterval(stepInterval);

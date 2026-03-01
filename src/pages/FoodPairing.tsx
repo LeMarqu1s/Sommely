@@ -4,6 +4,7 @@ import { canAccessFeature } from '../utils/subscription';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, ArrowLeft, Wine, Star, Search, ChevronRight, RotateCcw, AlertCircle, Utensils } from 'lucide-react';
 import { optimizeImageForAI } from '../lib/imageOptimize';
+import { fetchOpenAI } from '../lib/openai';
 
 // ─── TYPES ────────────────────────────────────────────────
 
@@ -249,7 +250,6 @@ export function FoodPairing() {
 
     try {
       const optimized = await optimizeImageForAI(base64, 1280, 0.82);
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
       const userContent: (object | { type: string; text: string })[] = [
         { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${optimized}`, detail: 'high' } } as object,
@@ -261,25 +261,18 @@ export function FoodPairing() {
         userContent.push({ type: 'text', text: FOOD_PROMPT });
       }
 
-      const response = await fetch('/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content: 'Tu es un sommelier expert en accords mets-vins. Tu réponds UNIQUEMENT en JSON valide.',
-            },
-            { role: 'user', content: userContent },
-          ],
-          max_tokens: 2000,
-          temperature: 0.2,
-          response_format: { type: 'json_object' },
-        }),
+      const response = await fetchOpenAI({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: 'Tu es un sommelier expert en accords mets-vins. Tu réponds UNIQUEMENT en JSON valide.',
+          },
+          { role: 'user', content: userContent },
+        ],
+        max_tokens: 2000,
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
       });
 
       clearInterval(stepInterval);

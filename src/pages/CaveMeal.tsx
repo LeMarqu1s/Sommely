@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Utensils, Wine, Thermometer, RotateCcw, Sparkles } from 'lucide-react';
 import { canAccessFeature } from '../utils/subscription';
+import { fetchOpenAI } from '../lib/openai';
 
 interface CaveBottle {
   id: string;
@@ -68,7 +69,6 @@ export function CaveMeal() {
     setIsLoading(true);
 
     try {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
       const caveContext = cave
         .slice(0, 15)
         .map(
@@ -94,19 +94,12 @@ Réponds UNIQUEMENT en JSON valide, sans markdown, sans backticks :
   "decanting": "Carafage 30 min recommandé" ou "Pas besoin de carafage"
 }`;
 
-      const res = await fetch('/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `Plat : ${dishText}` }],
-          max_tokens: 800,
-          temperature: 0.3,
-          response_format: { type: 'json_object' },
-        }),
+      const res = await fetchOpenAI({
+        model: 'gpt-4o',
+        messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `Plat : ${dishText}` }],
+        max_tokens: 800,
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
       });
 
       const data = await res.json();

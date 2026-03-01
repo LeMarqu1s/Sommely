@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Send, RotateCcw, Sparkles } from 'lucide-react';
 import { canAccessFeature } from '../utils/subscription';
+import { fetchOpenAI } from '../lib/openai';
 
 interface Message {
   id: string;
@@ -83,8 +84,6 @@ export function Sommelier() {
     setIsLoading(true);
 
     try {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-
       const caveContext =
         cave.length > 0
           ? `\n\nCAVE VIRTUELLE (${cave.length} références) :\n${cave
@@ -119,18 +118,11 @@ Tu es un vrai sommelier qui connaît son métier et donne des conseils pratiques
         .filter((m) => !m.isLoading)
         .map((m) => ({ role: m.role, content: m.content }));
 
-      const res = await fetch('/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [{ role: 'system', content: systemPrompt }, ...conversationHistory, { role: 'user', content: messageText }],
-          max_tokens: 600,
-          temperature: 0.7,
-        }),
+      const res = await fetchOpenAI({
+        model: 'gpt-4o',
+        messages: [{ role: 'system', content: systemPrompt }, ...conversationHistory, { role: 'user', content: messageText }],
+        max_tokens: 600,
+        temperature: 0.7,
       });
 
       const data = await res.json();

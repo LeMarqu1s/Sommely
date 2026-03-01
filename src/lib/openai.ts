@@ -56,6 +56,17 @@ export interface WineAnalysis {
   error?: string;
 }
 
+// ─── HELPERS API ───────────────────────────────────────────
+
+/** Appel OpenAI : utilise /api/openai-proxy en prod, /v1 en dev (proxy Vite) */
+export async function fetchOpenAI(body: Record<string, unknown>): Promise<Response> {
+  const isProd = import.meta.env.PROD;
+  const url = isProd ? '/api/openai-proxy' : '/v1/chat/completions';
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (!isProd) headers['Authorization'] = `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`;
+  return fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+}
+
 // ─── CACHE ────────────────────────────────────────────────
 
 const analysisCache = new Map<string, WineAnalysis>();
@@ -73,27 +84,11 @@ function hashImage(base64: string): string {
 
 // ─── PROMPT EXPERT VIN ────────────────────────────────────
 
-const WINE_EXPERT_PROMPT = `Tu es un sommelier expert de niveau mondial et un Master of Wine (MW).
-Tu as une connaissance encyclopédique de tous les vins du monde entier.
-Analyse cette étiquette de bouteille de vin avec la plus grande précision possible.
+const WINE_EXPERT_PROMPT = `Expert sommelier. Analyse l'étiquette de vin. Réponds UNIQUEMENT en JSON valide, pas de markdown.
+RÈGLE: "name" = nom EXACT sur l'étiquette. Ne jamais inventer. Lis tout le texte visible.
+Déduis les infos manquantes si possible (ex: Pauillac 2018 → Cabernet). Type = texte étiquette ou couleur du liquide.
 
-RÈGLE ABSOLUE : LE NOM DU VIN
-Tu DOIS retourner dans "name" le nom EXACT tel qu'écrit sur l'étiquette. Exemples : "Le petit français", "Château Margaux", "Domaine de la Romanée-Conti".
-Ne JAMAIS inventer ou remplacer par un autre vin connu. Si l'étiquette dit "Le petit français", tu renvoies "Le petit français", pas "Château Margaux".
-
-INSTRUCTIONS IMPORTANTES :
-1. Lis TOUTES les informations visibles sur l'étiquette, y compris les petits textes
-2. Le champ "name" doit être le nom EXACT lu sur l'étiquette, sans substitution
-3. Si tu ne peux pas lire une information clairement, utilise tes connaissances pour déduire (ex: si tu vois "Pauillac 2018" tu sais que c'est un Cabernet Sauvignon dominant)
-4. Fournis des conseils de dégustation PRÉCIS et UTILES basés sur ce vin spécifique
-5. Les accords mets-vins doivent être CONCRETS
-6. Le type (Rouge/Blanc/Rosé) : priorité au texte sur l'étiquette, sinon à la COULEUR du liquide visible
-
-Réponds UNIQUEMENT avec un objet JSON valide et complet.
-Pas de markdown, pas de backticks, pas d'explication.
-Si une information n'est pas visible, utilise tes connaissances du vin pour la déduire si possible, sinon null.
-
-Format JSON EXACT attendu :
+Format JSON attendu :
 {
   "name": "Nom complet du vin tel qu'écrit sur l'étiquette",
   "chateau": "Nom du château si applicable",
@@ -130,9 +125,7 @@ Format JSON EXACT attendu :
   "confidence": 90,
   "labelReadability": "excellent|good|poor"
 }
-
-Si l'image n'est PAS une étiquette de vin, retourne exactement :
-{"error": "not_wine", "confidence": 0, "message": "Aucune étiquette de vin détectée"}`;
+Si pas une étiquette de vin : {"error": "not_wine", "confidence": 0}`;
 
 // ─── ANALYSE PRINCIPALE ───────────────────────────────────
 
@@ -142,34 +135,22 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
     return analysisCache.get(cacheKey)!;
   }
 
-  const optimized = await optimizeImageForAI(imageBase64, 1280, 0.82);
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-
-  const response = await fetch('/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: 'Tu es un expert sommelier. Tu réponds UNIQUEMENT en JSON valide.'
-        },
-        {
-          role: 'user',
-          content: [
-            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${optimized}`, detail: 'high' } },
-            { type: 'text', text: WINE_EXPERT_PROMPT }
-          ]
-        }
-      ],
-      max_tokens: 1500,
-      temperature: 0.1,
-      response_format: { type: 'json_object' }
-    }),
+  const optimized = await optimizeImageForAI(imageBase64);
+  const response = await fetchOpenAI({
+    model: import.meta.env.VITE_OPENAI_VISION_MODEL || 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: 'Expert sommelier. Réponds UNIQUEMENT en JSON valide.' },
+      {
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${optimized}`, detail: 'auto' } },
+          { type: 'text', text: WINE_EXPERT_PROMPT }
+        ]
+      }
+    ],
+    max_tokens: 1000,
+    temperature: 0.1,
+    response_format: { type: 'json_object' }
   });
 
   const data = await response.json();

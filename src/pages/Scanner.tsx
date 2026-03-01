@@ -113,7 +113,7 @@ export function Scanner() {
       return;
     }
     setScanState('capturing');
-    await new Promise(resolve => setTimeout(resolve, 400));
+    await new Promise(resolve => setTimeout(resolve, 150));
 
     const canvas = canvasRef.current;
     const video = videoRef.current;
@@ -291,7 +291,6 @@ export function Scanner() {
       console.log('🍷 Vin identifié avec succès:', wineObject.name, '|', wineObject.year, '|', wineObject.appellation);
 
       localStorage.setItem('sommely_last_scan', JSON.stringify({ name: wineObject.name, year: wineObject.year, region: wineObject.region }));
-      await new Promise(resolve => setTimeout(resolve, 300));
 
       // Navigation vers le résultat avec les VRAIES données
       navigate('/result', {

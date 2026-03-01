@@ -23,3 +23,13 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Capacitor / Native
+ios/App/Pods
+ios/App/App.xcworkspace/xcuserdata
+android/build
+android/.gradle
+android/app/build
+android/.idea
+android/local.properties
+*.iml

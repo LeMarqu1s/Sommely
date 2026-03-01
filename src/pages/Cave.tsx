@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Bell, Trash2, RefreshCw, DollarSign, BarChart2, Package, X, Filter } from 'lucide-react';
 import { canAddToCave } from '../utils/subscription';
+import { fetchOpenAI } from '../lib/openai';
 import { PaywallModal } from '../components/PaywallModal';
 
 // ─── TYPES ────────────────────────────────────────────────
@@ -142,19 +143,14 @@ export function Cave() {
     if (isUpdating || list.length === 0) return;
     setIsUpdating(true);
     try {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
       const wines = list.map(b => `id:${b.id} | "${b.name}" ${b.year} | acheté ${b.purchasePrice}€ | actuel ${b.estimatedCurrentValue}€`).join('\n');
-      const res = await fetch('/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: 'Expert marché vins fins. JSON uniquement.' },
-            { role: 'user', content: `Date: ${new Date().toLocaleDateString('fr-FR')}\nMets à jour les prix de ces vins selon le marché actuel:\n${wines}\n\nJSON:\n{"updates":[{"id":"...","newPrice":0,"variation24h":0.0,"trend":"hausse","reason":"..."}]}` },
-          ],
-          max_tokens: 600, temperature: 0.1, response_format: { type: 'json_object' },
-        }),
+      const res = await fetchOpenAI({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: 'Expert marché vins fins. JSON uniquement.' },
+          { role: 'user', content: `Date: ${new Date().toLocaleDateString('fr-FR')}\nMets à jour les prix de ces vins selon le marché actuel:\n${wines}\n\nJSON:\n{"updates":[{"id":"...","newPrice":0,"variation24h":0.0,"trend":"hausse","reason":"..."}]}` },
+        ],
+        max_tokens: 600, temperature: 0.1, response_format: { type: 'json_object' },
       });
       const data = await res.json();
       const result = JSON.parse(data.choices?.[0]?.message?.content || '{}');
@@ -184,18 +180,13 @@ export function Cave() {
     }
     setIsAdding(true);
     try {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-      const res = await fetch('/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: 'Expert vins fins. JSON uniquement.' },
-            { role: 'user', content: `Vin: "${form.name}" ${form.year} ${form.region} | Achat: ${form.purchasePrice}€\nJSON:\n{"estimatedCurrentValue":0,"drinkFrom":0,"drinkUntil":0,"peakYear":0,"grapes":"","appellation":"","agingNote":""}` },
-          ],
-          max_tokens: 250, temperature: 0.1, response_format: { type: 'json_object' },
-        }),
+      const res = await fetchOpenAI({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: 'Expert vins fins. JSON uniquement.' },
+          { role: 'user', content: `Vin: "${form.name}" ${form.year} ${form.region} | Achat: ${form.purchasePrice}€\nJSON:\n{"estimatedCurrentValue":0,"drinkFrom":0,"drinkUntil":0,"peakYear":0,"grapes":"","appellation":"","agingNote":""}` },
+        ],
+        max_tokens: 250, temperature: 0.1, response_format: { type: 'json_object' },
       });
       const data = await res.json();
       const ai = JSON.parse(data.choices?.[0]?.message?.content || '{}');
