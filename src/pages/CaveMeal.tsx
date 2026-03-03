@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Utensils, Wine, Thermometer, RotateCcw, Sparkles } from 'lucide-react';
 import { canAccessFeature } from '../utils/subscription';
+import { useAuth } from '../context/AuthContext';
 import { fetchOpenAI } from '../lib/openai';
 
 interface CaveBottle {
@@ -35,6 +36,7 @@ const PLAT_SUGGESTIONS = [
 
 export function CaveMeal() {
   const navigate = useNavigate();
+  const { subscriptionState } = useAuth();
   const [dish, setDish] = useState('');
   const [cave, setCave] = useState<CaveBottle[]>([]);
   const [result, setResult] = useState<{
@@ -48,7 +50,7 @@ export function CaveMeal() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!canAccessFeature('cavemeal')) {
+    if (!canAccessFeature(subscriptionState, 'cavemeal')) {
       navigate('/premium');
       return;
     }
@@ -60,7 +62,7 @@ export function CaveMeal() {
         setCave([]);
       }
     }
-  }, [navigate]);
+  }, [navigate, subscriptionState]);
 
   const askAntoine = async (dishText: string) => {
     if (!dishText.trim() || cave.length === 0) return;

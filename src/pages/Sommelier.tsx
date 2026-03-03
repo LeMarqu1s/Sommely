@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Send, RotateCcw, Sparkles } from 'lucide-react';
 import { canAccessFeature } from '../utils/subscription';
 import { fetchOpenAI } from '../lib/openai';
+import { useAuth } from '../context/AuthContext';
 
 interface Message {
   id: string;
@@ -24,6 +25,7 @@ const QUICK_SUGGESTIONS = [
 
 export function Sommelier() {
   const navigate = useNavigate();
+  const { subscriptionState } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -33,11 +35,11 @@ export function Sommelier() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!canAccessFeature('antoine')) {
+    if (!canAccessFeature(subscriptionState, 'antoine')) {
       navigate('/premium');
       return;
     }
-  }, [navigate]);
+  }, [navigate, subscriptionState]);
 
   useEffect(() => {
     const p = localStorage.getItem('sommely_profile');

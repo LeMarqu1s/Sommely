@@ -1,17 +1,29 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { user, profile, isLoading } = useAuth();
 
   useEffect(() => {
-    const done = localStorage.getItem('sommely_onboarding_done');
-    const publicRoutes = ['/onboarding'];
-    if (!done && !publicRoutes.includes(pathname)) {
-      navigate('/onboarding', { replace: true });
+    const publicRoutes = ['/onboarding', '/auth'];
+    if (publicRoutes.some(p => pathname.startsWith(p))) return;
+
+    if (isLoading) return;
+
+    if (user) {
+      if (profile && !profile.onboarding_completed) {
+        navigate('/onboarding', { replace: true });
+      }
+    } else {
+      const done = localStorage.getItem('sommely_onboarding_done');
+      if (!done) {
+        navigate('/onboarding', { replace: true });
+      }
     }
-  }, [pathname, navigate]);
+  }, [pathname, user, profile?.onboarding_completed, isLoading, navigate]);
 
   return <>{children}</>;
 }

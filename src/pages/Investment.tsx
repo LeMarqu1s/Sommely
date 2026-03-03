@@ -2,16 +2,18 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
 import { canAccessFeature } from '../utils/subscription';
+import { useAuth } from '../context/AuthContext';
 
 export function Investment() {
   const navigate = useNavigate();
+  const { subscriptionState } = useAuth();
 
   useEffect(() => {
-    if (!canAccessFeature('investment')) {
+    if (!canAccessFeature(subscriptionState, 'investment')) {
       navigate('/premium');
       return;
     }
-  }, [navigate]);
+  }, [navigate, subscriptionState]);
   return (
     <div className="min-h-screen bg-cream font-body" style={{ backgroundColor: '#FAF9F6' }}>
       <div className="bg-white border-b border-gray-light/30 px-6 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">

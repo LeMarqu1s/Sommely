@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, Lock } from 'lucide-react';
 import { redirectToCheckout } from '../utils/stripe';
+import { Logo } from './Logo';
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -28,8 +29,11 @@ export function PaywallModal({ isOpen, onClose, feature, description }: PaywallM
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center">
-                <Lock size={24} color="#D4AF37" />
+              <div className="flex items-center gap-2">
+                <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center overflow-hidden">
+                  <Logo size={32} variant="default" />
+                </div>
+                <Lock size={20} color="#D4AF37" className="flex-shrink-0" />
               </div>
               <button onClick={onClose} className="bg-transparent border-none cursor-pointer p-1">
                 <X size={20} color="#6B5D56" />

@@ -1,13 +1,16 @@
-import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, type FormEvent } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Wine, Mail, Lock, User, ArrowRight, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Logo } from '../components/Logo';
 
 export function Auth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get('referral')?.trim().toUpperCase() || undefined;
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, isAuthenticated } = useAuth();
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup'>(referralCode ? 'signup' : 'signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -18,6 +21,10 @@ export function Auth() {
   if (isAuthenticated) {
     navigate('/scan');
   }
+
+  useEffect(() => {
+    if (referralCode) setMode('signup');
+  }, [referralCode]);
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
@@ -36,7 +43,7 @@ export function Auth() {
     setError('');
     try {
       if (mode === 'signup') {
-        const { error } = await signUpWithEmail(email, password, firstName);
+        const { error } = await signUpWithEmail(email, password, firstName, referralCode);
         if (error) throw error;
         navigate('/scan');
       } else {
@@ -60,8 +67,8 @@ export function Auth() {
         className="w-full max-w-sm"
       >
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-burgundy-dark flex items-center justify-center shadow-lg">
-            <Wine size={22} color="white" />
+          <div className="w-10 h-10 rounded-xl bg-burgundy-dark flex items-center justify-center shadow-lg overflow-hidden">
+            <Logo size={36} variant="white" />
           </div>
           <span className="font-display text-2xl font-bold text-burgundy-dark">Sommely</span>
         </div>

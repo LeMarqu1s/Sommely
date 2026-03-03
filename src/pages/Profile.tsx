@@ -17,10 +17,12 @@ import {
   RefreshCw,
   Bell,
   User,
+  Share2,
+  Copy,
 } from 'lucide-react';
+import { Logo } from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
-import { getUserScans } from '../lib/supabase';
-import { getSubscriptionStatus } from '../utils/subscription';
+import { getUserScans, getScansCountTotal } from '../lib/supabase';
 
 const BADGES = [
   { id: 'first', label: 'Premier scan', icon: '🍷', threshold: 1, description: 'Vous avez scanné votre première bouteille' },
@@ -40,37 +42,55 @@ const SUBSCRIPTION_LABELS: Record<string, { label: string; color: string; bg: st
 
 export function Profile() {
   const navigate = useNavigate();
-  const { user, signOut, isAuthenticated } = useAuth();
+  const { user, profile, subscription, subscriptionState, signOut, isAuthenticated, refreshSubscription } = useAuth();
   const [recentScans, setRecentScans] = useState<any[]>([]);
+  const [scanCountTotal, setScanCountTotal] = useState(0);
   const [favorites, setFavorites] = useState<any[]>([]);
   const [isLoadingScans, setIsLoadingScans] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-  const localProfile = JSON.parse(localStorage.getItem('sommely_profile') || '{}');
-  const { isPro, expiry } = getSubscriptionStatus();
-  const subscriptionTier = isPro ? (localStorage.getItem('sommely_subscription_type') || 'annual') : 'free';
-  const scanCountTotal = parseInt(
-    localStorage.getItem('sommely_scan_count_total') || localStorage.getItem('sommely_scan_count') || '0',
-  );
+  const tasteProfile = (profile?.taste_profile as Record<string, unknown>) || {};
+  const localProfile = { ...tasteProfile };
+  try {
+    const local = localStorage.getItem('sommely_profile');
+    if (local) Object.assign(localProfile, JSON.parse(local));
+  } catch { /* ignore */ }
+  const isPro = subscriptionState.isPro || subscriptionState.isTrial;
+  const subscriptionTier = isPro ? (subscriptionState.plan || 'annual') : 'free';
   const localFavorites = JSON.parse(localStorage.getItem('sommely_favorites') || '[]');
 
-  const firstName = localProfile.firstName || user?.user_metadata?.full_name?.split(' ')[0] || 'Vous';
-  const email = user?.email || localProfile.email || '';
+  const firstName = (localProfile.firstName as string) || profile?.name || user?.user_metadata?.full_name?.split(' ')[0] || 'Vous';
+  const email = user?.email || profile?.email || '';
   const subInfo = SUBSCRIPTION_LABELS[subscriptionTier] || SUBSCRIPTION_LABELS.free;
+
+  const scansRemaining = subscriptionState.isPro || subscriptionState.isTrial
+    ? 999
+    : Math.max(0, 3 - subscriptionState.scansThisMonth);
+  const expiry = subscription?.current_period_end || subscriptionState.trialEndsAt;
 
   const earnedBadges = BADGES.filter((b) => scanCountTotal >= b.threshold);
   const nextBadge = BADGES.find((b) => scanCountTotal < b.threshold);
 
   useEffect(() => {
     setFavorites(localFavorites);
+  }, [localFavorites]);
+
+  useEffect(() => {
     if (user) {
       setIsLoadingScans(true);
-      getUserScans(user.id, 5).then(({ data }) => {
+      Promise.all([
+        getUserScans(user.id, 5),
+        getScansCountTotal(user.id),
+      ]).then(([{ data }, { count }]) => {
         if (data) setRecentScans(data);
+        setScanCountTotal(count ?? 0);
         setIsLoadingScans(false);
       });
+    } else {
+      setRecentScans([]);
+      setScanCountTotal(0);
     }
-  }, [user, localFavorites]);
+  }, [user?.id]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -82,13 +102,10 @@ export function Profile() {
   };
 
   const confirmCancel = () => {
-    localStorage.removeItem('sommely_subscription');
-    localStorage.removeItem('sommely_subscription_tier');
     setShowCancelConfirm(false);
+    refreshSubscription();
     navigate('/');
   };
-
-  const scansRemaining = Math.max(0, 3 - parseInt(localStorage.getItem('sommely_scan_count') || '0'));
 
   return (
     <div className="min-h-screen bg-cream font-body text-black-wine overflow-x-hidden">
@@ -98,8 +115,8 @@ export function Profile() {
             onClick={() => navigate('/scan')}
             className="flex items-center gap-2 bg-transparent border-none cursor-pointer"
           >
-            <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center">
-              <Wine size={14} color="white" />
+            <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center overflow-hidden">
+              <Logo size={20} variant="white" />
             </div>
             <span className="font-display text-lg font-bold text-burgundy-dark">Sommely</span>
           </button>
@@ -161,7 +178,7 @@ export function Profile() {
               )}
               <span className="text-xs font-bold" style={{ color: subInfo.color }}>
                 {subInfo.label}
-                {subscriptionTier === 'free' && ` · ${scansRemaining} scan${scansRemaining > 1 ? 's' : ''} restant`}
+                    {subscriptionTier === 'free' && ` · ${scansRemaining} scan${scansRemaining > 1 ? 's' : ''} restant ce mois`}
               </span>
             </div>
           </div>
@@ -436,6 +453,37 @@ export function Profile() {
           </motion.div>
         )}
 
+        {profile?.referral_code && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+            className="bg-white rounded-2xl border border-gray-light/30 shadow-sm overflow-hidden"
+          >
+            <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
+              <h2 className="font-display text-base font-bold text-black-wine">Parrainer des amis</h2>
+              <Share2 size={16} color="#722F37" />
+            </div>
+            <div className="px-6 py-4">
+              <p className="text-xs text-gray-dark mb-2">Partagez votre code : 14 jours de trial pour vos amis, 1 mois offert pour vous s'ils passent Pro !</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 py-2.5 px-3 bg-cream rounded-xl font-mono text-sm font-bold text-burgundy-dark">
+                  {profile.referral_code}
+                </code>
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/invite/${profile.referral_code}`;
+                    navigator.clipboard?.writeText(url);
+                  }}
+                  className="p-2.5 bg-burgundy-dark text-white rounded-xl border-none cursor-pointer"
+                >
+                  <Copy size={18} />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -446,13 +494,35 @@ export function Profile() {
             <h2 className="font-display text-base font-bold text-black-wine">Mon abonnement</h2>
           </div>
           <div className="px-6 py-4">
-            {subscriptionTier === 'free' ? (
+            {subscriptionState.isTrial ? (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="font-semibold text-black-wine">Période d'essai</p>
+                    <p className="text-xs text-gray-dark">
+                      {subscriptionState.daysLeftInTrial} jour{subscriptionState.daysLeftInTrial > 1 ? 's' : ''} restant{subscriptionState.daysLeftInTrial > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-gold/20 flex items-center justify-center">
+                    <Zap size={18} color="#D4AF37" />
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigate('/premium')}
+                  className="w-full py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer hover:bg-burgundy-medium transition-colors shadow-md"
+                >
+                  <Crown size={16} />
+                  Passer à Pro · 4,99€/mois
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            ) : subscriptionTier === 'free' ? (
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="font-semibold text-black-wine">Formule gratuite</p>
                     <p className="text-xs text-gray-dark">
-                      {scansRemaining} scan{scansRemaining > 1 ? 's' : ''} restants aujourd'hui
+                      {scansRemaining} scan{scansRemaining > 1 ? 's' : ''} restants ce mois
                     </p>
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-gray-light/30 flex items-center justify-center">

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Copy, ExternalLink, Gift, Star } from 'lucide-react';
 import { canAccessFeature } from '../utils/subscription';
+import { useAuth } from '../context/AuthContext';
 
 const PARTNERS = [
   {
@@ -69,12 +70,13 @@ function generateReferralCode(): string {
 
 export function WineShop() {
   const navigate = useNavigate();
+  const { subscriptionState } = useAuth();
   const [activeTab, setActiveTab] = useState<'partners' | 'promos' | 'referral'>('partners');
   const [referralCode, setReferralCode] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!canAccessFeature('shop')) {
+    if (!canAccessFeature(subscriptionState, 'shop')) {
       navigate('/premium');
       return;
     }
@@ -84,7 +86,7 @@ export function WineShop() {
       localStorage.setItem('sommely_referral_code', code);
     }
     setReferralCode(code);
-  }, [navigate]);
+  }, [navigate, subscriptionState]);
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);

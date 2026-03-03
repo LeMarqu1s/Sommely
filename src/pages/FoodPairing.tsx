@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { canAccessFeature } from '../utils/subscription';
+import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, ArrowLeft, Wine, Star, Search, ChevronRight, RotateCcw, AlertCircle, Utensils } from 'lucide-react';
 import { optimizeImageForAI } from '../lib/imageOptimize';
@@ -120,6 +121,7 @@ Si l'image n'est pas un plat/aliment ou si la description est trop vague, retour
 
 export function FoodPairing() {
   const navigate = useNavigate();
+  const { subscriptionState } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -138,11 +140,11 @@ export function FoodPairing() {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   useEffect(() => {
-    if (!canAccessFeature('food')) {
+    if (!canAccessFeature(subscriptionState, 'food')) {
       navigate('/premium');
       return;
     }
-  }, [navigate]);
+  }, [navigate, subscriptionState]);
 
   useEffect(() => {
     return () => stopCamera();

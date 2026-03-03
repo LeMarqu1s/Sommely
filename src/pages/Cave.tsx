@@ -4,6 +4,14 @@ import { ArrowLeft, Plus, Bell, Trash2, RefreshCw, DollarSign, BarChart2, Packag
 import { canAddToCave } from '../utils/subscription';
 import { fetchOpenAI } from '../lib/openai';
 import { PaywallModal } from '../components/PaywallModal';
+import { useAuth } from '../context/AuthContext';
+import {
+  getCaveBottles,
+  insertCaveBottle,
+  updateCaveBottle,
+  deleteCaveBottle,
+  type CaveBottleRow,
+} from '../lib/supabase';
 
 // ─── TYPES ────────────────────────────────────────────────
 
@@ -61,13 +69,64 @@ function genHistory(bottles: CaveBottle[]): CaveValuePoint[] {
   return pts;
 }
 
-// ─── DONNÉES DÉMO ─────────────────────────────────────────
+// ─── MAPPING DB ↔ APP ─────────────────────────────────────
 
-const DEMO: CaveBottle[] = [
-  { id: 'd1', name: 'Château Pichon Baron', year: 2018, region: 'Bordeaux', type: 'Rouge', appellation: 'AOC Pauillac', grapes: 'Cabernet Sauvignon, Merlot', quantity: 6, purchasePrice: 65, estimatedCurrentValue: 89, priceHistory: [{ date: '2021-03-15', price: 65, event: "Prix d'achat" }, { date: '2022-06-01', price: 71 }, { date: '2023-01-01', price: 78 }, { date: '2024-01-01', price: 84 }, { date: todayStr(), price: 89 }], lastPriceUpdate: todayStr(), priceVariation24h: 2.3, drinkFrom: 2025, drinkUntil: 2040, peakYear: 2030, status: 'boire_maintenant', alert: 'hausse', addedDate: '2021-03-15', location: 'Étagère A, rangée 2' },
-  { id: 'd2', name: 'Meursault Les Charmes', year: 2020, region: 'Bourgogne', type: 'Blanc', appellation: 'AOC Meursault 1er Cru', grapes: 'Chardonnay', quantity: 3, purchasePrice: 55, estimatedCurrentValue: 68, priceHistory: [{ date: '2022-06-10', price: 55, event: "Prix d'achat" }, { date: '2023-01-01', price: 60 }, { date: '2024-01-01', price: 65 }, { date: todayStr(), price: 68 }], lastPriceUpdate: todayStr(), priceVariation24h: 0.8, drinkFrom: 2024, drinkUntil: 2032, peakYear: 2027, status: 'boire_maintenant', alert: null, addedDate: '2022-06-10', location: 'Étagère B, rangée 1' },
-  { id: 'd3', name: 'Château Angelus', year: 2019, region: 'Bordeaux', type: 'Rouge', appellation: 'AOC Saint-Émilion Grand Cru', grapes: 'Merlot, Cabernet Franc', quantity: 2, purchasePrice: 220, estimatedCurrentValue: 285, priceHistory: [{ date: '2022-01-20', price: 220, event: "Prix d'achat" }, { date: '2023-01-01', price: 245 }, { date: '2024-01-01', price: 268 }, { date: todayStr(), price: 285 }], lastPriceUpdate: todayStr(), priceVariation24h: -1.2, drinkFrom: 2027, drinkUntil: 2045, peakYear: 2033, status: 'trop_tot', alert: null, addedDate: '2022-01-20', location: 'Étagère A, rangée 1' },
-];
+function rowToBottle(r: CaveBottleRow): CaveBottle {
+  const ph = Array.isArray(r.price_history) ? r.price_history : [];
+  return {
+    id: r.id,
+    name: r.name,
+    year: r.vintage,
+    region: r.region ?? '',
+    type: (r.wine_type as CaveBottle['type']) ?? 'Rouge',
+    appellation: r.appellation ?? undefined,
+    grapes: r.grapes ?? undefined,
+    quantity: r.quantity,
+    purchasePrice: Number(r.price_paid),
+    estimatedCurrentValue: Number(r.current_price),
+    priceHistory: ph as PriceHistory[],
+    lastPriceUpdate: r.last_price_update ?? todayStr(),
+    priceVariation24h: Number(r.price_variation_24h ?? 0),
+    drinkFrom: r.drink_from ?? new Date().getFullYear() + 2,
+    drinkUntil: r.drink_until ?? new Date().getFullYear() + 8,
+    peakYear: r.peak_year ?? new Date().getFullYear() + 4,
+    status: getStatus({
+      drinkFrom: r.drink_from ?? undefined,
+      drinkUntil: r.drink_until ?? undefined,
+      peakYear: r.peak_year ?? undefined,
+    }),
+    alert: (r.alert as CaveBottle['alert']) ?? null,
+    notes: r.notes ?? undefined,
+    addedDate: r.added_at?.split('T')[0] ?? todayStr(),
+    location: r.location ?? undefined,
+  };
+}
+
+function bottleToInsert(b: CaveBottle): Omit<CaveBottleRow, 'id' | 'user_id' | 'added_at'> {
+  return {
+    name: b.name,
+    vintage: b.year,
+    region: b.region || null,
+    appellation: b.appellation || null,
+    wine_type: b.type,
+    grapes: b.grapes || null,
+    price_paid: b.purchasePrice,
+    current_price: b.estimatedCurrentValue,
+    quantity: b.quantity,
+    peak_start: b.drinkFrom ?? null,
+    peak_end: b.drinkUntil ?? null,
+    peak_year: b.peakYear ?? null,
+    drink_from: b.drinkFrom ?? null,
+    drink_until: b.drinkUntil ?? null,
+    image_url: null,
+    notes: b.notes ?? null,
+    price_history: b.priceHistory ?? [],
+    price_variation_24h: b.priceVariation24h ?? 0,
+    last_price_update: b.lastPriceUpdate ?? null,
+    alert: b.alert ?? null,
+    location: b.location ?? null,
+  };
+}
 
 const EMPTY = { name: '', year: new Date().getFullYear() - 2, region: '', type: 'Rouge', appellation: '', grapes: '', quantity: 1, purchasePrice: 0, notes: '', location: '' };
 
@@ -103,6 +162,7 @@ function MiniChart({ history }: { history: CaveValuePoint[] }) {
 // ─── COMPOSANT PRINCIPAL ──────────────────────────────────
 
 export function Cave() {
+  const { user, subscriptionState } = useAuth();
   type View = 'overview' | 'list' | 'add' | 'detail' | 'sell';
   const [view, setView] = useState<View>('overview');
   const [bottles, setBottles] = useState<CaveBottle[]>([]);
@@ -119,28 +179,58 @@ export function Cave() {
   const [lastUpdate, setLastUpdate] = useState('');
   const [showPaywall, setShowPaywall] = useState(false);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('sommely_cave_v3');
-    let loaded: CaveBottle[];
-    try { loaded = saved ? JSON.parse(saved) : DEMO; } catch { loaded = DEMO; }
-    const ws = loaded.map(b => ({ ...b, status: getStatus(b) }));
-    setBottles(ws); setHistory(genHistory(ws));
-    const lu = localStorage.getItem('sommely_cave_update') || '';
-    setLastUpdate(lu);
-    const stale = !lu || Date.now() - new Date(lu).getTime() > 86400000;
-    if (stale && ws.length > 0) updatePrices(ws);
-    setAlerts(ws.filter(b => b.alert || Math.abs(b.priceVariation24h) >= 5));
-  }, []);
+  const totalBottleCount = bottles.reduce((s, b) => s + b.quantity, 0);
+  const canAdd = !!user && canAddToCave(subscriptionState, totalBottleCount);
 
-  const save = (list: CaveBottle[]) => {
-    const ws = list.map(b => ({ ...b, status: getStatus(b) }));
-    setBottles(ws); setHistory(genHistory(ws));
-    localStorage.setItem('sommely_cave_v3', JSON.stringify(ws));
-    setAlerts(ws.filter(b => b.alert || Math.abs(b.priceVariation24h) >= 5));
+  useEffect(() => {
+    if (!user?.id) {
+      setBottles([]);
+      setHistory([]);
+      setAlerts([]);
+      return;
+    }
+    getCaveBottles(user.id).then(({ data }) => {
+      const ws = (data || []).map(rowToBottle).map(b => ({ ...b, status: getStatus(b) }));
+      setBottles(ws);
+      setHistory(genHistory(ws));
+      setAlerts(ws.filter(b => b.alert || Math.abs(b.priceVariation24h) >= 5));
+      const lu = localStorage.getItem('sommely_cave_update') || '';
+      setLastUpdate(lu);
+      const stale = !lu || Date.now() - new Date(lu).getTime() > 86400000;
+      if (stale && ws.length > 0) updatePrices(ws);
+    });
+  }, [user?.id]);
+
+  const persistQuantity = async (b: CaveBottle, qty: number) => {
+    if (!user?.id) return;
+    if (qty <= 0) {
+      await deleteCaveBottle(user.id, b.id);
+      const next = bottles.filter(x => x.id !== b.id);
+      setBottles(next.map(x => ({ ...x, status: getStatus(x) })));
+      setHistory(genHistory(next));
+      setAlerts(next.filter(x => x.alert || Math.abs(x.priceVariation24h) >= 5));
+      setSelected(null);
+    } else {
+      await updateCaveBottle(user.id, b.id, { quantity: qty });
+      const updated = bottles.map(x => (x.id === b.id ? { ...x, quantity: qty } : x));
+      setBottles(updated.map(x => ({ ...x, status: getStatus(x) })));
+      setHistory(genHistory(updated));
+      setSelected(prev => (prev?.id === b.id ? { ...prev, quantity: qty } : prev));
+    }
+  };
+
+  const persistDelete = async (b: CaveBottle) => {
+    if (!user?.id) return;
+    await deleteCaveBottle(user.id, b.id);
+    const next = bottles.filter(x => x.id !== b.id);
+    setBottles(next.map(x => ({ ...x, status: getStatus(x) })));
+    setHistory(genHistory(next));
+    setAlerts(next.filter(x => x.alert || Math.abs(x.priceVariation24h) >= 5));
+    setSelected(null);
   };
 
   const updatePrices = async (list: CaveBottle[]) => {
-    if (isUpdating || list.length === 0) return;
+    if (!user?.id || isUpdating || list.length === 0) return;
     setIsUpdating(true);
     try {
       const wines = list.map(b => `id:${b.id} | "${b.name}" ${b.year} | acheté ${b.purchasePrice}€ | actuel ${b.estimatedCurrentValue}€`).join('\n');
@@ -163,7 +253,21 @@ export function Cave() {
           const variation = ((newP - b.estimatedCurrentValue) / b.estimatedCurrentValue) * 100;
           return { ...b, estimatedCurrentValue: newP, priceVariation24h: u.variation24h || 0, lastPriceUpdate: now, alert: Math.abs(variation) >= 15 ? (variation > 0 ? 'hausse' : 'baisse') : null, priceHistory: [...b.priceHistory, ...(Math.abs(newP - b.estimatedCurrentValue) > 1 ? [{ date: now, price: newP, event: u.reason }] : [])].slice(-20) } as CaveBottle;
         });
-        save(updated);
+        for (const b of updated) {
+          const u = result.updates.find((x: { id: string }) => x.id === b.id);
+          if (u) {
+            await updateCaveBottle(user.id, b.id, {
+              current_price: b.estimatedCurrentValue,
+              price_variation_24h: b.priceVariation24h,
+              last_price_update: b.lastPriceUpdate,
+              alert: b.alert,
+              price_history: b.priceHistory,
+            });
+          }
+        }
+        setBottles(updated.map(b => ({ ...b, status: getStatus(b) })));
+        setHistory(genHistory(updated));
+        setAlerts(updated.filter(b => b.alert || Math.abs(b.priceVariation24h) >= 5));
         const lu = new Date().toISOString();
         localStorage.setItem('sommely_cave_update', lu);
         setLastUpdate(lu);
@@ -173,8 +277,8 @@ export function Cave() {
   };
 
   const addBottle = async () => {
-    if (!form.name || !form.purchasePrice) return;
-    if (!canAddToCave()) {
+    if (!user?.id || !form.name || !form.purchasePrice) return;
+    if (!canAdd) {
       setShowPaywall(true);
       return;
     }
@@ -190,12 +294,25 @@ export function Cave() {
       });
       const data = await res.json();
       const ai = JSON.parse(data.choices?.[0]?.message?.content || '{}');
-      const nb: CaveBottle = { id: Date.now().toString(), name: form.name, year: Number(form.year), region: form.region, type: form.type, appellation: form.appellation || ai.appellation || '', grapes: form.grapes || ai.grapes || '', quantity: Number(form.quantity), purchasePrice: Number(form.purchasePrice), estimatedCurrentValue: ai.estimatedCurrentValue || Math.round(Number(form.purchasePrice) * 1.05), priceHistory: [{ date: todayStr(), price: Number(form.purchasePrice), event: "Prix d'achat" }], lastPriceUpdate: todayStr(), priceVariation24h: 0, drinkFrom: ai.drinkFrom || new Date().getFullYear() + 2, drinkUntil: ai.drinkUntil || new Date().getFullYear() + 8, peakYear: ai.peakYear || new Date().getFullYear() + 4, status: 'trop_tot', alert: null, notes: form.notes || ai.agingNote || '', addedDate: todayStr(), location: form.location };
+      const nb: CaveBottle = { id: '', name: form.name, year: Number(form.year), region: form.region, type: form.type, appellation: form.appellation || ai.appellation || '', grapes: form.grapes || ai.grapes || '', quantity: Number(form.quantity), purchasePrice: Number(form.purchasePrice), estimatedCurrentValue: ai.estimatedCurrentValue || Math.round(Number(form.purchasePrice) * 1.05), priceHistory: [{ date: todayStr(), price: Number(form.purchasePrice), event: "Prix d'achat" }], lastPriceUpdate: todayStr(), priceVariation24h: 0, drinkFrom: ai.drinkFrom || new Date().getFullYear() + 2, drinkUntil: ai.drinkUntil || new Date().getFullYear() + 8, peakYear: ai.peakYear || new Date().getFullYear() + 4, status: 'trop_tot', alert: null, notes: form.notes || ai.agingNote || '', addedDate: todayStr(), location: form.location };
       nb.status = getStatus(nb);
-      save([...bottles, nb]);
+      const { data: inserted } = await insertCaveBottle(user.id, bottleToInsert(nb));
+      if (inserted) {
+        const newBottle = rowToBottle(inserted);
+        newBottle.status = getStatus(newBottle);
+        setBottles(prev => [...prev, newBottle]);
+        setHistory(genHistory([...bottles, newBottle]));
+        setAlerts(prev => [...prev, newBottle].filter(b => b.alert || Math.abs(b.priceVariation24h) >= 5));
+      }
     } catch {
-      const nb: CaveBottle = { id: Date.now().toString(), name: form.name, year: Number(form.year), region: form.region, type: form.type, appellation: form.appellation, grapes: form.grapes, quantity: Number(form.quantity), purchasePrice: Number(form.purchasePrice), estimatedCurrentValue: Math.round(Number(form.purchasePrice) * 1.05), priceHistory: [{ date: todayStr(), price: Number(form.purchasePrice), event: "Prix d'achat" }], lastPriceUpdate: todayStr(), priceVariation24h: 0, drinkFrom: new Date().getFullYear() + 2, drinkUntil: new Date().getFullYear() + 8, peakYear: new Date().getFullYear() + 4, status: 'trop_tot', alert: null, notes: form.notes, addedDate: todayStr(), location: form.location };
-      save([...bottles, nb]);
+      const nb: CaveBottle = { id: '', name: form.name, year: Number(form.year), region: form.region, type: form.type, appellation: form.appellation, grapes: form.grapes, quantity: Number(form.quantity), purchasePrice: Number(form.purchasePrice), estimatedCurrentValue: Math.round(Number(form.purchasePrice) * 1.05), priceHistory: [{ date: todayStr(), price: Number(form.purchasePrice), event: "Prix d'achat" }], lastPriceUpdate: todayStr(), priceVariation24h: 0, drinkFrom: new Date().getFullYear() + 2, drinkUntil: new Date().getFullYear() + 8, peakYear: new Date().getFullYear() + 4, status: 'trop_tot', alert: null, notes: form.notes, addedDate: todayStr(), location: form.location };
+      const { data: inserted } = await insertCaveBottle(user.id, bottleToInsert(nb));
+      if (inserted) {
+        const newBottle = rowToBottle(inserted);
+        newBottle.status = getStatus(newBottle);
+        setBottles(prev => [...prev, newBottle]);
+        setHistory(genHistory([...bottles, newBottle]));
+      }
     } finally {
       setIsAdding(false);
       setForm(EMPTY);
@@ -251,7 +368,7 @@ export function Cave() {
             </button>
           )}
           {(view === 'overview' || view === 'list') && (
-            <button onClick={() => { if (!canAddToCave()) setShowPaywall(true); else setView('add'); }} className="w-8 h-8 rounded-full bg-burgundy-dark flex items-center justify-center border-none cursor-pointer shadow">
+            <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="w-8 h-8 rounded-full bg-burgundy-dark flex items-center justify-center border-none cursor-pointer shadow">
               <Plus size={16} color="white" />
             </button>
           )}
@@ -291,10 +408,19 @@ export function Cave() {
       </AnimatePresence>
 
       <div className="max-w-lg mx-auto px-5 py-5">
+        {!user && (
+          <div className="bg-white rounded-2xl border border-dashed border-gray-light p-8 text-center mb-6">
+            <span className="text-5xl block mb-3">🔐</span>
+            <p className="font-display text-lg font-bold text-black-wine mb-2">Connectez-vous</p>
+            <p className="text-gray-dark text-sm mb-4">Connectez-vous pour gérer votre cave et suivre la valeur de vos vins</p>
+            <a href="/auth" className="inline-block bg-burgundy-dark text-white px-6 py-3 rounded-full font-semibold text-sm">Se connecter</a>
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
 
           {/* ══ OVERVIEW ══ */}
-          {view === 'overview' && (
+          {view === 'overview' && user && (
             <motion.div key="ov" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
               <div className="bg-gradient-to-br from-black-wine to-burgundy-dark rounded-3xl p-5 text-white overflow-hidden relative">
                 <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/5" />
@@ -375,7 +501,7 @@ export function Cave() {
                 <button onClick={() => setView('list')} className="py-4 bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer hover:bg-burgundy-dark/5 transition-colors">
                   <Package size={16} /> Mes bouteilles
                 </button>
-                <button onClick={() => { if (!canAddToCave()) setShowPaywall(true); else setView('add'); }} className="py-4 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer shadow-md hover:bg-burgundy-medium transition-colors">
+                <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="py-4 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer shadow-md hover:bg-burgundy-medium transition-colors">
                   <Plus size={16} /> Ajouter
                 </button>
               </div>
@@ -385,7 +511,7 @@ export function Cave() {
                   <span className="text-5xl block mb-3">🍾</span>
                   <p className="font-display text-lg font-bold text-black-wine mb-2">Cave vide</p>
                   <p className="text-gray-dark text-sm mb-4">Ajoutez vos premières bouteilles pour suivre leur valeur</p>
-                  <button onClick={() => { if (!canAddToCave()) setShowPaywall(true); else setView('add'); }} className="bg-burgundy-dark text-white px-6 py-3 rounded-full font-semibold text-sm border-none cursor-pointer">Ajouter une bouteille</button>
+                  <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="bg-burgundy-dark text-white px-6 py-3 rounded-full font-semibold text-sm border-none cursor-pointer">Ajouter une bouteille</button>
                 </div>
               )}
               <div className="h-4" />
@@ -393,7 +519,7 @@ export function Cave() {
           )}
 
           {/* ══ LISTE ══ */}
-          {view === 'list' && (
+          {view === 'list' && user && (
             <motion.div key="list" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white rounded-2xl border border-gray-light/30 p-4 text-center shadow-sm"><p className="font-display text-2xl font-bold text-black-wine">{eur(totalValue)}</p><p className="text-xs text-gray-dark">Valeur totale</p></div>
@@ -420,7 +546,7 @@ export function Cave() {
                 <div className="bg-white rounded-2xl border border-gray-light/30 p-8 text-center">
                   <span className="text-4xl block mb-3">🍾</span>
                   <p className="font-semibold text-black-wine mb-3">Aucune bouteille</p>
-                  <button onClick={() => { if (!canAddToCave()) setShowPaywall(true); else setView('add'); }} className="bg-burgundy-dark text-white px-5 py-2.5 rounded-full text-sm font-semibold border-none cursor-pointer">Ajouter</button>
+                  <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="bg-burgundy-dark text-white px-5 py-2.5 rounded-full text-sm font-semibold border-none cursor-pointer">Ajouter</button>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -460,7 +586,7 @@ export function Cave() {
           )}
 
           {/* ══ DÉTAIL ══ */}
-          {view === 'detail' && selected && (() => {
+          {view === 'detail' && user && selected && (() => {
             const conf = sc(selected.status);
             const gp = Math.round(((selected.estimatedCurrentValue - selected.purchasePrice) / selected.purchasePrice) * 100);
             const totalVal = selected.estimatedCurrentValue * selected.quantity;
@@ -518,15 +644,11 @@ export function Cave() {
                       <div className="flex items-center gap-3">
                         <button onClick={() => {
                           const newQty = Math.max(0, selected.quantity - 1);
-                          if (newQty === 0) { save(bottles.filter(b => b.id !== selected.id)); setView('list'); return; }
-                          const updated = bottles.map(b => b.id === selected.id ? { ...b, quantity: newQty } : b);
-                          save(updated); setSelected({ ...selected, quantity: newQty });
+                          persistQuantity(selected, newQty);
+                          if (newQty === 0) setView('list');
                         }} className="w-8 h-8 rounded-full bg-white border border-gray-light flex items-center justify-center cursor-pointer font-bold text-burgundy-dark hover:bg-burgundy-dark hover:text-white transition-colors">−</button>
                         <span className="font-display text-xl font-bold text-black-wine w-8 text-center">{selected.quantity}</span>
-                        <button onClick={() => {
-                          const updated = bottles.map(b => b.id === selected.id ? { ...b, quantity: b.quantity + 1 } : b);
-                          save(updated); setSelected({ ...selected, quantity: selected.quantity + 1 });
-                        }} className="w-8 h-8 rounded-full bg-white border border-gray-light flex items-center justify-center cursor-pointer font-bold text-burgundy-dark hover:bg-burgundy-dark hover:text-white transition-colors">+</button>
+                        <button onClick={() => persistQuantity(selected, selected.quantity + 1)} className="w-8 h-8 rounded-full bg-white border border-gray-light flex items-center justify-center cursor-pointer font-bold text-burgundy-dark hover:bg-burgundy-dark hover:text-white transition-colors">+</button>
                       </div>
                     </div>
 
@@ -562,7 +684,7 @@ export function Cave() {
                 </button>
 
                 <div className="flex gap-3">
-                  <button onClick={() => { save(bottles.filter(b => b.id !== selected.id)); setView('list'); }} className="flex-1 py-3.5 border-2 border-red-200 text-red-600 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 bg-transparent cursor-pointer hover:bg-red-50 transition-colors">
+                  <button onClick={() => { persistDelete(selected); setView('list'); }} className="flex-1 py-3.5 border-2 border-red-200 text-red-600 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 bg-transparent cursor-pointer hover:bg-red-50 transition-colors">
                     <Trash2 size={16} /> Supprimer
                   </button>
                   <button onClick={() => setView('list')} className="flex-1 py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer hover:bg-burgundy-medium transition-colors">
@@ -575,7 +697,7 @@ export function Cave() {
           })()}
 
           {/* ══ SIMULATION VENTE ══ */}
-          {view === 'sell' && sellData && (
+          {view === 'sell' && user && sellData && (
             <motion.div key="sell" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
               <div className="text-center">
                 <h2 className="font-display text-2xl font-bold text-black-wine">💰 Simulation de vente</h2>
@@ -631,7 +753,7 @@ export function Cave() {
           )}
 
           {/* ══ AJOUT ══ */}
-          {view === 'add' && (
+          {view === 'add' && user && (
             <motion.div key="add" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
               <div>
                 <h2 className="font-display text-xl font-bold text-black-wine mb-1">Ajouter une bouteille</h2>

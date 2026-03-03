@@ -1,64 +1,58 @@
-export function getSubscriptionStatus() {
-  const tier = localStorage.getItem('sommely_subscription_tier') || 'free';
-  const type = localStorage.getItem('sommely_subscription_type') || null;
-  const expiry = localStorage.getItem('sommely_subscription_expiry') || null;
+import type { SubscriptionState } from '../context/AuthContext';
 
-  const isPro = (tier === 'pro' || tier === 'annual' || tier === 'monthly') && (!expiry || new Date(expiry) > new Date());
+const FREE_SCAN_LIMIT = 3;
+const FREE_CAVE_LIMIT = 5;
+
+export function getGatingFromState(state: SubscriptionState) {
+  const isPro = state.isPro;
+  const isTrial = state.isTrial;
+  const isFree = state.isFree;
+  const scansThisMonth = state.scansThisMonth;
 
   return {
-    tier,
-    type,
-    expiry,
     isPro,
-    isFree: !isPro,
+    isTrial,
+    isFree,
+    scansThisMonth,
+    scansRemaining: isPro || isTrial ? 999 : Math.max(0, FREE_SCAN_LIMIT - scansThisMonth),
+    canScanUnlimited: isPro || isTrial,
+    caveLimit: isPro || isTrial ? 999 : FREE_CAVE_LIMIT,
   };
 }
 
-export function getScanCount() {
-  return parseInt(localStorage.getItem('sommely_scan_count') || '0');
-}
-
-export function incrementScanCount() {
-  const count = getScanCount() + 1;
-  localStorage.setItem('sommely_scan_count', String(count));
-  return count;
-}
-
-export function canScan() {
-  const { isPro } = getSubscriptionStatus();
-  if (isPro) return { allowed: true };
-
-  const count = getScanCount();
-  if (count >= 3) return { allowed: false, reason: 'Limite de 3 scans gratuits atteinte' };
-
-  return { allowed: true, remaining: 3 - count };
-}
-
-export function canAccessFeature(feature: 'cave' | 'menu' | 'food' | 'investment' | 'antoine' | 'cavemeal' | 'shop') {
-  const { isPro } = getSubscriptionStatus();
-  if (isPro) return true;
-
-  if (feature === 'cave') {
-    try {
-      const cave = JSON.parse(localStorage.getItem('sommely_cave_v3') || '[]');
-      const totalBottles = cave.reduce((sum: number, b: { quantity?: number }) => sum + (b.quantity || 1), 0);
-      return totalBottles <= 5;
-    } catch {
-      return true;
-    }
+export function canScan(state: SubscriptionState) {
+  const { isPro, isTrial, scansThisMonth } = getGatingFromState(state);
+  if (isPro || isTrial) return { allowed: true };
+  if (scansThisMonth >= FREE_SCAN_LIMIT) {
+    return { allowed: false, reason: 'Limite de 3 scans gratuits atteinte ce mois-ci' };
   }
+  return { allowed: true, remaining: FREE_SCAN_LIMIT - scansThisMonth };
+}
 
+export function canAddToCave(state: SubscriptionState, currentBottleCount: number) {
+  const { caveLimit } = getGatingFromState(state);
+  return currentBottleCount < caveLimit;
+}
+
+export function canAccessFeature(
+  state: SubscriptionState,
+  feature: 'cave' | 'menu' | 'food' | 'investment' | 'antoine' | 'cavemeal' | 'shop',
+  currentBottleCount?: number
+): boolean {
+  const { isPro, isTrial, caveLimit } = getGatingFromState(state);
+  if (isPro || isTrial) return true;
+  if (feature === 'cave') {
+    return (currentBottleCount ?? 0) <= caveLimit;
+  }
   return false;
 }
 
-export function canAddToCave() {
-  const { isPro } = getSubscriptionStatus();
-  if (isPro) return true;
-  try {
-    const cave = JSON.parse(localStorage.getItem('sommely_cave_v3') || '[]');
-    const totalBottles = cave.reduce((sum: number, b: { quantity?: number }) => sum + (b.quantity || 1), 0);
-    return totalBottles < 5;
-  } catch {
-    return true;
-  }
+export function getSubscriptionStatus() {
+  return {
+    tier: 'free' as const,
+    type: null as string | null,
+    expiry: null as string | null,
+    isPro: false,
+    isFree: true,
+  };
 }

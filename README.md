@@ -75,9 +75,7 @@ Dans Supabase SQL editor, exécuter le contenu de `supabase-schema.sql` (tables 
 - Connexion Google OAuth en production fonctionne (`/auth`)
 - Les scans sont bien sauvegardés dans Supabase (tables `scans` et `user_profiles`)
 
----
-
-## CHECKLIST PRE-LANCEMENT SOMMELY
+---## CHECKLIST PRE-LANCEMENT SOMMELY
 
 ### TECHNIQUE
 - [ ] npm run build sans erreurs

@@ -2,22 +2,17 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export function Success() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const plan = searchParams.get('plan') as 'monthly' | 'annual';
   const [countdown, setCountdown] = useState(5);
+  const { refreshSubscription } = useAuth();
 
   useEffect(() => {
-    // Active le statut Pro
-    const expiry = plan === 'annual'
-      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-    localStorage.setItem('sommely_subscription_tier', 'pro');
-    localStorage.setItem('sommely_subscription_type', plan || 'monthly');
-    localStorage.setItem('sommely_subscription_expiry', expiry.toISOString());
+    refreshSubscription();
 
     // Compte à rebours
     const interval = setInterval(() => {
@@ -32,7 +27,7 @@ export function Success() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [plan, navigate]);
+  }, [plan, navigate, refreshSubscription]);
 
   const features = [
     '🔍 Scans illimités',

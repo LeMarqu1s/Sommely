@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Logo } from '../components/Logo';
 import {
   ArrowLeft,
   Heart,
@@ -161,7 +162,7 @@ export function WineResult() {
         </button>
 
         <div className="flex items-center gap-2">
-          <Wine size={18} color="#722F37" />
+          <Logo size={24} variant="default" />
           <span className="font-display text-lg font-bold text-burgundy-dark">Sommely</span>
         </div>
 

@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ClarityScript } from './components/analytics/Clarity';
 import { GoogleAnalytics } from './components/analytics/Analytics';
 import { Home } from './pages/Home';
 import { Auth } from './pages/Auth';
+import { Invite } from './pages/Invite';
 import { Onboarding } from './pages/Onboarding';
 import { Scanner } from './pages/Scanner';
 import { MenuScanner } from './pages/MenuScanner';
@@ -21,10 +23,13 @@ import { Investment } from './pages/Investment';
 import { BottomNav } from './components/BottomNav';
 import { OnboardingGuard } from './components/OnboardingGuard';
 
-const NAV_HIDDEN = ['/onboarding', '/result', '/premium', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/success', '/cave-meal', '/shop'];
+const NAV_HIDDEN = ['/onboarding', '/result', '/premium', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/invite', '/success', '/cave-meal', '/shop'];
 
-function AppContent() {
+function AppContent({ onReady }: { onReady?: () => void }) {
   const { pathname } = useLocation();
+  useEffect(() => {
+    onReady?.();
+  }, [onReady]);
   const showNav = !NAV_HIDDEN.some(p => pathname.startsWith(p));
   return (
     <>
@@ -35,6 +40,7 @@ function AppContent() {
           <Route path="/investment" element={<Investment />} />
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/invite/:code" element={<Invite />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/scan" element={<Scanner />} />
           <Route path="/menu" element={<MenuScanner />} />
@@ -55,12 +61,21 @@ function AppContent() {
   );
 }
 
+function hideSplash() {
+  const splash = document.getElementById('splash');
+  if (splash) {
+    splash.style.opacity = '0';
+    splash.style.transition = 'opacity 0.2s ease';
+    setTimeout(() => splash.remove(), 200);
+  }
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <OnboardingGuard>
-          <AppContent />
+          <AppContent onReady={hideSplash} />
         </OnboardingGuard>
       </BrowserRouter>
     </AuthProvider>

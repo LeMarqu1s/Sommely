@@ -1,51 +1,55 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getSubscriptionStatus } from '../utils/subscription';
 import { motion } from 'framer-motion';
 import { Camera, ChevronRight, TrendingUp, Star, Zap } from 'lucide-react';
 import { Logo } from '../components/Logo';
+import { useAuth } from '../context/AuthContext';
+import { getCaveBottles, getScansCountTotal } from '../lib/supabase';
 
 export function Home() {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{ name?: string; firstName?: string } | null>(null);
+  const { user, profile, subscriptionState } = useAuth();
   const [scanCount, setScanCount] = useState(0);
   const [caveValue, setCaveValue] = useState(0);
   const [caveBottles, setCaveBottles] = useState(0);
   const [timeOfDay, setTimeOfDay] = useState('');
   const [recentWine, setRecentWine] = useState<{ name: string; year?: number; region?: string } | null>(null);
 
+  const firstName = (profile?.taste_profile as any)?.firstName || profile?.name?.split(' ')[0] || '';
+  const isPremium = subscriptionState.isPro || subscriptionState.isTrial;
+  const scansRemaining = isPremium ? 999 : Math.max(0, 3 - subscriptionState.scansThisMonth);
+
   useEffect(() => {
-    const p = localStorage.getItem('sommely_profile');
-    if (p) setProfile(JSON.parse(p));
-
-    const count = parseInt(localStorage.getItem('sommely_scan_count_total') || localStorage.getItem('sommely_scan_count') || '0');
-    setScanCount(count);
-
-    const cave = localStorage.getItem('sommely_cave_v3');
-    if (cave) {
-      try {
-        const bottles = JSON.parse(cave);
-        const val = bottles.reduce((s: number, b: { estimatedCurrentValue: number; quantity: number }) => s + b.estimatedCurrentValue * b.quantity, 0);
-        const total = bottles.reduce((s: number, b: { quantity: number }) => s + b.quantity, 0);
-        setCaveValue(Math.round(val));
-        setCaveBottles(total);
-      } catch { /* ignore */ }
-    }
-
     const h = new Date().getHours();
     if (h < 12) setTimeOfDay('Bonjour');
     else if (h < 18) setTimeOfDay('Bon après-midi');
     else setTimeOfDay('Bonsoir');
-
-    const lastScan = localStorage.getItem('sommely_last_scan');
-    if (lastScan) {
-      try { setRecentWine(JSON.parse(lastScan)); } catch { /* ignore */ }
-    }
   }, []);
 
-  const firstName = profile?.firstName || profile?.name?.split(' ')[0] || '';
-  const { isPro: isPremium } = getSubscriptionStatus();
-  const scansRemaining = isPremium ? 999 : Math.max(0, 3 - (parseInt(localStorage.getItem('sommely_scan_count') || '0')));
+  useEffect(() => {
+    if (user?.id) {
+      getCaveBottles(user.id).then(({ data }) => {
+        if (data?.length) {
+          const val = data.reduce((s, b) => s + Number(b.current_price) * b.quantity, 0);
+          const total = data.reduce((s, b) => s + b.quantity, 0);
+          setCaveValue(Math.round(val));
+          setCaveBottles(total);
+        }
+      });
+      getScansCountTotal(user.id).then(({ count }) => setScanCount(count ?? 0));
+    } else {
+      setScanCount(0);
+      setCaveValue(0);
+      setCaveBottles(0);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    try {
+      const lastScan = localStorage.getItem('sommely_last_scan');
+      if (lastScan) setRecentWine(JSON.parse(lastScan));
+    } catch { /* ignore */ }
+  }, []);
 
   const features = [
     {
@@ -122,7 +126,7 @@ export function Home() {
               {firstName ? (
                 <span className="font-display text-base font-bold text-white">{firstName[0].toUpperCase()}</span>
               ) : (
-                <Logo size={24} />
+                <Logo size={24} variant="white" />
               )}
             </button>
           </div>

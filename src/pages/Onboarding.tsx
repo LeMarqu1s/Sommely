@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Star, Check } from 'lucide-react';
 import { Logo } from '../components/Logo';
+import { useAuth } from '../context/AuthContext';
+import { updateProfile } from '../lib/supabase';
 
 // ─── TYPES ────────────────────────────────────────────────
 
@@ -96,6 +98,7 @@ const TYPE_TO_MATCHSCORE: Record<string, string> = {
 
 export function Onboarding() {
   const navigate = useNavigate();
+  const { user, refreshProfile } = useAuth();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [data, setData] = useState<OnboardingData>({
@@ -135,13 +138,11 @@ export function Onboarding() {
     }));
   };
 
-  const finish = () => {
+  const finish = async () => {
     const firstName = data.name.trim().split(' ')[0] || data.name;
-    // types: clés pour matchScore (red_bold, white_dry, etc.)
     const typesForScore = [...new Set(data.favoriteTypes.map(t => TYPE_TO_MATCHSCORE[t]).filter(Boolean))];
-    // expertise: matchScore attend 'beginner' ou 'expert'
     const expertiseForScore = data.experience === 'debutant' ? 'beginner' : data.experience === 'expert' ? 'expert' : data.experience;
-    const profile = {
+    const tasteProfile = {
       name: data.name,
       firstName,
       experience: data.experience,
@@ -155,8 +156,13 @@ export function Onboarding() {
       types: typesForScore,
       createdAt: new Date().toISOString(),
     };
-    localStorage.setItem('sommely_profile', JSON.stringify(profile));
-    localStorage.setItem('sommely_onboarding_done', 'true');
+    if (user?.id) {
+      await updateProfile(user.id, { name: firstName, taste_profile: tasteProfile, onboarding_completed: true });
+      refreshProfile();
+    } else {
+      localStorage.setItem('sommely_profile', JSON.stringify(tasteProfile));
+      localStorage.setItem('sommely_onboarding_done', 'true');
+    }
     navigate('/');
   };
 

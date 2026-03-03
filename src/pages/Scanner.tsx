@@ -4,8 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, Search, Wine, Zap, AlertCircle, X, RotateCcw, ChevronRight } from 'lucide-react';
 import { analyzeWineLabel, enrichWineData } from '../lib/openai';
 import { calculatePersonalizedScore, generateDetailedExplanation } from '../lib/matchScore';
-import { canScan, incrementScanCount } from '../utils/subscription';
+import { canScan } from '../utils/subscription';
 import { PaywallModal } from '../components/PaywallModal';
+import { Logo } from '../components/Logo';
+import { useAuth } from '../context/AuthContext';
+import { insertScan } from '../lib/supabase';
 
 type ScanState = 'idle' | 'camera_active' | 'capturing' | 'analyzing' | 'error';
 
@@ -19,6 +22,7 @@ const ANALYSIS_STEPS = [
 
 export function Scanner() {
   const navigate = useNavigate();
+  const { user, profile, subscriptionState, refreshSubscription } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -27,8 +31,7 @@ export function Scanner() {
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [analysisStep, setAnalysisStep] = useState(0);
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [scanCount, setScanCount] = useState(0);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<Record<string, unknown> | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [cameraError, setCameraError] = useState('');
   const [showManualSearch, setShowManualSearch] = useState(false);
@@ -44,21 +47,22 @@ export function Scanner() {
     'Rapprochez-vous si le texte est petit',
   ];
 
-  // Sur mobile, la caméra directe (getUserMedia) est souvent bloquée.
-  // L'input file avec capture="environment" ouvre l'appareil photo natif → fiable.
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-  const subscriptionTier = localStorage.getItem('sommely_subscription_tier') || 'free';
-  const isPremium = subscriptionTier !== 'free';
-  const scansRemaining = isPremium ? 999 : Math.max(0, 3 - scanCount);
+  const scanCheck = canScan(subscriptionState);
+  const isPremium = subscriptionState.isPro || subscriptionState.isTrial;
+  const scansRemaining = scanCheck.allowed ? (scanCheck.remaining ?? 999) : 0;
 
   useEffect(() => {
-    const profile = localStorage.getItem('sommely_profile');
-    const count = parseInt(localStorage.getItem('sommely_scan_count') || '0');
-    if (profile) setUserProfile(JSON.parse(profile));
-    setScanCount(count);
+    const pf = profile?.taste_profile as Record<string, unknown> | undefined;
+    if (pf && typeof pf === 'object') setUserProfile(pf);
+    else {
+      try {
+        const local = localStorage.getItem('sommely_profile');
+        if (local) setUserProfile(JSON.parse(local));
+      } catch { /* ignore */ }
+    }
     return () => stopCamera();
-  }, []);
+  }, [profile?.taste_profile]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -191,7 +195,7 @@ export function Scanner() {
   // PAS DE VIN ALÉATOIRE ICI
 
   const analyzeImage = async (base64: string) => {
-    const scanCheck = canScan();
+    const scanCheck = canScan(subscriptionState);
     if (!scanCheck.allowed) {
       setShowPaywall(true);
       return;
@@ -245,11 +249,6 @@ export function Scanner() {
       const scoreBreakdown = calculatePersonalizedScore(wineAnalysis, enrichedData, userProfile);
       const explanation = generateDetailedExplanation(wineAnalysis, scoreBreakdown, userProfile);
 
-      const newCount = incrementScanCount();
-      setScanCount(newCount);
-      const total = parseInt(localStorage.getItem('sommely_scan_count_total') || '0') + 1;
-      localStorage.setItem('sommely_scan_count_total', String(total));
-
       // Accords mets-vins : structure { perfect, good, avoid } pour WineResult
       const foodPairingsObj = wineAnalysis.foodPairings
         ?? (enrichedData.foodPairings && Array.isArray(enrichedData.foodPairings)
@@ -290,7 +289,17 @@ export function Scanner() {
 
       console.log('🍷 Vin identifié avec succès:', wineObject.name, '|', wineObject.year, '|', wineObject.appellation);
 
-      localStorage.setItem('sommely_last_scan', JSON.stringify({ name: wineObject.name, year: wineObject.year, region: wineObject.region }));
+      if (user?.id) {
+        await insertScan(user.id, 'bottle', {
+          wine: wineObject,
+          score: scoreBreakdown.total,
+          name: wineObject.name,
+          year: wineObject.year,
+          region: wineObject.region,
+          type: wineObject.type,
+        });
+        refreshSubscription();
+      }
 
       // Navigation vers le résultat avec les VRAIES données
       navigate('/result', {
@@ -326,7 +335,7 @@ export function Scanner() {
 
   const handleManualSearch = async () => {
     if (!manualQuery.trim()) return;
-    if (!isPremium && scanCount >= 3) { navigate('/premium'); return; }
+    if (!scanCheck.allowed) { setShowPaywall(true); return; }
 
     setScanState('analyzing');
     setAnalysisStep(0);
@@ -371,8 +380,8 @@ export function Scanner() {
       <div className="flex items-center justify-between px-6 py-4 z-20 relative flex-shrink-0">
         <div className="w-20" />
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center">
-            <Wine size={14} color="white" />
+          <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center overflow-hidden">
+            <Logo size={20} variant="white" />
           </div>
           <span className="font-display text-lg font-bold text-white">Sommely</span>
         </div>
@@ -385,7 +394,7 @@ export function Scanner() {
 
       {!isPremium && scansRemaining === 1 && scanState === 'idle' && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-warning/10 border-b border-warning/30 px-6 py-2.5 text-center">
-          <p className="text-warning text-xs font-semibold">⚠️ Il vous reste 1 scan gratuit aujourd'hui</p>
+          <p className="text-warning text-xs font-semibold">⚠️ Il vous reste 1 scan gratuit ce mois-ci</p>
         </motion.div>
       )}
 

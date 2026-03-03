@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { canAccessFeature } from '../utils/subscription';
+import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, ArrowLeft, Wine, Star, AlertCircle, RotateCcw } from 'lucide-react';
 import { optimizeImageForAI } from '../lib/imageOptimize';
@@ -125,6 +126,7 @@ Si l'image n'est pas une carte des vins ou menu, retourne :
 
 export function MenuScanner() {
   const navigate = useNavigate();
+  const { subscriptionState } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -141,11 +143,11 @@ export function MenuScanner() {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   useEffect(() => {
-    if (!canAccessFeature('menu')) {
+    if (!canAccessFeature(subscriptionState, 'menu')) {
       navigate('/premium');
       return;
     }
-  }, [navigate]);
+  }, [navigate, subscriptionState]);
 
   useEffect(() => {
     return () => stopCamera();
