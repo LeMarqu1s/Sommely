@@ -9,6 +9,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   plugins: [react(), basicSsl()],
   resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
+  build: {
+    chunkSizeWarningLimit: 1000, // KB - évite le warning Vercel sur les chunks volumineux
+  },
   server: {
     host: true,
     port: 5173,
