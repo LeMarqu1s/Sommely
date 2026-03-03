@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Upload, Search, Wine, Zap, AlertCircle, X, RotateCcw, ChevronRight } from 'lucide-react';
+import { Camera, Upload, Search, Zap, AlertCircle, X, RotateCcw, ChevronRight } from 'lucide-react';
 import { analyzeWineLabel, enrichWineData } from '../lib/openai';
 import { calculatePersonalizedScore, generateDetailedExplanation } from '../lib/matchScore';
 import { canScan } from '../utils/subscription';

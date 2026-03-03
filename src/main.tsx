@@ -17,7 +17,7 @@ try {
   ReactDOM.createRoot(rootEl).render(
     <React.StrictMode>
       <ErrorBoundary>
-        <App onMount={hideSplash} />
+        <App />
       </ErrorBoundary>
     </React.StrictMode>
   );

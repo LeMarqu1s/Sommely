@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Wine, Mail, Lock, User, ArrowRight, Loader } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Logo } from '../components/Logo';
 
