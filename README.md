@@ -1,5 +1,16 @@
 # SOMMELY - Déploiement Vercel
 
+## ⚠️ La version ne se met pas à jour ?
+
+Si après `git push` le site affiche encore l'ancienne version :
+
+1. **Vercel** : Projet → **Deployments** → **Redeploy** sur le dernier déploiement (ou **Create Deployment**)
+2. **Cache navigateur** : Rafraîchissement forcé **Ctrl+Shift+R** (ou **Cmd+Shift+R** sur Mac)
+3. **PWA / App installée** : Désinstaller et réinstaller, ou vider le cache du site
+4. **Vérifier la version** : Clic droit → "Afficher le code source" → chercher `meta name="build"` (doit être 2025-03-04 ou plus récent)
+
+---
+
 ## Étapes de déploiement (≈ 5 minutes)
 
 ### 1. Pousser sur GitHub
