@@ -64,6 +64,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
 function hideSplash() {
   const splash = document.getElementById('splash');
   if (splash) {
+    splash.style.pointerEvents = 'none'; // Débloque les clics immédiatement
     splash.style.opacity = '0';
     splash.style.transition = 'opacity 0.2s ease';
     setTimeout(() => splash.remove(), 200);

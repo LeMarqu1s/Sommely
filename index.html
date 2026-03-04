@@ -28,5 +28,9 @@
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Fallback: retire le splash après 2.5s si React ne l'a pas fait (évite blocage des clics) -->
+    <script>
+      setTimeout(function(){var s=document.getElementById('splash');if(s){s.style.pointerEvents='none';s.remove();}},2500);
+    </script>
   </body>
 </html>

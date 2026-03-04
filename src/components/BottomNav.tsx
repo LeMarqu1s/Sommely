@@ -17,7 +17,7 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-2 pb-safe z-30 shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-2 pb-safe z-50 shadow-lg">
       <div className="max-w-lg mx-auto flex items-center justify-around py-2">
         {items.map(item => {
           const active = pathname === item.path;
