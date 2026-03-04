@@ -23,6 +23,7 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   refreshSubscription: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  signInWithMagicLink: (email: string) => Promise<{ error: unknown }>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: unknown }>;
   signUpWithEmail: (email: string, password: string, firstName: string, referralCode?: string) => Promise<{ error: unknown }>;
   signOut: () => Promise<void>;
@@ -154,6 +155,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const signInWithMagicLink = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/scan`,
+      },
+    });
+    return { error };
+  };
+
   const signInWithEmail = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error };
@@ -204,6 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshProfile,
         refreshSubscription,
         signInWithGoogle,
+        signInWithMagicLink,
         signInWithEmail,
         signUpWithEmail,
         signOut,
