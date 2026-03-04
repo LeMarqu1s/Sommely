@@ -19,7 +19,8 @@ export function Auth() {
   const [error, setError] = useState('');
 
   if (isAuthenticated) {
-    navigate('/scan');
+    const done = localStorage.getItem('sommely_onboarding_done');
+    navigate(done ? '/scan' : '/onboarding', { replace: true });
   }
 
   useEffect(() => {
@@ -45,11 +46,12 @@ export function Auth() {
       if (mode === 'signup') {
         const { error } = await signUpWithEmail(email, password, firstName, referralCode);
         if (error) throw error;
-        navigate('/scan');
+        navigate('/onboarding');
       } else {
         const { error } = await signInWithEmail(email, password);
         if (error) throw error;
-        navigate('/scan');
+        const done = localStorage.getItem('sommely_onboarding_done');
+        navigate(done ? '/scan' : '/onboarding');
       }
     } catch (err: any) {
       setError(err.message || 'Erreur de connexion. Vérifiez vos identifiants.');

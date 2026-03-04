@@ -8,20 +8,19 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { user, profile, isLoading } = useAuth();
 
   useEffect(() => {
-    const publicRoutes = ['/onboarding', '/auth'];
+    const publicRoutes = ['/onboarding', '/auth', '/success'];
     if (publicRoutes.some(p => pathname.startsWith(p))) return;
-
     if (isLoading) return;
 
-    if (user) {
-      if (profile && !profile.onboarding_completed) {
-        navigate('/onboarding', { replace: true });
-      }
-    } else {
-      const done = localStorage.getItem('sommely_onboarding_done');
-      if (!done) {
-        navigate('/onboarding', { replace: true });
-      }
+    if (!user) {
+      // Pas connecté → auth en premier
+      navigate('/auth', { replace: true });
+      return;
+    }
+
+    // Connecté mais onboarding pas fait
+    if (profile && !profile.onboarding_completed) {
+      navigate('/onboarding', { replace: true });
     }
   }, [pathname, user, profile?.onboarding_completed, isLoading, navigate]);
 
