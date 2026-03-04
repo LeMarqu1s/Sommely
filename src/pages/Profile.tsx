@@ -142,15 +142,15 @@ export function Profile() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-light/20"
         >
-          <div className="h-20 bg-gradient-to-br from-burgundy-dark to-burgundy-medium relative">
+          <div className="h-20 bg-gradient-to-br from-burgundy-dark to-burgundy-medium relative -z-0">
             <div
               className="absolute inset-0 opacity-20"
               style={{ backgroundImage: 'radial-gradient(circle at 70% 50%, #D4AF37 0%, transparent 60%)' }}
             />
           </div>
 
-          <div className="px-6 pb-6">
-            <div className="flex items-end justify-between -mt-8 mb-4">
+          <div className="px-6 pb-6 relative z-10 -mt-8">
+            <div className="flex items-end justify-between mb-4">
               <div className="w-16 h-16 rounded-2xl bg-burgundy-dark border-4 border-white flex items-center justify-center shadow-lg">
                 <span className="text-white font-display text-2xl font-bold">
                   {firstName.charAt(0).toUpperCase()}

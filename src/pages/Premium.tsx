@@ -57,7 +57,11 @@ export function Premium() {
   return (
     <div className="min-h-screen bg-cream font-body">
       <div className="bg-white border-b border-gray-light/30 px-5 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
-        <button onClick={() => navigate(-1)} className="bg-transparent border-none cursor-pointer p-1">
+        <button
+          onClick={() => (window.history.length > 2 ? navigate(-1) : navigate('/'))}
+          className="bg-transparent border-none cursor-pointer p-1"
+          aria-label="Retour"
+        >
           <ArrowLeft size={20} color="#722F37" />
         </button>
         <span className="font-display text-base font-bold text-burgundy-dark">Sommely Pro</span>

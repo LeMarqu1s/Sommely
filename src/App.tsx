@@ -23,7 +23,7 @@ import { Investment } from './pages/Investment';
 import { BottomNav } from './components/BottomNav';
 import { OnboardingGuard } from './components/OnboardingGuard';
 
-const NAV_HIDDEN = ['/onboarding', '/result', '/premium', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/invite', '/success', '/cave-meal', '/shop'];
+const NAV_HIDDEN = ['/result', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/success', '/cave-meal', '/shop'];
 
 function AppContent({ onReady }: { onReady?: () => void }) {
   const { pathname } = useLocation();
