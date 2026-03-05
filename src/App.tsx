@@ -32,6 +32,11 @@ function AppContent({ onReady }: { onReady?: () => void }) {
   useEffect(() => {
     onReady?.();
   }, [onReady]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   const showNav = !NAV_HIDDEN.some(p => pathname.startsWith(p));
   return (
     <>
@@ -60,7 +65,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
         </Routes>
       </div>
       <BottomNav />
-        <SommelierButton />
+      <SommelierButton />
     </>
   );
 }
@@ -79,9 +84,8 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <OnboardingGuard>
-          <AppContent onReady={hideSplash} />
-        </OnboardingGuard>
+        <OnboardingGuard />
+        <AppContent onReady={hideSplash} />
       </BrowserRouter>
     </AuthProvider>
   );
