@@ -105,7 +105,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setIsLoading(false);
 
       if (session?.user) {
         let { data: p } = await getProfile(session.user.id);
@@ -136,6 +135,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSubscription(null);
         setSubscriptionState(defaultSubscriptionState);
       }
+      // isLoading passe à false SEULEMENT après que tout soit chargé
+      setIsLoading(false);
     });
 
     return () => sub.unsubscribe();
