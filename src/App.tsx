@@ -21,7 +21,7 @@ import { Success } from './pages/Success';
 import { Cave } from './pages/Cave';
 import { Investment } from './pages/Investment';
 import { BottomNav } from './components/BottomNav';
-import { OnboardingGuard } from './components/OnboardingGuard';
+import { Privacy } from './pages/Privacy';
 
 const NAV_HIDDEN = ['/result', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/success', '/cave-meal', '/shop'];
 
@@ -52,6 +52,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
           <Route path="/shop" element={<WineShop />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/success" element={<Success />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="/cave" element={<Cave />} />
         </Routes>
       </div>
