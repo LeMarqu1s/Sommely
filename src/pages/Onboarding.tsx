@@ -163,7 +163,7 @@ export function Onboarding() {
       localStorage.setItem('sommely_profile', JSON.stringify(tasteProfile));
       localStorage.setItem('sommely_onboarding_done', 'true');
     }
-    navigate('/');
+    navigate('/home');
   };
 
   const variants = {

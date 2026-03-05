@@ -10,7 +10,7 @@ export function BottomNav() {
   if (hidden.some(p => pathname.startsWith(p))) return null;
 
   const items: { path: string; icon: typeof Home | null; label: string; emoji: string | null }[] = [
-    { path: '/', icon: Home, label: 'Accueil', emoji: null },
+    { path: '/home', icon: Home, label: 'Accueil', emoji: null },
     { path: '/scan', icon: Camera, label: 'Scanner', emoji: null },
     { path: '/cave', icon: null, label: 'Ma cave', emoji: '🍾' },
     { path: '/profile', icon: User, label: 'Profil', emoji: null },

@@ -94,7 +94,7 @@ export function Profile() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/');
+    navigate('/home');
   };
 
   const handleCancelSubscription = () => {
@@ -104,7 +104,7 @@ export function Profile() {
   const confirmCancel = () => {
     setShowCancelConfirm(false);
     refreshSubscription();
-    navigate('/');
+    navigate('/home');
   };
 
   return (

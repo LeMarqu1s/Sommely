@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ClarityScript } from './components/analytics/Clarity';
 import { GoogleAnalytics } from './components/analytics/Analytics';
+import { Landing } from './pages/Landing';
 import { Home } from './pages/Home';
 import { Auth } from './pages/Auth';
 import { Invite } from './pages/Invite';
@@ -23,7 +24,7 @@ import { Investment } from './pages/Investment';
 import { BottomNav } from './components/BottomNav';
 import { Privacy } from './pages/Privacy';
 
-const NAV_HIDDEN = ['/result', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/success', '/cave-meal', '/shop'];
+const NAV_HIDDEN = ['/', '/onboarding', '/privacy', '/result', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/success', '/cave-meal', '/shop'];
 
 function AppContent({ onReady }: { onReady?: () => void }) {
   const { pathname } = useLocation();
@@ -38,7 +39,8 @@ function AppContent({ onReady }: { onReady?: () => void }) {
         <GoogleAnalytics />
         <Routes>
           <Route path="/investment" element={<Investment />} />
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/invite/:code" element={<Invite />} />
           <Route path="/onboarding" element={<Onboarding />} />

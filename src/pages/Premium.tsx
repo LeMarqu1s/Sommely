@@ -76,7 +76,7 @@ export function Premium() {
         </div>
         <h1 className="font-display text-2xl font-bold text-black-wine mb-2">Vous êtes déjà Pro !</h1>
         <p className="text-gray-dark text-sm text-center mb-6">Profitez de toutes les fonctionnalités.</p>
-        <button onClick={() => navigate('/')} className="bg-burgundy-dark text-white px-8 py-3 rounded-full font-semibold text-sm border-none cursor-pointer">
+        <button onClick={() => navigate('/home')} className="bg-burgundy-dark text-white px-8 py-3 rounded-full font-semibold text-sm border-none cursor-pointer">
           Retour à l'accueil
         </button>
       </div>
@@ -88,7 +88,7 @@ export function Premium() {
       {/* Header */}
       <div className="bg-white border-b border-gray-light/30 px-5 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
         <button
-          onClick={() => (window.history.length > 2 ? navigate(-1) : navigate('/'))}
+          onClick={() => (window.history.length > 2 ? navigate(-1) : navigate('/home'))}
           className="bg-transparent border-none cursor-pointer p-1"
           aria-label="Retour"
         >
