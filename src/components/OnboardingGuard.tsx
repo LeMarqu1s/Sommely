@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -6,24 +6,42 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { pathname, hash } = useLocation();
   const { user, profile, isLoading } = useAuth();
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const publicRoutes = ['/onboarding', '/auth', '/success', '/privacy', '/'];
     if (publicRoutes.some(p => pathname === p || pathname.startsWith(p + '/'))) return;
 
-    // Si y'a un access_token dans le hash, c'est un callback OAuth — ne pas rediriger
+    // Callback OAuth — laisser Supabase traiter le token
     if (hash && hash.includes('access_token')) return;
 
+    // Annule tout timer précédent
+    if (redirectTimer.current) clearTimeout(redirectTimer.current);
+
+    // Attendre que le chargement soit fini
     if (isLoading) return;
 
-    if (!user) {
-      navigate('/auth', { replace: true });
-      return;
-    }
+    // Délai de 800ms pour laisser le profil se charger depuis Supabase
+    redirectTimer.current = setTimeout(() => {
+      if (!user) {
+        // Vérifie le localStorage avant de rediriger
+        const done = localStorage.getItem('sommely_onboarding_done');
+        if (!done) {
+          navigate('/auth', { replace: true });
+        }
+        return;
+      }
 
-    if (profile && !profile.onboarding_completed) {
-      navigate('/onboarding', { replace: true });
-    }
+      // Connecté : vérifie onboarding
+      const done = localStorage.getItem('sommely_onboarding_done');
+      if (!done && profile && !profile.onboarding_completed) {
+        navigate('/onboarding', { replace: true });
+      }
+    }, 800);
+
+    return () => {
+      if (redirectTimer.current) clearTimeout(redirectTimer.current);
+    };
   }, [pathname, hash, user, profile?.onboarding_completed, isLoading, navigate]);
 
   return <>{children}</>;
