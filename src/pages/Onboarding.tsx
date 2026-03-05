@@ -158,7 +158,8 @@ export function Onboarding() {
     };
     if (user?.id) {
       await updateProfile(user.id, { name: firstName, taste_profile: tasteProfile, onboarding_completed: true });
-      refreshProfile();
+      localStorage.setItem('sommely_onboarding_done', 'true');
+      await refreshProfile();
     } else {
       localStorage.setItem('sommely_profile', JSON.stringify(tasteProfile));
       localStorage.setItem('sommely_onboarding_done', 'true');
