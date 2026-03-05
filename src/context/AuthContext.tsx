@@ -89,6 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   useEffect(() => {
+    // Nettoie le hash OAuth de l'URL (ex: /home#access_token=...)
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+
     supabase.auth.getSession()
       .then(async ({ data: { session } }) => {
         setSession(session);
