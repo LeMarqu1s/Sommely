@@ -90,9 +90,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession()
-      .then(({ data: { session } }) => {
+      .then(async ({ data: { session } }) => {
         setSession(session);
         setUser(session?.user ?? null);
+        if (session?.user) {
+          const { data: p } = await getProfile(session.user.id);
+          setProfile(p ?? null);
+        }
         setIsLoading(false);
       })
       .catch((err) => {
