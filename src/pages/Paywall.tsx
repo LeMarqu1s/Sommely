@@ -104,7 +104,7 @@ export function Paywall() {
   }
 
   return (
-    <div className="min-h-screen bg-cream font-body text-black-wine overflow-x-hidden">
+    <div className="min-h-screen bg-cream font-body text-black-wine ">
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-light/30">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center">

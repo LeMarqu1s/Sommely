@@ -150,7 +150,7 @@ export function WineResult() {
   const scansRemaining = Math.max(0, 3 - scanCount);
 
   return (
-    <div className="min-h-screen bg-cream font-body text-black-wine overflow-x-hidden">
+    <div className="min-h-screen bg-cream font-body text-black-wine ">
       <div className="sticky top-0 z-10 bg-cream/95 backdrop-blur-md border-b border-gray-light/30 px-6 py-4 flex items-center justify-between">
         <button
           onClick={() => navigate('/scan')}
