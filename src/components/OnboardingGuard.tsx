@@ -4,25 +4,27 @@ import { useAuth } from '../context/AuthContext';
 
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   const { user, profile, isLoading } = useAuth();
 
   useEffect(() => {
     const publicRoutes = ['/onboarding', '/auth', '/success', '/privacy', '/'];
-    if (publicRoutes.some(p => pathname.startsWith(p))) return;
+    if (publicRoutes.some(p => pathname === p || pathname.startsWith(p + '/'))) return;
+
+    // Si y'a un access_token dans le hash, c'est un callback OAuth — ne pas rediriger
+    if (hash && hash.includes('access_token')) return;
+
     if (isLoading) return;
 
     if (!user) {
-      // Pas connecté → auth en premier
       navigate('/auth', { replace: true });
       return;
     }
 
-    // Connecté mais onboarding pas fait
     if (profile && !profile.onboarding_completed) {
       navigate('/onboarding', { replace: true });
     }
-  }, [pathname, user, profile?.onboarding_completed, isLoading, navigate]);
+  }, [pathname, hash, user, profile?.onboarding_completed, isLoading, navigate]);
 
   return <>{children}</>;
 }
