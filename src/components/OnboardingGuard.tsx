@@ -8,7 +8,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { user, profile, isLoading } = useAuth();
 
   useEffect(() => {
-    const publicRoutes = ['/onboarding', '/auth', '/success'];
+    const publicRoutes = ['/onboarding', '/auth', '/auth/callback', '/success'];
     if (publicRoutes.some(p => pathname.startsWith(p))) return;
     if (isLoading) return;
 

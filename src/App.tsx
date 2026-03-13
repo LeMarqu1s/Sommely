@@ -17,13 +17,14 @@ import { CaveMeal } from './pages/CaveMeal';
 import { WineShop } from './pages/WineShop';
 import { SommelierButton } from './components/SommelierButton';
 import { Profile } from './pages/Profile';
+import { AuthCallback } from './pages/AuthCallback';
 import { Success } from './pages/Success';
 import { Cave } from './pages/Cave';
 import { Investment } from './pages/Investment';
 import { BottomNav } from './components/BottomNav';
 import { OnboardingGuard } from './components/OnboardingGuard';
 
-const NAV_HIDDEN = ['/result', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/success', '/cave-meal', '/shop'];
+const NAV_HIDDEN = ['/result', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/success', '/cave-meal', '/shop'];
 
 function AppContent({ onReady }: { onReady?: () => void }) {
   const { pathname } = useLocation();
@@ -40,6 +41,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
           <Route path="/investment" element={<Investment />} />
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/invite/:code" element={<Invite />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/scan" element={<Scanner />} />

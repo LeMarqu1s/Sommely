@@ -6,7 +6,7 @@ export function BottomNav() {
   const { pathname } = useLocation();
 
   // Pages où la nav est cachée (Profil, Cave, Scanner, Premium gardent la nav pour pouvoir naviguer)
-  const hidden = ['/result', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/success', '/cave-meal', '/shop'];
+  const hidden = ['/result', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/success', '/cave-meal', '/shop'];
   if (hidden.some(p => pathname.startsWith(p))) return null;
 
   const items: { path: string; icon: typeof Home | null; label: string; emoji: string | null }[] = [

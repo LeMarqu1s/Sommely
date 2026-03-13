@@ -20,7 +20,6 @@ import {
   Share2,
   Copy,
 } from 'lucide-react';
-import { Logo } from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 import { getUserScans, getScansCountTotal } from '../lib/supabase';
 
@@ -115,8 +114,8 @@ export function Profile() {
             onClick={() => navigate('/scan')}
             className="flex items-center gap-2 bg-transparent border-none cursor-pointer"
           >
-            <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center overflow-hidden">
-              <Logo size={20} variant="white" />
+            <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center overflow-hidden flex-shrink-0 p-0.5">
+              <img src="/IMG_1639-transparent.png" alt="Sommely" width={20} height={20} className="object-contain" style={{ filter: 'brightness(0) invert(1)' }} onError={(e) => { (e.target as HTMLImageElement).src = '/Logo%20Sommely.jpeg'; (e.target as HTMLImageElement).style.filter = 'brightness(0) invert(1)'; }} />
             </div>
             <span className="font-display text-lg font-bold text-burgundy-dark">Sommely</span>
           </button>

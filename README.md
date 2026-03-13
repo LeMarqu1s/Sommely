@@ -38,6 +38,9 @@ Dans **Project Settings → Environment Variables**, ajouter (valeurs réelles �
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_STRIPE_PUBLIC_KEY`
+- `VITE_STRIPE_MONTHLY_PAYMENT_LINK` (lien Stripe mensuel)
+- `VITE_STRIPE_ANNUAL_PAYMENT_LINK` (lien Stripe annuel)
+- `VITE_STRIPE_PRESTIGE_PAYMENT_LINK` (lien Stripe Prestige 14,99€/mois)
 - `VITE_OPENAI_API_KEY`
 - `VITE_CLARITY_ID`
 - `VITE_GA_ID`
@@ -53,23 +56,29 @@ Vercel détecte automatiquement Vite.
 ### 5. Domaine custom (recommandé)
 
 - Dans **Project Settings → Domains**
-- Ajouter `sommely.fr` ou `sommely.com`
+- Ajouter `sommely-wine.vercel.app` ou un domaine custom (`sommely.fr`)
 - Suivre les instructions DNS chez ton registrar (OVH, Namecheap, Gandi, …)
 
 ### 6. Configurer Supabase pour la prod
 
 - Dans Supabase → **Authentication → URL Configuration**
 - Ajouter :
-  - `https://sommely-xxxx.vercel.app`
+  - `https://sommely-wine.vercel.app`
   - `https://sommely.fr` (si domaine custom)
 
-### 7. Configurer Google OAuth dans Supabase
+### 7. Configurer Google OAuth (Supabase + Google Cloud)
 
-- Supabase → **Authentication → Providers → Google**
-- Activer Google
-- Créer les credentials dans Google Cloud Console
-- **Authorized redirect URIs** :
-  - `https://xxxxx.supabase.co/auth/v1/callback`
+**Supabase** → Authentication → URL Configuration → **Redirect URLs** :
+- `https://sommely-wine.vercel.app`
+- `https://sommely-wine.vercel.app/**`
+- `https://sommely-wine.vercel.app/auth/callback`
+
+**Supabase** → Authentication → Providers → **Google** :
+- Activer + coller Client ID et Client Secret de Google Cloud
+
+**Google Cloud Console** → APIs & Services → Credentials :
+- **Authorized redirect URIs** : `https://TON_PROJECT_REF.supabase.co/auth/v1/callback`
+- (Copier l'URL exacte depuis Supabase → Authentication → URL Configuration)
 
 ### 8. Schéma Supabase
 
@@ -128,8 +137,8 @@ Dans Supabase SQL editor, exécuter le contenu de `supabase-schema.sql` (tables 
 
 ### LANCEMENT
 - [ ] Deploye sur Vercel
-- [ ] Domaine custom configure (sommely.fr / sommely.com)
+- [ ] Domaine custom configuré (sommely.fr) si besoin
 - [ ] HTTPS fonctionne
-- [ ] URL partager : https://sommely.fr
+- [ ] URL partagée : https://sommely-wine.vercel.app
 - [ ] Premier utilisateur beta inscrit
 - [ ] Premier scan realise en prod

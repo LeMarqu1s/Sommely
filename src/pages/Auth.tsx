@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, Loader, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Logo } from '../components/Logo';
 
 type AuthMode = 'signin' | 'signup' | 'magic';
 
@@ -94,8 +93,19 @@ export function Auth() {
       >
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-burgundy-dark flex items-center justify-center shadow-lg overflow-hidden">
-            <Logo size={36} variant="white" />
+          <div className="w-10 h-10 rounded-xl bg-burgundy-dark flex items-center justify-center shadow-lg overflow-hidden p-1">
+            <img
+              src="/IMG_1639-transparent.png"
+              alt="Sommely"
+              width={36}
+              height={36}
+              className="object-contain"
+              style={{ filter: 'brightness(0) invert(1)' }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/Logo%20Sommely.jpeg';
+                (e.target as HTMLImageElement).style.filter = 'brightness(0) invert(1)';
+              }}
+            />
           </div>
           <span className="font-display text-2xl font-bold text-burgundy-dark">Sommely</span>
         </div>

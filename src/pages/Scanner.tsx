@@ -6,7 +6,6 @@ import { analyzeWineLabel, enrichWineData } from '../lib/openai';
 import { calculatePersonalizedScore, generateDetailedExplanation } from '../lib/matchScore';
 import { canScan } from '../utils/subscription';
 import { PaywallModal } from '../components/PaywallModal';
-import { Logo } from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 import { insertScan } from '../lib/supabase';
 
@@ -380,8 +379,8 @@ export function Scanner() {
       <div className="flex items-center justify-between px-6 py-4 z-20 relative flex-shrink-0">
         <div className="w-20" />
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center overflow-hidden">
-            <Logo size={20} variant="white" />
+          <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center overflow-hidden p-0.5">
+            <img src="/IMG_1639-transparent.png" alt="Sommely" width={20} height={20} className="object-contain" style={{ filter: 'brightness(0) invert(1)' }} onError={(e) => { (e.target as HTMLImageElement).src = '/Logo%20Sommely.jpeg'; (e.target as HTMLImageElement).style.filter = 'brightness(0) invert(1)'; }} />
           </div>
           <span className="font-display text-lg font-bold text-white">Sommely</span>
         </div>
@@ -434,13 +433,14 @@ export function Scanner() {
                     onClick={!isPremium && scansRemaining === 0 ? () => navigate('/premium') : () => fileInputRef.current?.click()}
                     className={`w-full py-5 rounded-2xl font-bold text-lg mb-4 flex items-center justify-center gap-3 border-none transition-all duration-200 ${isPremium || scansRemaining > 0 ? 'bg-burgundy-dark text-white shadow-[0_8px_32px_rgba(114,47,55,0.5)] hover:bg-burgundy-medium hover:-translate-y-0.5 active:scale-95 cursor-pointer' : 'bg-white/10 text-white/40 cursor-not-allowed'}`}
                   >
-                    <Camera size={22} />
-                    {!isPremium && scansRemaining === 0 ? 'Passer Premium →' : 'Prendre une photo'}
+                    <Camera size={22} className="flex-shrink-0" />
+                    <span>{!isPremium && scansRemaining === 0 ? 'Passer Premium →' : 'Prendre une photo'}</span>
                   </button>
                   <p className="text-white/40 text-xs mb-3">Ouvre l’appareil photo ou la galerie</p>
                   <div className="flex gap-3 w-full">
                     <button onClick={() => setShowManualSearch(true)} className="flex-1 py-3.5 rounded-xl border border-white/20 text-white/70 text-sm font-medium flex items-center justify-center gap-2 hover:bg-white/5 transition-colors bg-transparent cursor-pointer">
-                      <Search size={16} /> Rechercher
+                      <Search size={16} className="flex-shrink-0" />
+                      <span>Rechercher</span>
                     </button>
                   </div>
                 </>
@@ -450,8 +450,8 @@ export function Scanner() {
                     onClick={!isPremium && scansRemaining === 0 ? () => navigate('/premium') : startCamera}
                     className={`w-full py-5 rounded-2xl font-bold text-lg mb-4 flex items-center justify-center gap-3 border-none transition-all duration-200 ${isPremium || scansRemaining > 0 ? 'bg-burgundy-dark text-white shadow-[0_8px_32px_rgba(114,47,55,0.5)] hover:bg-burgundy-medium hover:-translate-y-0.5 active:scale-95 cursor-pointer' : 'bg-white/10 text-white/40 cursor-not-allowed'}`}
                   >
-                    <Camera size={22} />
-                    {!isPremium && scansRemaining === 0 ? 'Passer Premium →' : 'Activer la caméra'}
+                    <Camera size={22} className="flex-shrink-0" />
+                    <span>{!isPremium && scansRemaining === 0 ? 'Passer Premium →' : 'Activer la caméra'}</span>
                   </button>
                   <div className="flex gap-3 w-full">
                     <button onClick={() => fileInputRef.current?.click()} className="flex-1 py-3.5 rounded-xl border border-white/20 text-white/70 text-sm font-medium flex items-center justify-center gap-2 hover:bg-white/5 transition-colors bg-transparent cursor-pointer">
@@ -467,26 +467,30 @@ export function Scanner() {
 
               <button
                 onClick={() => navigate('/menu')}
-                className="w-full mt-3 py-4 bg-white/5 border border-white/20 text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-3 cursor-pointer hover:bg-white/10 transition-colors"
+                className="w-full mt-3 py-4 bg-white/5 border border-white/20 text-white rounded-2xl font-semibold text-sm flex items-center justify-between gap-3 cursor-pointer hover:bg-white/10 transition-colors"
               >
-                <span className="text-lg">📋</span>
-                <div className="text-left">
-                  <p className="font-semibold text-sm">Scanner la carte du restaurant</p>
-                  <p className="text-white/40 text-xs">Trouvez le meilleur rapport qualité-prix</p>
+                <div className="flex items-center justify-center gap-3 flex-1 min-w-0">
+                  <span className="text-lg flex-shrink-0">📋</span>
+                  <div className="text-center min-w-0">
+                    <p className="font-semibold text-sm">Scanner la carte du restaurant</p>
+                    <p className="text-white/40 text-xs">Trouvez le meilleur rapport qualité-prix</p>
+                  </div>
                 </div>
-                <ChevronRight size={16} color="rgba(255,255,255,0.4)" className="ml-auto" />
+                <ChevronRight size={16} color="rgba(255,255,255,0.4)" className="flex-shrink-0" />
               </button>
 
               <button
                 onClick={() => navigate('/food-pairing')}
-                className="w-full mt-3 py-4 bg-white/5 border border-white/20 text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-3 cursor-pointer hover:bg-white/10 transition-colors"
+                className="w-full mt-3 py-4 bg-white/5 border border-white/20 text-white rounded-2xl font-semibold text-sm flex items-center justify-between gap-3 cursor-pointer hover:bg-white/10 transition-colors"
               >
-                <span className="text-lg">🍽️</span>
-                <div className="text-left">
-                  <p className="font-semibold text-sm">Quel vin avec ce plat ?</p>
-                  <p className="text-white/40 text-xs">Scannez votre assiette → accord parfait</p>
+                <div className="flex items-center justify-center gap-3 flex-1 min-w-0">
+                  <span className="text-lg flex-shrink-0">🍽️</span>
+                  <div className="text-center min-w-0">
+                    <p className="font-semibold text-sm">Quel vin avec ce plat ?</p>
+                    <p className="text-white/40 text-xs">Scannez votre assiette → accord parfait</p>
+                  </div>
                 </div>
-                <ChevronRight size={16} color="rgba(255,255,255,0.4)" className="ml-auto" />
+                <ChevronRight size={16} color="rgba(255,255,255,0.4)" className="flex-shrink-0" />
               </button>
             </motion.div>
           )}
@@ -612,8 +616,8 @@ export function Scanner() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="px-6 py-4 flex-shrink-0">
           <AnimatePresence mode="wait">
             <motion.div key={currentTip} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="flex items-center justify-center gap-2 bg-white/5 rounded-2xl px-4 py-3 max-w-sm mx-auto">
-              <Zap size={14} color="#D4AF37" />
-              <p className="text-white/40 text-xs">{tips[currentTip]}</p>
+              <Zap size={14} color="#D4AF37" className="flex-shrink-0" />
+              <p className="text-white/40 text-xs text-center">{tips[currentTip]}</p>
             </motion.div>
           </AnimatePresence>
         </motion.div>

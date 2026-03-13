@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Star, Check } from 'lucide-react';
-import { Logo } from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 import { updateProfile } from '../lib/supabase';
 
@@ -220,9 +219,20 @@ export function Onboarding() {
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.2, type: 'spring' }}
-                  className="w-28 h-28 rounded-3xl bg-burgundy-dark flex items-center justify-center mb-8 shadow-2xl"
+                  className="w-28 h-28 rounded-3xl bg-burgundy-dark flex items-center justify-center mb-8 shadow-2xl overflow-hidden p-2"
                 >
-                  <Logo size={80} variant="white" />
+                  <img
+                    src="/IMG_1639-transparent.png"
+                    alt="Sommely"
+                    width={80}
+                    height={80}
+                    className="object-contain w-20 h-20"
+                    style={{ filter: 'brightness(0) invert(1)' }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/Logo%20Sommely.jpeg';
+                      (e.target as HTMLImageElement).style.filter = 'brightness(0) invert(1)';
+                    }}
+                  />
                 </motion.div>
 
                 <motion.h1

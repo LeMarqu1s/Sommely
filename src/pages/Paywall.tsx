@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Star, Wine, Shield, RefreshCw, Crown } from 'lucide-react';
+import { X, Star, Shield, RefreshCw, Crown } from 'lucide-react';
 import { PaymentButtons } from '../components/payment/PaymentButtons';
 import { useMemberCount } from '../hooks/useMemberCount';
 import { TierKey } from '../lib/stripe';
@@ -107,8 +107,8 @@ export function Paywall() {
     <div className="min-h-screen bg-cream font-body text-black-wine overflow-x-hidden">
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-light/30">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center">
-            <Wine size={14} color="white" />
+          <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center overflow-hidden p-0.5">
+            <img src="/IMG_1639-transparent.png" alt="Sommely" width={20} height={20} className="object-contain" style={{ filter: 'brightness(0) invert(1)' }} onError={(e) => { (e.target as HTMLImageElement).src = '/Logo%20Sommely.jpeg'; (e.target as HTMLImageElement).style.filter = 'brightness(0) invert(1)'; }} />
           </div>
           <span className="font-display text-lg font-bold text-burgundy-dark">Sommely</span>
         </div>

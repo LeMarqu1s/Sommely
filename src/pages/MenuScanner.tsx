@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { canAccessFeature } from '../utils/subscription';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Upload, ArrowLeft, Wine, Star, AlertCircle, RotateCcw } from 'lucide-react';
+import { Camera, Upload, ArrowLeft, Star, AlertCircle, RotateCcw, Wine } from 'lucide-react';
 import { optimizeImageForAI } from '../lib/imageOptimize';
 import { fetchOpenAI } from '../lib/openai';
 
@@ -305,8 +305,8 @@ export function MenuScanner() {
           <ArrowLeft size={20} color="#722F37" />
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center">
-            <Wine size={14} color="white" />
+          <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center overflow-hidden p-0.5">
+            <img src="/IMG_1639-transparent.png" alt="Sommely" width={20} height={20} className="object-contain" style={{ filter: 'brightness(0) invert(1)' }} onError={(e) => { (e.target as HTMLImageElement).src = '/Logo%20Sommely.jpeg'; (e.target as HTMLImageElement).style.filter = 'brightness(0) invert(1)'; }} />
           </div>
           <span className="font-display text-base font-bold text-burgundy-dark">Carte des vins</span>
         </div>

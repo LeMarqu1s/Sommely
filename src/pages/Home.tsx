@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Camera, ChevronRight, TrendingUp, Star, Zap } from 'lucide-react';
-import { Logo } from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 import { getCaveBottles, getScansCountTotal } from '../lib/supabase';
 
@@ -126,7 +125,7 @@ export function Home() {
               {firstName ? (
                 <span className="font-display text-base font-bold text-white">{firstName[0].toUpperCase()}</span>
               ) : (
-                <Logo size={24} variant="white" />
+                <img src="/IMG_1639-transparent.png" alt="Sommely" width={24} height={24} className="object-contain" style={{ filter: 'brightness(0) invert(1)' }} onError={(e) => { (e.target as HTMLImageElement).src = '/Logo%20Sommely.jpeg'; (e.target as HTMLImageElement).style.filter = 'brightness(0) invert(1)'; }} />
               )}
             </button>
           </div>
@@ -156,8 +155,8 @@ export function Home() {
               )}
               {isPremium && <div className="px-3 py-1.5 rounded-full text-xs font-bold bg-gold/30 text-gold">♾ Illimité</div>}
             </div>
-            <h2 className="font-display text-2xl font-bold mb-1">Scanner un vin</h2>
-            <p className="text-white/60 text-sm">GPT-4o identifie l'étiquette et vous donne un score personnalisé</p>
+            <h2 className="font-display text-2xl font-bold mb-1">Scanner un vin en 3 secondes</h2>
+            <p className="text-white/60 text-sm">Photographiez l'étiquette, Antoine analyse et vous donne un score personnalisé selon vos goûts.</p>
             <div className="flex items-center gap-2 mt-4">
               <div className="flex-1 h-0.5 bg-white/10" />
               <span className="text-white/40 text-xs">Appuyez pour commencer</span>

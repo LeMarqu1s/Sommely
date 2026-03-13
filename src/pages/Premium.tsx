@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, Zap, Star, TrendingUp, Wine, Shield, Crown } from 'lucide-react';
+import { ArrowLeft, Check, Zap, Star, TrendingUp, Wine, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { redirectToCheckout } from '../utils/stripe';
 
@@ -15,7 +15,6 @@ export function Premium() {
   const { isPro, isTrial, daysLeftInTrial } = subscriptionState;
 
   const handleSubscribe = async (plan: Plan) => {
-    if (plan === 'prestige') return;
     setIsLoading(true);
     try {
       await redirectToCheckout(plan);
@@ -31,9 +30,9 @@ export function Premium() {
       price: '14,99€',
       period: '/mois',
       sub: 'Accès prioritaire aux nouvelles features',
-      badge: null,
+      badge: '👑 Premium',
       highlight: false,
-      anchor: true,
+      anchor: false,
     },
     {
       id: 'annual' as Plan,
@@ -142,38 +141,32 @@ export function Premium() {
           {plans.map((plan) => (
             <motion.button
               key={plan.id}
-              onClick={() => !plan.anchor && setSelectedPlan(plan.id)}
-              whileTap={plan.anchor ? {} : { scale: 0.98 }}
+              onClick={() => setSelectedPlan(plan.id)}
+              whileTap={{ scale: 0.98 }}
               className={`w-full text-left rounded-2xl border-2 p-4 transition-all relative bg-white ${
-                plan.anchor
-                  ? 'border-gray-light/30 opacity-50 cursor-default'
-                  : selectedPlan === plan.id
+                selectedPlan === plan.id
                   ? 'border-burgundy-dark shadow-md cursor-pointer'
                   : 'border-gray-light/40 cursor-pointer hover:border-gray-dark/30'
               }`}
             >
               {plan.badge && (
-                <span className="absolute -top-3 left-4 bg-burgundy-dark text-white text-xs font-bold px-3 py-1 rounded-full">
+                <span className={`absolute -top-3 left-4 text-xs font-bold px-3 py-1 rounded-full ${
+                  plan.id === 'prestige' ? 'bg-gold/20 text-gold border border-gold/40' : 'bg-burgundy-dark text-white'
+                }`}>
                   {plan.badge}
                 </span>
               )}
-              {plan.anchor && (
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Crown size={12} color="#D4AF37" />
-                  <span className="text-xs font-semibold text-gold">Prestige</span>
-                </div>
-              )}
               <div className="flex items-center justify-between pr-6">
                 <div>
-                  <p className={`font-semibold text-sm ${plan.anchor ? 'text-gray-dark' : 'text-black-wine'}`}>{plan.label}</p>
+                  <p className="font-semibold text-sm text-black-wine">{plan.label}</p>
                   <p className={`text-xs mt-0.5 ${plan.highlight ? 'text-green-700 font-medium' : 'text-gray-dark'}`}>{plan.sub}</p>
                 </div>
                 <div className="text-right">
-                  <span className={`font-display text-2xl font-bold ${plan.anchor ? 'text-gray-dark' : 'text-burgundy-dark'}`}>{plan.price}</span>
+                  <span className="font-display text-2xl font-bold text-burgundy-dark">{plan.price}</span>
                   <span className="text-xs text-gray-dark ml-0.5">{plan.period}</span>
                 </div>
               </div>
-              {selectedPlan === plan.id && !plan.anchor && (
+              {selectedPlan === plan.id && (
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-burgundy-dark flex items-center justify-center">
                   <Check size={12} color="white" />
                 </div>

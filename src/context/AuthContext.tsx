@@ -108,29 +108,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
 
       if (session?.user) {
-        let { data: p } = await getProfile(session.user.id);
-        if (!p) {
-          await upsertProfile(session.user.id, {
-            email: session.user.email ?? undefined,
-            name: session.user.user_metadata?.full_name ?? session.user.email?.split('@')[0],
-          });
-          const res = await getProfile(session.user.id);
-          p = res.data ?? null;
+        try {
+          let { data: p } = await getProfile(session.user.id);
+          if (!p) {
+            const { error } = await upsertProfile(session.user.id, {
+              email: session.user.email ?? undefined,
+              name: session.user.user_metadata?.full_name ?? session.user.email?.split('@')[0],
+            });
+            if (!error) {
+              const res = await getProfile(session.user.id);
+              p = res.data ?? null;
+            }
+          }
+          setProfile(p ?? null);
+
+          let { data: s } = await getSubscription(session.user.id);
+          if (!s) {
+            const trialEnd = new Date();
+            trialEnd.setDate(trialEnd.getDate() + 7);
+            const { error: subErr } = await supabase.from('subscriptions').insert({
+              user_id: session.user.id,
+              plan: 'free',
+              status: 'trial',
+              trial_ends_at: trialEnd.toISOString(),
+            });
+            if (!subErr) {
+              const res2 = await getSubscription(session.user.id);
+              s = res2.data ?? null;
+            }
+          }
+          setSubscription(s ?? null);
+        } catch (err) {
+          console.warn('Auth profile/subscription setup:', err);
+          setProfile(null);
+          setSubscription(null);
         }
-        setProfile(p ?? null);
-        const { data: s } = await getSubscription(session.user.id);
-        if (!s) {
-          const trialEnd = new Date();
-          trialEnd.setDate(trialEnd.getDate() + 7);
-          await supabase.from('subscriptions').insert({
-            user_id: session.user.id,
-            plan: 'free',
-            status: 'trial',
-            trial_ends_at: trialEnd.toISOString(),
-          });
-        }
-        const { data: s2 } = await getSubscription(session.user.id);
-        setSubscription(s ?? s2 ?? null);
       } else {
         setProfile(null);
         setSubscription(null);
@@ -149,7 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/scan`,
+        redirectTo: `${window.location.origin}/auth/callback`,
         queryParams: { access_type: 'offline', prompt: 'consent' },
       },
     });
