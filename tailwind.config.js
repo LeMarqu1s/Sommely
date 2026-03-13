@@ -19,8 +19,8 @@ export default {
         'danger': '#C62828',
       },
       fontFamily: {
-        display: ['Playfair Display', 'serif'],
-        body: ['Inter', 'sans-serif'],
+        display: ['DM Serif Display', 'serif'],
+        body: ['DM Sans', 'sans-serif'],
       },
       borderRadius: {
         'xl': '16px',

@@ -5,7 +5,15 @@ const supabaseAnonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').tri
 
 export const supabase = createClient(
   supabaseUrl || 'https://temp.supabase.co',
-  supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0ZW1wIn0.x'
+  supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0ZW1wIn0.x',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: 'sommely-auth',
+    },
+  }
 );
 
 // ─── TYPES ────────────────────────────────────────────────

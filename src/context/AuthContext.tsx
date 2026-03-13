@@ -89,10 +89,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   useEffect(() => {
+    // Nettoie le hash OAuth de l'URL (ex: /home#access_token=...)
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+
     supabase.auth.getSession()
-      .then(({ data: { session } }) => {
+      .then(async ({ data: { session } }) => {
         setSession(session);
         setUser(session?.user ?? null);
+        if (session?.user) {
+          const { data: p } = await getProfile(session.user.id);
+          setProfile(p ?? null);
+        }
         setIsLoading(false);
       })
       .catch((err) => {
@@ -105,7 +114,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setIsLoading(false);
 
       if (session?.user) {
         try {
@@ -148,6 +156,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSubscription(null);
         setSubscriptionState(defaultSubscriptionState);
       }
+      // isLoading passe à false SEULEMENT après que tout soit chargé
+      setIsLoading(false);
     });
 
     return () => sub.unsubscribe();
@@ -171,7 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/scan`,
+        emailRedirectTo: `${window.location.origin}/home`,
       },
     });
     return { error };

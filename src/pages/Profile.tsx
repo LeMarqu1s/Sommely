@@ -93,7 +93,7 @@ export function Profile() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/');
+    navigate('/home');
   };
 
   const handleCancelSubscription = () => {
@@ -103,11 +103,11 @@ export function Profile() {
   const confirmCancel = () => {
     setShowCancelConfirm(false);
     refreshSubscription();
-    navigate('/');
+    navigate('/home');
   };
 
   return (
-    <div className="min-h-screen bg-cream font-body text-black-wine overflow-x-hidden">
+    <div className="min-h-screen bg-cream font-body text-black-wine">
       <div className="bg-white border-b border-gray-light/30 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <button

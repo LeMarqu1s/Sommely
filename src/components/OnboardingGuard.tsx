@@ -2,27 +2,27 @@ import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export function OnboardingGuard({ children }: { children: React.ReactNode }) {
+export function OnboardingGuard() {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   const { user, profile, isLoading } = useAuth();
 
   useEffect(() => {
-    const publicRoutes = ['/onboarding', '/auth', '/auth/callback', '/success'];
-    if (publicRoutes.some(p => pathname.startsWith(p))) return;
+    const publicRoutes = ['/onboarding', '/auth', '/auth/callback', '/success', '/privacy', '/'];
+    if (publicRoutes.some(p => pathname === p || pathname.startsWith(p + '/'))) return;
+    if (hash && hash.includes('access_token')) return;
     if (isLoading) return;
 
     if (!user) {
-      // Pas connecté → auth en premier
       navigate('/auth', { replace: true });
       return;
     }
 
-    // Connecté mais onboarding pas fait
-    if (profile && !profile.onboarding_completed) {
+    const done = localStorage.getItem('sommely_onboarding_done');
+    if (!done && profile && !profile.onboarding_completed) {
       navigate('/onboarding', { replace: true });
     }
-  }, [pathname, user, profile?.onboarding_completed, isLoading, navigate]);
+  }, [pathname, hash, user, profile, isLoading, navigate]);
 
-  return <>{children}</>;
+  return null;
 }

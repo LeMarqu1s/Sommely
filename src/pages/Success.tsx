@@ -19,7 +19,7 @@ export function Success() {
       setCountdown(prev => {
         if (prev <= 1) {
           clearInterval(interval);
-          navigate('/');
+          navigate('/home');
           return 0;
         }
         return prev - 1;
@@ -89,7 +89,7 @@ export function Success() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.1 }}
-        onClick={() => navigate('/')}
+        onClick={() => navigate('/home')}
         className="w-full max-w-xs py-4 bg-burgundy-dark text-white rounded-2xl font-bold border-none cursor-pointer shadow-lg active:scale-95 transition-all">
         Découvrir Sommely Pro ({countdown}s) 🍷
       </motion.button>

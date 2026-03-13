@@ -321,6 +321,13 @@ export function Home() {
         </motion.div>
 
         <div className="h-6" />
+
+        {/* Footer */}
+        <div className="text-center pb-4">
+          <button onClick={() => navigate('/privacy')} className="text-xs text-gray-dark/50 hover:text-burgundy-dark bg-transparent border-none cursor-pointer underline">
+            Politique de confidentialité
+          </button>
+        </div>
       </div>
     </div>
   );

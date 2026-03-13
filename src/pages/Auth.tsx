@@ -264,6 +264,13 @@ export function Auth() {
             </button>
           </p>
         )}
+
+        <p className="text-center text-xs text-gray-dark/60 mt-6">
+          En continuant, vous acceptez notre{' '}
+          <button onClick={() => navigate('/privacy')} className="underline hover:text-burgundy-dark bg-transparent border-none cursor-pointer">
+            politique de confidentialité
+          </button>
+        </p>
       </motion.div>
     </div>
   );

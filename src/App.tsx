@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ClarityScript } from './components/analytics/Clarity';
 import { GoogleAnalytics } from './components/analytics/Analytics';
+import { Landing } from './pages/Landing';
+import { OnboardingGuard } from './components/OnboardingGuard';
 import { Home } from './pages/Home';
 import { Auth } from './pages/Auth';
 import { Invite } from './pages/Invite';
@@ -22,15 +24,20 @@ import { Success } from './pages/Success';
 import { Cave } from './pages/Cave';
 import { Investment } from './pages/Investment';
 import { BottomNav } from './components/BottomNav';
-import { OnboardingGuard } from './components/OnboardingGuard';
+import { Privacy } from './pages/Privacy';
 
-const NAV_HIDDEN = ['/result', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/success', '/cave-meal', '/shop'];
+const NAV_HIDDEN = ['/', '/onboarding', '/privacy', '/result', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/success', '/cave-meal', '/shop'];
 
 function AppContent({ onReady }: { onReady?: () => void }) {
   const { pathname } = useLocation();
   useEffect(() => {
     onReady?.();
   }, [onReady]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   const showNav = !NAV_HIDDEN.some(p => pathname.startsWith(p));
   return (
     <>
@@ -39,7 +46,8 @@ function AppContent({ onReady }: { onReady?: () => void }) {
         <GoogleAnalytics />
         <Routes>
           <Route path="/investment" element={<Investment />} />
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/invite/:code" element={<Invite />} />
@@ -54,11 +62,12 @@ function AppContent({ onReady }: { onReady?: () => void }) {
           <Route path="/shop" element={<WineShop />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/success" element={<Success />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="/cave" element={<Cave />} />
         </Routes>
       </div>
       <BottomNav />
-        <SommelierButton />
+      <SommelierButton />
     </>
   );
 }
@@ -77,9 +86,8 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <OnboardingGuard>
-          <AppContent onReady={hideSplash} />
-        </OnboardingGuard>
+        <OnboardingGuard />
+        <AppContent onReady={hideSplash} />
       </BrowserRouter>
     </AuthProvider>
   );
