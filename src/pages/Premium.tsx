@@ -144,9 +144,9 @@ export function Premium() {
             </div>
           </div>
           {[
-            { img: '10', name: 'Marie L.', text: '"Antoine m'a sauvé au resto, enfin une app qui comprend le vin !"' },
-            { img: '11', name: 'Thomas R.', text: '"Scanner une étiquette et avoir un score perso en 3 sec, bluffant."' },
-            { img: '15', name: 'Sophie M.', text: '"Ma cave virtuelle est devenue indispensable."' },
+            { img: '10', name: 'Marie L.', text: "Antoine m\'a sauvé au resto, enfin une app qui comprend le vin !" },
+            { img: '11', name: 'Thomas R.', text: "Scanner une étiquette et avoir un score perso en 3 sec, bluffant." },
+            { img: '15', name: 'Sophie M.', text: "Ma cave virtuelle est devenue indispensable." },
           ].map((r, i) => (
             <div key={i} className="flex items-start gap-2 py-2 border-t border-gray-light/20">
               <img src={`https://i.pravatar.cc/32?img=${r.img}`} alt={r.name} className="w-6 h-6 rounded-full flex-shrink-0 mt-0.5" />
