@@ -6,18 +6,21 @@ const PUBLIC_ROUTES = ['/onboarding', '/auth', '/auth/callback', '/success', '/p
 
 export function OnboardingGuard() {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const { user, profile, isLoading } = useAuth();
   const hasRedirected = useRef(false);
 
   useEffect(() => {
-    // Reset redirect flag on route change
     hasRedirected.current = false;
   }, [pathname]);
 
   useEffect(() => {
     if (hasRedirected.current) return;
     if (PUBLIC_ROUTES.some(p => pathname === p || pathname.startsWith(p + '/'))) return;
+    
+    // Si y'a un code OAuth dans l'URL, ne pas rediriger - Supabase gère
+    if (search.includes('code=') || search.includes('access_token')) return;
+    
     if (isLoading) return;
 
     if (!user) {
@@ -31,7 +34,7 @@ export function OnboardingGuard() {
       hasRedirected.current = true;
       navigate('/onboarding', { replace: true });
     }
-  }, [pathname, user, profile, isLoading, navigate]);
+  }, [pathname, search, user, profile, isLoading, navigate]);
 
   return null;
 }

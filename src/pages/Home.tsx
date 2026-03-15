@@ -1,13 +1,34 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, ChevronRight, TrendingUp, Star, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getCaveBottles, getScansCountTotal } from '../lib/supabase';
 
 export function Home() {
   const navigate = useNavigate();
-  const { user, profile, subscriptionState } = useAuth();
+  const { search } = useLocation();
+  const { user, profile, subscriptionState, isLoading } = useAuth();
+  
+  // Show wine bottle loading if OAuth code in URL
+  const hasOAuthCode = search.includes('code=');
+  const [showLoader, setShowLoader] = useState(hasOAuthCode);
+  const [loaderPct, setLoaderPct] = useState(15);
+
+  useEffect(() => {
+    if (!hasOAuthCode) return;
+    const steps = [35, 60, 80, 95];
+    const timers = steps.map((pct, i) => setTimeout(() => setLoaderPct(pct), 500 + i * 600));
+    return () => timers.forEach(clearTimeout);
+  }, [hasOAuthCode]);
+
+  useEffect(() => {
+    if (!hasOAuthCode) return;
+    if (!isLoading && user) {
+      setLoaderPct(100);
+      setTimeout(() => setShowLoader(false), 600);
+    }
+  }, [hasOAuthCode, isLoading, user]);
   const [scanCount, setScanCount] = useState(0);
   const [caveValue, setCaveValue] = useState(0);
   const [caveBottles, setCaveBottles] = useState(0);
@@ -107,6 +128,78 @@ export function Home() {
       tagColor: 'bg-purple-100 text-purple-700',
     },
   ];
+
+  if (showLoader) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center font-body relative overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #0d0608 0%, #1a0a0d 40%, #0d0608 100%)' }}>
+        <motion.div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(114,47,55,0.3) 0%, transparent 70%)' }}
+          animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 3, repeat: Infinity }} />
+        {[...Array(6)].map((_, i) => (
+          <motion.div key={i} className="absolute w-1 h-1 rounded-full"
+            style={{ left: `${10 + i * 15}%`, bottom: '25%',
+              background: i % 2 === 0 ? 'rgba(212,175,55,0.7)' : 'rgba(114,47,55,0.9)',
+              boxShadow: i % 2 === 0 ? '0 0 8px rgba(212,175,55,0.9)' : '0 0 8px rgba(114,47,55,0.9)' }}
+            animate={{ y: [0, -100, 0], opacity: [0, 1, 0] }}
+            transition={{ duration: 2.5 + i * 0.4, repeat: Infinity, delay: i * 0.5 }} />
+        ))}
+        <div className="relative z-10 flex flex-col items-center gap-8 px-8 w-full max-w-xs">
+          <div className="relative">
+            <motion.div className="absolute inset-0 rounded-full blur-3xl"
+              style={{ background: 'radial-gradient(circle, rgba(114,47,55,0.6) 0%, transparent 60%)' }}
+              animate={{ scale: [0.8, 1.1, 0.8] }} transition={{ duration: 2, repeat: Infinity }} />
+            <svg width="90" height="200" viewBox="0 0 80 180" className="relative z-10"
+              style={{ filter: 'drop-shadow(0 0 25px rgba(114,47,55,0.7))' }}>
+              <defs>
+                <linearGradient id="hbg" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#0d0205"/><stop offset="50%" stopColor="#1f0810"/><stop offset="100%" stopColor="#0d0205"/>
+                </linearGradient>
+                <linearGradient id="hwine" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#9B2335"/><stop offset="100%" stopColor="#4a0d14"/>
+                </linearGradient>
+                <linearGradient id="hgold" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#F5D77C"/><stop offset="100%" stopColor="#8B7523"/>
+                </linearGradient>
+                <clipPath id="hclip">
+                  <rect x="13" y={168 - (loaderPct / 100) * 82} width="54" height="82"/>
+                </clipPath>
+              </defs>
+              <path d="M28 58 C18 65 13 80 13 96 L13 154 C13 162 20 168 28 168 L52 168 C60 168 67 162 67 154 L67 96 C67 80 62 65 52 58 Z" fill="url(#hbg)" stroke="rgba(114,47,55,0.4)" strokeWidth="1.5"/>
+              <motion.path d="M28 58 C18 65 13 80 13 96 L13 154 C13 162 20 168 28 168 L52 168 C60 168 67 162 67 154 L67 96 C67 80 62 65 52 58 Z"
+                fill="url(#hwine)" clipPath="url(#hclip)"
+                animate={{ opacity: [0.85, 1, 0.85] }} transition={{ duration: 1.5, repeat: Infinity }}/>
+              <path d="M31 18 L31 58 L49 58 L49 18 Z" fill="url(#hbg)" stroke="rgba(114,47,55,0.3)" strokeWidth="1.5"/>
+              <rect x="29" y="10" width="22" height="12" rx="4" fill="url(#hgold)"/>
+              {loaderPct > 25 && (
+                <g>
+                  <rect x="19" y="95" width="42" height="40" rx="4" fill="rgba(250,249,246,0.92)"/>
+                  <rect x="19" y="95" width="42" height="3" rx="2" fill="url(#hgold)"/>
+                  <text x="40" y="112" textAnchor="middle" fill="#722F37" fontSize="7" fontWeight="bold" fontFamily="Georgia,serif">SOMMELY</text>
+                  <text x="40" y="121" textAnchor="middle" fill="#9E9E9E" fontSize="4.5" fontFamily="Georgia,serif">SOMMELIER IA</text>
+                  <text x="40" y="133" textAnchor="middle" fill="#6B5D56" fontSize="4.5" fontFamily="Georgia,serif">2026</text>
+                </g>
+              )}
+            </svg>
+          </div>
+          <motion.span key={loaderPct} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            className="font-bold" style={{ fontSize: '3.5rem', background: 'linear-gradient(135deg, #D4AF37, #F5D77C, #D4AF37)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 0 20px rgba(212,175,55,0.6))', fontFamily: 'Georgia, serif' }}>
+            {loaderPct}%
+          </motion.span>
+          <div className="w-full">
+            <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+              <motion.div className="h-full rounded-full" animate={{ width: `${loaderPct}%` }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                style={{ background: 'linear-gradient(90deg, #722F37, #D4AF37)', boxShadow: '0 0 12px rgba(212,175,55,0.5)' }}/>
+            </div>
+          </div>
+          <p className="text-white/50 text-sm">{loaderPct < 100 ? 'Connexion en cours...' : 'Bienvenue ! 🍷'}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cream font-body">
