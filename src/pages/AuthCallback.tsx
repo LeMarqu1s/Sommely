@@ -40,7 +40,7 @@ export function AuthCallback() {
       return;
     }
 
-    const redirect = (session: any) => {
+    const redirect = (_session: any) => {
       timers.forEach(clearTimeout);
       setProgress(100);
       setLabel('Bienvenue ! 🍷');
