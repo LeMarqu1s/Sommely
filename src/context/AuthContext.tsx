@@ -101,6 +101,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           const { data: p } = await getProfile(session.user.id);
           setProfile(p ?? null);
+          // Crée le trial si pas de subscription
+          const { data: existingSub } = await getSubscription(session.user.id);
+          if (!existingSub) {
+            const trialEnd = new Date();
+            trialEnd.setDate(trialEnd.getDate() + 7);
+            await supabase.from('subscriptions').insert({
+              user_id: session.user.id,
+              plan: 'free',
+              status: 'trial',
+              trial_ends_at: trialEnd.toISOString(),
+            });
+          }
         }
         setIsLoading(false);
       })

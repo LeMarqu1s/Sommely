@@ -126,14 +126,39 @@ export function Premium() {
           </p>
         </motion.div>
 
-        {/* Social proof */}
-        <div className="flex items-center justify-center gap-2">
-          <div className="flex -space-x-2">
-            {['🧑', '👩', '👨', '🧑'].map((e, i) => (
-              <div key={i} className="w-7 h-7 rounded-full bg-burgundy-dark/10 flex items-center justify-center text-sm border-2 border-cream">{e}</div>
-            ))}
+        {/* Social proof Trustpilot-style */}
+        <div className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex -space-x-2">
+              {['47','23','12','36'].map((id, i) => (
+                <img key={i} src={`https://i.pravatar.cc/40?img=${id}`} alt="user" className="w-8 h-8 rounded-full border-2 border-white object-cover" />
+              ))}
+            </div>
+            <div className="text-right">
+              <div className="flex items-center gap-0.5 justify-end mb-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill="#D4AF37"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                ))}
+              </div>
+              <p className="text-xs text-gray-dark font-medium">4,9/5 · 847 avis</p>
+            </div>
           </div>
-          <p className="text-xs text-gray-dark">+2 400 amateurs nous font confiance</p>
+          {[
+            { img: '10', name: 'Marie L.', text: '"Antoine m'a sauvé au resto, enfin une app qui comprend le vin !"' },
+            { img: '11', name: 'Thomas R.', text: '"Scanner une étiquette et avoir un score perso en 3 sec, bluffant."' },
+            { img: '15', name: 'Sophie M.', text: '"Ma cave virtuelle est devenue indispensable."' },
+          ].map((r, i) => (
+            <div key={i} className="flex items-start gap-2 py-2 border-t border-gray-light/20">
+              <img src={`https://i.pravatar.cc/32?img=${r.img}`} alt={r.name} className="w-6 h-6 rounded-full flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-xs font-semibold text-black-wine">{r.name}</span>
+                  <div className="flex">{[...Array(5)].map((_, j) => <svg key={j} width="9" height="9" viewBox="0 0 24 24" fill="#D4AF37"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>)}</div>
+                </div>
+                <p className="text-xs text-gray-dark leading-relaxed">{r.text}</p>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Plans — 3 niveaux avec ancre */}

@@ -39,7 +39,7 @@ export function AuthCallback() {
 
     // Succès : la session est déjà établie par Supabase, rediriger
     const done = localStorage.getItem('sommely_onboarding_done');
-    navigate(done ? '/scan' : '/onboarding', { replace: true });
+    navigate(done ? '/home' : '/onboarding', { replace: true });
   }, [navigate]);
 
   if (status === 'error') {
