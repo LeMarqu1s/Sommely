@@ -1,48 +1,58 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader, AlertCircle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
-/**
- * Page de retour OAuth (Google, etc.)
- * Gère les erreurs dans l'URL et affiche un message clair.
- */
 export function AuthCallback() {
   const navigate = useNavigate();
-  const [status, setStatus] = useState<'loading' | 'error'>('loading');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Supabase peut mettre les erreurs dans le hash OU dans les query params
+    // Vérifie les erreurs dans l'URL
     const hash = window.location.hash.slice(1);
     const search = window.location.search.slice(1);
     const params = new URLSearchParams(hash || search);
+    const errorParam = params.get('error');
+    const errorDesc = params.get('error_description');
 
-    const error = params.get('error');
-    const errorDescription = params.get('error_description');
-
-    if (error || errorDescription) {
-      setStatus('error');
-      if (errorDescription) {
-        const decoded = decodeURIComponent(errorDescription.replace(/\+/g, ' '));
-        setErrorMessage(decoded);
-      } else if (error === 'access_denied') {
-        setErrorMessage('Connexion annulée. Vous pouvez réessayer.');
-      } else if (error === 'redirect_uri_mismatch') {
-        setErrorMessage(
-          'Erreur Google : dans Google Cloud Console → Authorized redirect URIs, ajoute l\'URL de Supabase (pas sommely-wine.vercel.app !). Voir GOOGLE-OAUTH-SETUP.md'
-        );
-      } else {
-        setErrorMessage(`Erreur de connexion : ${error || 'Veuillez réessayer.'}`);
-      }
+    if (errorParam || errorDesc) {
+      const msg = errorDesc
+        ? decodeURIComponent(errorDesc.replace(/\+/g, ' '))
+        : errorParam === 'access_denied'
+        ? 'Connexion annulée.'
+        : `Erreur : ${errorParam}`;
+      setError(msg);
       return;
     }
 
-    // Succès : la session est déjà établie par Supabase, rediriger
-    const done = localStorage.getItem('sommely_onboarding_done');
-    navigate(done ? '/home' : '/onboarding', { replace: true });
+    // Attend que Supabase établisse la session via le hash OAuth
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        const done = localStorage.getItem('sommely_onboarding_done');
+        navigate(done ? '/home' : '/onboarding', { replace: true });
+      } else {
+        // Écoute onAuthStateChange si la session n'est pas encore prête
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_IN' && session) {
+            subscription.unsubscribe();
+            const done = localStorage.getItem('sommely_onboarding_done');
+            navigate(done ? '/home' : '/onboarding', { replace: true });
+          } else if (event === 'SIGNED_OUT') {
+            subscription.unsubscribe();
+            navigate('/auth', { replace: true });
+          }
+        });
+
+        // Timeout de sécurité — 5 secondes max
+        setTimeout(() => {
+          subscription.unsubscribe();
+          navigate('/auth', { replace: true });
+        }, 5000);
+      }
+    });
   }, [navigate]);
 
-  if (status === 'error') {
+  if (error) {
     return (
       <div className="min-h-screen bg-cream flex flex-col items-center justify-center px-6 font-body">
         <div className="w-full max-w-sm text-center">
@@ -50,33 +60,22 @@ export function AuthCallback() {
             <AlertCircle size={28} color="#C62828" />
           </div>
           <h1 className="font-display text-xl font-bold text-black-wine mb-2">Connexion impossible</h1>
-          <p className="text-gray-dark text-sm mb-6">{errorMessage}</p>
-          <div className="space-y-3">
-            <button
-              onClick={() => navigate('/auth', { replace: true })}
-              className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-semibold border-none cursor-pointer"
-            >
-              Réessayer
-            </button>
-            <button
-              onClick={() => navigate('/', { replace: true })}
-              className="w-full py-3 text-gray-dark text-sm bg-transparent border-none cursor-pointer hover:underline"
-            >
-              Retour à l'accueil
-            </button>
-          </div>
+          <p className="text-gray-dark text-sm mb-6">{error}</p>
+          <button
+            onClick={() => navigate('/auth', { replace: true })}
+            className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-semibold border-none cursor-pointer"
+          >
+            Réessayer
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-cream flex flex-col items-center justify-center px-6 font-body">
+    <div className="min-h-screen bg-cream flex flex-col items-center justify-center font-body">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-burgundy-dark flex items-center justify-center overflow-hidden p-2">
-          <img src="/IMG_1639-transparent.png" alt="Sommely" width={40} height={40} className="object-contain" style={{ filter: 'brightness(0) invert(1)' }} onError={(e) => { (e.target as HTMLImageElement).src = '/Logo%20Sommely.jpeg'; (e.target as HTMLImageElement).style.filter = 'brightness(0) invert(1)'; }} />
-        </div>
-        <Loader size={24} className="animate-spin text-burgundy-dark" />
+        <Loader size={28} className="animate-spin text-burgundy-dark" />
         <p className="text-gray-dark text-sm">Connexion en cours...</p>
       </div>
     </div>
