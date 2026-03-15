@@ -22,7 +22,7 @@ export function Auth() {
 
   if (isAuthenticated) {
     const done = localStorage.getItem('sommely_onboarding_done');
-    navigate(done ? '/scan' : '/onboarding', { replace: true });
+    navigate(done ? '/home' : '/onboarding', { replace: true });
   }
 
   useEffect(() => {
@@ -68,7 +68,7 @@ export function Auth() {
         const { error } = await signInWithEmail(email, password);
         if (error) throw error;
         const done = localStorage.getItem('sommely_onboarding_done');
-        navigate(done ? '/scan' : '/onboarding');
+        navigate(done ? '/home' : '/onboarding');
       }
     } catch (err: any) {
       setError(err.message || 'Erreur de connexion. Vérifiez vos identifiants.');
