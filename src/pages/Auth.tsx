@@ -20,6 +20,16 @@ export function Auth() {
   const [error, setError] = useState('');
   const [magicSent, setMagicSent] = useState(false);
 
+  // Si Supabase a mis le token dans le hash de /auth, on redirige vers /home
+  // Supabase le détectera automatiquement via detectSessionInUrl
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token')) {
+      const done = localStorage.getItem('sommely_onboarding_done');
+      navigate(done ? '/home' : '/onboarding', { replace: true });
+    }
+  }, [navigate]);
+
   if (isAuthenticated) {
     const done = localStorage.getItem('sommely_onboarding_done');
     navigate(done ? '/home' : '/onboarding', { replace: true });
