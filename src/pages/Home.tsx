@@ -10,25 +10,30 @@ export function Home() {
   const { search } = useLocation();
   const { user, profile, subscriptionState, isLoading } = useAuth();
   
-  // Show wine bottle loading if OAuth code in URL
-  const hasOAuthCode = search.includes('code=');
-  const [showLoader, setShowLoader] = useState(hasOAuthCode);
+  // Show wine bottle loading if OAuth callback (code= or access_token in URL)
+  const hasOAuth = search.includes('code=') || window.location.hash.includes('access_token');
+  const [showLoader, setShowLoader] = useState(hasOAuth);
   const [loaderPct, setLoaderPct] = useState(15);
 
   useEffect(() => {
-    if (!hasOAuthCode) return;
+    if (!hasOAuth) return;
     const steps = [35, 60, 80, 95];
     const timers = steps.map((pct, i) => setTimeout(() => setLoaderPct(pct), 500 + i * 600));
     return () => timers.forEach(clearTimeout);
-  }, [hasOAuthCode]);
+  }, [hasOAuth]);
 
   useEffect(() => {
-    if (!hasOAuthCode) return;
+    if (!hasOAuth) return;
     if (!isLoading && user) {
       setLoaderPct(100);
-      setTimeout(() => setShowLoader(false), 600);
+      // Clean URL
+      window.history.replaceState(null, '', '/home');
+      setTimeout(() => setShowLoader(false), 700);
     }
-  }, [hasOAuthCode, isLoading, user]);
+    // Timeout fallback - 12s max
+    const timeout = setTimeout(() => setShowLoader(false), 12000);
+    return () => clearTimeout(timeout);
+  }, [hasOAuth, isLoading, user]);
   const [scanCount, setScanCount] = useState(0);
   const [caveValue, setCaveValue] = useState(0);
   const [caveBottles, setCaveBottles] = useState(0);
