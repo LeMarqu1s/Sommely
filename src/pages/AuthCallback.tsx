@@ -8,48 +8,52 @@ export function AuthCallback() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Vérifie les erreurs dans l'URL
-    const hash = window.location.hash.slice(1);
-    const search = window.location.search.slice(1);
-    const params = new URLSearchParams(hash || search);
-    const errorParam = params.get('error');
-    const errorDesc = params.get('error_description');
+    const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.slice(1));
+    
+    const errorParam = params.get('error') || hashParams.get('error');
+    const errorDesc = params.get('error_description') || hashParams.get('error_description');
 
     if (errorParam || errorDesc) {
-      const msg = errorDesc
+      setError(errorDesc 
         ? decodeURIComponent(errorDesc.replace(/\+/g, ' '))
-        : errorParam === 'access_denied'
-        ? 'Connexion annulée.'
-        : `Erreur : ${errorParam}`;
-      setError(msg);
+        : 'Connexion annulée.');
       return;
     }
 
-    // Attend que Supabase établisse la session via le hash OAuth
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+    // Supabase PKCE flow : échange le code automatiquement
+    // On attend juste que la session soit prête
+    let timeout: ReturnType<typeof setTimeout>;
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        clearTimeout(timeout);
+        subscription.unsubscribe();
         const done = localStorage.getItem('sommely_onboarding_done');
         navigate(done ? '/home' : '/onboarding', { replace: true });
-      } else {
-        // Écoute onAuthStateChange si la session n'est pas encore prête
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-          if (event === 'SIGNED_IN' && session) {
-            subscription.unsubscribe();
-            const done = localStorage.getItem('sommely_onboarding_done');
-            navigate(done ? '/home' : '/onboarding', { replace: true });
-          } else if (event === 'SIGNED_OUT') {
-            subscription.unsubscribe();
-            navigate('/auth', { replace: true });
-          }
-        });
-
-        // Timeout de sécurité — 5 secondes max
-        setTimeout(() => {
-          subscription.unsubscribe();
-          navigate('/auth', { replace: true });
-        }, 5000);
       }
     });
+
+    // Vérifie aussi si session déjà là
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        clearTimeout(timeout);
+        subscription.unsubscribe();
+        const done = localStorage.getItem('sommely_onboarding_done');
+        navigate(done ? '/home' : '/onboarding', { replace: true });
+      }
+    });
+
+    // Timeout 10 secondes
+    timeout = setTimeout(() => {
+      subscription.unsubscribe();
+      navigate('/auth', { replace: true });
+    }, 10000);
+
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   if (error) {
@@ -61,10 +65,8 @@ export function AuthCallback() {
           </div>
           <h1 className="font-display text-xl font-bold text-black-wine mb-2">Connexion impossible</h1>
           <p className="text-gray-dark text-sm mb-6">{error}</p>
-          <button
-            onClick={() => navigate('/auth', { replace: true })}
-            className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-semibold border-none cursor-pointer"
-          >
+          <button onClick={() => navigate('/auth', { replace: true })}
+            className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-semibold border-none cursor-pointer">
             Réessayer
           </button>
         </div>
