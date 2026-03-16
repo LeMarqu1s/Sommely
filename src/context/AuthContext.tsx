@@ -98,6 +98,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           const { data: p } = await getProfile(session.user.id);
           setProfile(p ?? null);
+          // Sync localStorage avec Supabase
+          if (p?.onboarding_completed) {
+            localStorage.setItem('sommely_onboarding_done', 'true');
+          }
           const { data: existingSub } = await getSubscription(session.user.id);
           if (!existingSub) {
             const trialEnd = new Date();
@@ -141,6 +145,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           }
           setProfile(p ?? null);
+          if (p?.onboarding_completed) {
+            localStorage.setItem('sommely_onboarding_done', 'true');
+          }
 
           let { data: s } = await getSubscription(session.user.id);
           if (!s) {
@@ -225,9 +232,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // Nettoie tout le state et localStorage
     setProfile(null);
     setSubscription(null);
     setSubscriptionState(defaultSubscriptionState);
+    setUser(null);
+    setSession(null);
+    localStorage.removeItem('sommely_onboarding_done');
+    localStorage.removeItem('sommely_profile');
     const keysToKeep = ['sommely_theme', 'sommely_lang'];
     const toRemove: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
