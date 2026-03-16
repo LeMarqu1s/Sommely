@@ -23,6 +23,25 @@ const QUICK_SUGGESTIONS = [
   { emoji: '🌍', label: 'Découverte', prompt: 'Je veux découvrir une nouvelle région viticole, que me recommandes-tu ?' },
 ];
 
+function renderMessage(text: string) {
+  // Convertit le markdown basique en JSX propre
+  const lines = text.split('\n').filter(l => l.trim());
+  return lines.map((line, i) => {
+    // Supprime les ** et * 
+    const clean = line
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/^#{1,3}\s+/, '')
+      .replace(/^[-•]\s+/, '• ');
+    
+    // Lignes numérotées (1. 2. 3.)
+    if (/^\d+\.\s/.test(clean)) {
+      return <p key={i} className="mb-2 last:mb-0">{clean}</p>;
+    }
+    return <p key={i} className="mb-2 last:mb-0">{clean}</p>;
+  });
+}
+
 export function Sommelier() {
   const navigate = useNavigate();
   const { subscriptionState } = useAuth();
@@ -113,6 +132,7 @@ RÈGLES :
 5. Maximum 3-4 paragraphes par réponse, sois concis
 6. Utilise les emojis avec parcimonie (1-2 max par message)
 7. Termine parfois par une question pour approfondir si pertinent
+8. N'utilise JAMAIS de markdown (**gras**, *italique*, ##titres, listes avec tirets). Écris en texte naturel comme un vrai sommelier qui parle.
 
 Tu es un vrai sommelier qui connaît son métier et donne des conseils pratiques et actionnables.`;
 
@@ -203,7 +223,7 @@ Tu es un vrai sommelier qui connaît son métier et donne des conseils pratiques
                   msg.role === 'user' ? 'bg-burgundy-dark text-white' : 'bg-white border border-gray-light/30 text-black-wine shadow-sm'
                 }`}
               >
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                <div className="text-sm leading-relaxed">{renderMessage(msg.content)}</div>
                 <p className={`text-xs mt-1 ${msg.role === 'user' ? 'text-white/50' : 'text-gray-dark'}`}>
                   {msg.timestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                 </p>

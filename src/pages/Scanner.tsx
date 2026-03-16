@@ -374,7 +374,7 @@ export function Scanner() {
   // ─── RENDU ────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-black-wine flex flex-col font-body overflow-hidden">
+    <div className="min-h-screen bg-black-wine flex flex-col font-body overflow-y-auto">
 
       <div className="flex items-center justify-between px-6 py-4 z-20 relative flex-shrink-0">
         <div className="w-20" />
@@ -397,7 +397,7 @@ export function Scanner() {
         </motion.div>
       )}
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 relative">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-24 relative">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-burgundy-dark/20 blur-[80px]" />
         </div>
