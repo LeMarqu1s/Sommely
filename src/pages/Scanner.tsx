@@ -377,13 +377,13 @@ export function Scanner() {
     <div className="min-h-screen flex flex-col font-body overflow-y-auto" style={{ background: '#0a0a0a' }}>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 z-20 relative flex-shrink-0">
+      <div className="flex items-center justify-between px-5 py-4 z-20 relative flex-shrink-0"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="w-16" />
-        <span className="font-display font-bold text-white text-base" style={{ letterSpacing: '-0.01em' }}>Scanner</span>
-        <div className={`px-3 py-1 rounded-full text-xs font-bold ${
-          isPremium ? 'text-yellow-300' : scansRemaining > 1 ? 'text-white/60' : scansRemaining === 1 ? 'text-orange-300' : 'text-red-400'
-        }`} style={{ background: 'rgba(255,255,255,0.08)' }}>
-          {isPremium ? '∞' : `${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''}`}
+        <span className="font-display font-bold text-white text-sm" style={{ letterSpacing: '-0.02em' }}>Scanner</span>
+        <div className={`px-3 py-1 rounded-full text-xs font-bold`}
+          style={{ background: isPremium ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.07)', color: isPremium ? '#D4AF37' : scansRemaining > 1 ? 'rgba(255,255,255,0.5)' : scansRemaining === 1 ? '#fb923c' : '#f87171' }}>
+          {isPremium ? '∞ Illimité' : `${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''}`}
         </div>
       </div>
 
@@ -448,9 +448,9 @@ export function Scanner() {
                 </div>
               </div>
 
-              <h1 className="font-display font-bold text-white mb-2 text-center" style={{ fontSize: '1.6rem', letterSpacing: '-0.02em' }}>Scanner une bouteille</h1>
-              <p className="text-center text-sm mb-6 leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                GPT-4o identifie l&apos;étiquette et calcule votre score en 3 secondes.
+              <h1 className="font-display font-bold text-white mb-2 text-center" style={{ fontSize: '1.5rem', letterSpacing: '-0.03em' }}>Scanner une bouteille</h1>
+              <p className="text-center text-sm mb-6 leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>
+                GPT-4o identifie l&apos;étiquette et calcule<br/>votre score personnalisé en 3 secondes.
               </p>
 
               {isMobile ? (
@@ -493,7 +493,8 @@ export function Scanner() {
 
               <button
                 onClick={() => navigate('/menu')}
-                className="w-full mt-3 py-4 bg-white/5 border border-white/20 text-white rounded-2xl font-semibold text-sm flex items-center justify-between gap-3 cursor-pointer hover:bg-white/10 transition-colors"
+                className="w-full mt-3 py-4 rounded-2xl font-semibold text-sm flex items-center justify-between gap-3 cursor-pointer border-none"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: 'white' }}
               >
                 <div className="flex items-center justify-center gap-3 flex-1 min-w-0">
                   <span className="text-lg flex-shrink-0">📋</span>

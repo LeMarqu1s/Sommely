@@ -350,27 +350,29 @@ export function Cave() {
     });
 
   return (
-    <div className="min-h-screen bg-cream font-body">
+    <div className="min-h-screen font-body" style={{ background: '#F5F0E8' }}>
 
       {/* HEADER */}
-      <div className="bg-white border-b border-gray-light/30 px-5 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+      <div className="px-5 py-4 flex items-center justify-between sticky top-0 z-20"
+        style={{ background: 'rgba(245,240,232,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
         <div className="w-8" />
         <div className="flex items-center gap-2">
-          <span className="text-xl">🍾</span>
-          <span className="font-display text-base font-bold text-burgundy-dark">Ma cave</span>
-          {isUpdating && <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}><RefreshCw size={13} color="#D4AF37" /></motion.div>}
+          <span className="font-display font-bold text-sm" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>Ma cave</span>
+          {isUpdating && <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}><RefreshCw size={12} color="#D4AF37" /></motion.div>}
         </div>
         <div className="flex items-center gap-2">
           {alerts.length > 0 && (
             <button onClick={() => setShowAlerts(true)} className="relative bg-transparent border-none cursor-pointer p-1">
-              <Bell size={20} color="#D4AF37" />
+              <Bell size={18} color="#D4AF37" />
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold">{alerts.length}</span>
             </button>
           )}
           {(view === 'overview' || view === 'list') && (
-            <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="w-8 h-8 rounded-full bg-burgundy-dark flex items-center justify-center border-none cursor-pointer shadow">
-              <Plus size={16} color="white" />
-            </button>
+            <motion.button whileTap={{ scale: 0.95 }} onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }}
+              className="w-8 h-8 rounded-full flex items-center justify-center border-none cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #722F37, #8B4049)', boxShadow: '0 4px 12px rgba(114,47,55,0.3)' }}>
+              <Plus size={15} color="white" />
+            </motion.button>
           )}
         </div>
       </div>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Wine,
+  Camera,
   Settings,
   Crown,
   LogOut,
@@ -107,50 +108,45 @@ export function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-cream font-body text-black-wine">
-      <div className="bg-white border-b border-gray-light/30 px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen font-body" style={{ background: '#F5F0E8' }}>
+      <div className="px-5 py-4 flex items-center justify-between sticky top-0 z-20"
+        style={{ background: 'rgba(245,240,232,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+        <div className="w-8" />
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate('/scan')}
-            className="flex items-center gap-2 bg-transparent border-none cursor-pointer"
-          >
-            <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center overflow-hidden flex-shrink-0 p-0.5">
-              <img src="/IMG_1639-transparent.png" alt="Sommely" width={20} height={20} className="object-contain" style={{ filter: 'brightness(0) invert(1)' }} onError={(e) => { (e.target as HTMLImageElement).src = '/Logo%20Sommely.jpeg'; (e.target as HTMLImageElement).style.filter = 'brightness(0) invert(1)'; }} />
-            </div>
-            <span className="font-display text-lg font-bold text-burgundy-dark">Sommely</span>
-          </button>
+          <span className="font-display font-bold text-sm" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>Profil</span>
           {isPro && (
-            <div className="inline-flex items-center gap-1.5 bg-gold/10 border border-gold/30 rounded-full px-3 py-1">
-              <Star size={14} color="#D4AF37" fill="#D4AF37" />
-              <span className="text-xs font-bold text-gold">Pro</span>
-            </div>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(212,175,55,0.15)', color: '#D4AF37' }}>Pro</span>
           )}
         </div>
-        <button
-          onClick={() => navigate('/scan')}
-          className="flex items-center gap-1 text-gray-dark text-sm bg-transparent border-none cursor-pointer hover:text-burgundy-dark transition-colors"
-        >
-          <Wine size={16} />
+        <motion.button whileTap={{ scale: 0.95 }} onClick={() => navigate('/scan')}
+          className="flex items-center gap-1.5 border-none cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold"
+          style={{ background: 'linear-gradient(135deg, #722F37, #8B4049)', color: 'white' }}>
+          <Camera size={12} />
           Scanner
-        </button>
+        </motion.button>
       </div>
 
       <div className="max-w-lg mx-auto px-6 py-6 space-y-5">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-light/20"
+          className="rounded-3xl overflow-hidden" style={{ background: 'white', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.05)' }}
         >
-          <div className="h-20 bg-gradient-to-br from-burgundy-dark to-burgundy-medium relative -z-0">
-            <div
-              className="absolute inset-0 opacity-20"
-              style={{ backgroundImage: 'radial-gradient(circle at 70% 50%, #D4AF37 0%, transparent 60%)' }}
-            />
+          <div className="h-24 relative -z-0"
+            style={{ background: 'linear-gradient(150deg, #2d0d14 0%, #1a0508 100%)' }}>
+            <div className="absolute inset-0 opacity-20"
+              style={{ backgroundImage: 'radial-gradient(circle at 70% 50%, #D4AF37 0%, transparent 55%)' }}/>
+            {/* Grain */}
+            <div className="absolute inset-0 opacity-15" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E")`,
+              backgroundSize: '150px',
+            }}/>
           </div>
 
           <div className="px-6 pb-6 relative z-10 -mt-8">
             <div className="flex items-end justify-between mb-4">
-              <div className="w-16 h-16 rounded-2xl bg-burgundy-dark border-4 border-white flex items-center justify-center shadow-lg">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl"
+                style={{ background: 'linear-gradient(135deg, #722F37, #8B4049)', border: '3px solid white', boxShadow: '0 4px 20px rgba(114,47,55,0.3)' }}>
                 <span className="text-white font-display text-2xl font-bold">
                   {firstName.charAt(0).toUpperCase()}
                 </span>
@@ -229,7 +225,7 @@ export function Profile() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl border border-gray-light/30 shadow-sm overflow-hidden"
+          className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
             <h2 className="font-display text-base font-bold text-black-wine">Mes badges 🏅</h2>
@@ -289,7 +285,7 @@ export function Profile() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
-          className="bg-white rounded-2xl border border-gray-light/30 shadow-sm overflow-hidden"
+          className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
             <h2 className="font-display text-base font-bold text-black-wine">Mon profil de dégustation</h2>
@@ -360,7 +356,7 @@ export function Profile() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-white rounded-2xl border border-gray-light/30 shadow-sm overflow-hidden"
+          className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
             <h2 className="font-display text-base font-bold text-black-wine">Mes scans récents</h2>
@@ -419,7 +415,7 @@ export function Profile() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.17 }}
-            className="bg-white rounded-2xl border border-gray-light/30 shadow-sm overflow-hidden"
+            className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
           >
             <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
               <h2 className="font-display text-base font-bold text-black-wine">Mes vins favoris ❤️</h2>
@@ -455,7 +451,7 @@ export function Profile() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18 }}
-            className="bg-white rounded-2xl border border-gray-light/30 shadow-sm overflow-hidden"
+            className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
           >
             <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
               <h2 className="font-display text-base font-bold text-black-wine">Parrainer des amis</h2>
@@ -485,7 +481,7 @@ export function Profile() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-2xl border border-gray-light/30 shadow-sm overflow-hidden"
+          className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           <div className="px-6 py-4 border-b border-gray-light/20">
             <h2 className="font-display text-base font-bold text-black-wine">Mon abonnement</h2>
@@ -573,7 +569,7 @@ export function Profile() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.22 }}
-          className="bg-white rounded-2xl border border-gray-light/30 shadow-sm overflow-hidden"
+          className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           {[
             { icon: Bell, label: 'Notifications', action: () => {}, color: '#6B5D56' },
