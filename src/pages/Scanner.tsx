@@ -407,18 +407,44 @@ export function Scanner() {
           {scanState === 'idle' && !showManualSearch && (
             <motion.div key="idle" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex flex-col items-center text-center z-10 w-full max-w-sm">
               <div className="relative mb-8">
-                <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2.5, repeat: Infinity }} className="w-64 h-64 rounded-3xl border-2 border-dashed border-white/20 flex items-center justify-center relative overflow-hidden bg-white/5">
-                  <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 border-gold rounded-tl-lg" />
-                  <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-gold rounded-tr-lg" />
-                  <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 border-gold rounded-bl-lg" />
-                  <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2 border-gold rounded-br-lg" />
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center">
-                      <Camera size={32} color="rgba(255,255,255,0.7)" />
-                    </div>
-                    <p className="text-white/40 text-xs px-4">Pointez vers l'étiquette</p>
+                {/* Outer glow */}
+                <motion.div className="absolute inset-0 rounded-3xl blur-2xl"
+                  style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.15) 0%, transparent 70%)' }}
+                  animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ duration: 3, repeat: Infinity }} />
+                
+                <motion.div
+                  animate={{ boxShadow: ['0 0 0 0 rgba(212,175,55,0)', '0 0 0 8px rgba(212,175,55,0.1)', '0 0 0 0 rgba(212,175,55,0)'] }}
+                  transition={{ duration: 2.5, repeat: Infinity }}
+                  className="w-64 h-64 rounded-3xl flex items-center justify-center relative overflow-hidden"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
+                  
+                  {/* Corner markers — Apple style */}
+                  {[['top-0 left-0', 'border-t-2 border-l-2 rounded-tl-2xl'],
+                    ['top-0 right-0', 'border-t-2 border-r-2 rounded-tr-2xl'],
+                    ['bottom-0 left-0', 'border-b-2 border-l-2 rounded-bl-2xl'],
+                    ['bottom-0 right-0', 'border-b-2 border-r-2 rounded-br-2xl']].map(([pos, style], i) => (
+                    <motion.div key={i} className={`absolute ${pos} w-10 h-10 ${style}`}
+                      style={{ borderColor: '#D4AF37' }}
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }} />
+                  ))}
+                  
+                  <div className="flex flex-col items-center gap-3 relative z-10">
+                    <motion.div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                      style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)' }}
+                      animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 2, repeat: Infinity }}>
+                      <Camera size={30} color="rgba(255,255,255,0.7)" />
+                    </motion.div>
+                    <p className="text-xs px-4" style={{ color: 'rgba(255,255,255,0.35)' }}>Pointez vers l'étiquette</p>
                   </div>
-                  <motion.div animate={{ y: [-80, 80, -80] }} transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }} className="absolute left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent opacity-70" />
+                  
+                  {/* Scanning line */}
+                  <motion.div
+                    animate={{ y: [-80, 80, -80] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                    className="absolute left-6 right-6 h-px"
+                    style={{ background: 'linear-gradient(90deg, transparent, rgba(212,175,55,0.8), transparent)' }} />
                 </motion.div>
               </div>
 
