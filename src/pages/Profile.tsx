@@ -318,27 +318,25 @@ export function Profile() {
               {
                 label: 'Niveau',
                 value:
-                  localProfile.expertise === 'beginner'
+                  (localProfile.experience === 'debutant' || localProfile.expertise === 'beginner')
                     ? 'Débutant'
-                    : localProfile.expertise === 'learning'
-                    ? 'En apprentissage'
-                    : localProfile.expertise === 'amateur'
-                    ? 'Amateur'
-                    : localProfile.expertise === 'expert'
+                    : (localProfile.experience === 'curieux' || localProfile.expertise === 'learning')
+                    ? 'Curieux'
+                    : (localProfile.experience === 'passionne' || localProfile.expertise === 'amateur')
+                    ? 'Passionné'
+                    : (localProfile.experience === 'expert' || localProfile.expertise === 'expert')
                     ? 'Expert'
                     : 'Non défini',
               },
               {
-                label: 'Fréquence',
+                label: 'Style préféré',
                 value:
-                  localProfile.frequency === 'rarely'
-                    ? 'Rarement'
-                    : localProfile.frequency === 'monthly'
-                    ? '1-2 fois par mois'
-                    : localProfile.frequency === 'weekly'
-                    ? 'Chaque semaine'
-                    : localProfile.frequency === 'daily'
-                    ? 'Plusieurs fois par semaine'
+                  localProfile.body === 2
+                    ? 'Léger & frais'
+                    : localProfile.body === 5
+                    ? 'Équilibré'
+                    : localProfile.body === 8
+                    ? 'Charpenté & puissant'
                     : 'Non défini',
               },
             ].map((item) => (
