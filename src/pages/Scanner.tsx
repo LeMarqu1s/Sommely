@@ -374,7 +374,7 @@ export function Scanner() {
   // ─── RENDU ────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-black-wine flex flex-col font-body overflow-y-auto">
+    <div className="min-h-screen bg-black-wine flex flex-col font-body overflow-y-auto" style={{ background: "#1a0508" }}>
 
       <div className="flex items-center justify-between px-6 py-4 z-20 relative flex-shrink-0">
         <div className="w-20" />
@@ -496,7 +496,7 @@ export function Scanner() {
           )}
 
           {scanState === 'idle' && !showManualSearch && (
-            <motion.div key="tip" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="w-full max-w-sm px-2 pb-4">
+            <motion.div key="tip" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="w-full max-w-sm px-2 py-4">
               <div className="flex items-center justify-center gap-2 bg-white/5 rounded-2xl px-4 py-3">
                 <Zap size={14} color="#D4AF37" className="flex-shrink-0" />
                 <p className="text-white/40 text-xs text-center">{tips[currentTip]}</p>
