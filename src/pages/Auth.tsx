@@ -20,27 +20,9 @@ export function Auth() {
   const [error, setError] = useState('');
   const [magicSent, setMagicSent] = useState(false);
 
-  // Si Supabase a mis le token dans le hash de /auth, attendre que la session soit établie
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (!hash || !hash.includes('access_token')) return;
-    
-    // Supabase va traiter le hash via detectSessionInUrl et déclencher onAuthStateChange
-    // On attend que isAuthenticated soit true avant de rediriger
-    const timeout = setTimeout(() => {
-      // Fallback si onAuthStateChange ne se déclenche pas
-      const done = localStorage.getItem('sommely_onboarding_done');
-      navigate(done ? '/home' : '/onboarding', { replace: true });
-    }, 2000);
-    
-    return () => clearTimeout(timeout);
-  }, [navigate]);
-
-  // Redirige seulement quand loading est terminé ET user authentifié
+  // Redirige quand authentifié (après chargement complet)
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      const hash = window.location.hash;
-      if (hash && hash.includes('access_token')) return; // Géré par l'autre useEffect
       const done = localStorage.getItem('sommely_onboarding_done');
       navigate(done ? '/home' : '/onboarding', { replace: true });
     }

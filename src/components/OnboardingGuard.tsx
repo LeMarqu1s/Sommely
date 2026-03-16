@@ -1,37 +1,37 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const PUBLIC_ROUTES = ['/onboarding', '/auth', '/auth/callback', '/success', '/privacy', '/'];
+const PUBLIC_ROUTES = ['/onboarding', '/auth', '/success', '/privacy', '/'];
 
 export function OnboardingGuard() {
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
   const { user, profile, isLoading } = useAuth();
-  const hasRedirected = useRef(false);
 
   useEffect(() => {
-    hasRedirected.current = false;
-  }, [pathname]);
-
-  useEffect(() => {
-    if (hasRedirected.current) return;
+    // Routes publiques — pas de vérification
     if (PUBLIC_ROUTES.some(p => pathname === p || pathname.startsWith(p + '/'))) return;
-    
-    // Si y'a un code OAuth dans l'URL, ne pas rediriger - Supabase gère
-    if (search.includes('code=') || search.includes('access_token')) return;
-    
+
+    // OAuth en cours — ne pas interrompre
+    if (search.includes('code=') || window.location.hash.includes('access_token')) return;
+
+    // Attendre fin du chargement
     if (isLoading) return;
 
+    // Pas connecté → page de connexion
     if (!user) {
-      hasRedirected.current = true;
       navigate('/auth', { replace: true });
       return;
     }
 
-    const done = localStorage.getItem('sommely_onboarding_done');
-    if (!done && profile && !profile.onboarding_completed) {
-      hasRedirected.current = true;
+    // Connecté mais onboarding pas fait
+    // On vérifie d'abord localStorage (plus fiable que Supabase en temps réel)
+    const localDone = localStorage.getItem('sommely_onboarding_done');
+    if (localDone) return; // localStorage dit que c'est fait → OK
+
+    // Sinon on vérifie Supabase
+    if (profile && !profile.onboarding_completed) {
       navigate('/onboarding', { replace: true });
     }
   }, [pathname, search, user, profile, isLoading, navigate]);

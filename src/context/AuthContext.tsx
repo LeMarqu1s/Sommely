@@ -89,11 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   useEffect(() => {
-    // Nettoie le hash OAuth de l'URL (ex: /home#access_token=...)
-    if (window.location.hash && window.location.hash.includes('access_token')) {
-      window.history.replaceState(null, '', window.location.pathname);
-    }
-
+    // NE PAS nettoyer le hash ici — Supabase a besoin du access_token pour établir la session
+    // getSession() va automatiquement détecter le token dans l'URL via detectSessionInUrl
     supabase.auth.getSession()
       .then(async ({ data: { session } }) => {
         setSession(session);
@@ -101,7 +98,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           const { data: p } = await getProfile(session.user.id);
           setProfile(p ?? null);
-          // Crée le trial si pas de subscription
           const { data: existingSub } = await getSubscription(session.user.id);
           if (!existingSub) {
             const trialEnd = new Date();
@@ -115,6 +111,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
         setIsLoading(false);
+        // Nettoie le hash seulement APRÈS que Supabase a traité le token
+        if (window.location.hash && window.location.hash.includes('access_token')) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
       })
       .catch((err) => {
         console.warn('Supabase session:', err);
