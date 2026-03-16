@@ -241,12 +241,12 @@ export function Landing() {
             <div className="absolute inset-0 rounded-full blur-3xl"
               style={{ background: 'radial-gradient(circle, rgba(114,47,55,0.18) 0%, transparent 65%)', transform: 'scale(1.3)' }}/>
             <img
-              src="https://images.vivino.com/thumbs/ApnIiXjcT5Kc33OHgNb9dA_pb_x600.png"
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Wine_bottle_and_glass.jpg/400px-Wine_bottle_and_glass.jpg"
               alt="Bouteille de vin"
               className="relative z-10"
-              style={{ height: 420, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 32px 64px rgba(114,47,55,0.25)) drop-shadow(0 8px 24px rgba(0,0,0,0.15))', maxWidth: '100%' }}
+              style={{ height: 380, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 32px 64px rgba(114,47,55,0.25)) drop-shadow(0 8px 24px rgba(0,0,0,0.15))', maxWidth: '100%', borderRadius: 16 }}
               onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://images.vivino.com/thumbs/RgArjwAqM5MObJUPE9e6RA_pb_x600.png';
+                (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
             {/* Floating scan result card */}
@@ -322,28 +322,46 @@ export function Landing() {
         </div>
       </div>
 
-      {/* ── FEATURES — Linear style alternated ── */}
-      <div id="fonctionnalités">
-        <FeatureRow
-          icon={<Camera size={16}/>} tag="Scanner" delay={0}
-          title="Identifiez n'importe quelle bouteille en 3 secondes."
-          desc="GPT-4o analyse l'étiquette et calcule un score personnalisé selon vos goûts, votre niveau et votre budget habituel."
-          stat="3s" statLabel="pour un résultat complet" darkBg={false}/>
-        <FeatureRow
-          icon={<MessageCircle size={16}/>} tag="Antoine IA" delay={0.05} reverse
-          title="Un sommelier expert disponible 24h/24."
-          desc="Posez n'importe quelle question sur le vin. Antoine connaît votre cave, vos goûts et vos occasions."
-          stat="24/7" statLabel="disponible, sans attente" darkBg={true}/>
-        <FeatureRow
-          icon={<Wine size={16}/>} tag="Cave virtuelle" delay={0.05}
-          title="Valorisez chaque bouteille de votre cave."
-          desc="Cataloguez, organisez et découvrez la valeur réelle de votre collection grâce aux prix IA mis à jour en temps réel."
-          stat="3 200€" statLabel="valeur moyenne découverte" darkBg={false}/>
-        <FeatureRow
-          icon={<TrendingUp size={16}/>} tag="Investissement" delay={0.05} reverse
-          title="Prédisez la valeur de vos vins à 5 ans."
-          desc="Grade A+ → D sur chaque bouteille. Prédictions à 1, 3 et 5 ans. Simulez vos ventes au meilleur moment."
-          stat="+340%" statLabel="de valorisation sur certains crus" darkBg={true}/>
+      {/* ── FEATURES — Clean 2x2 grid ── */}
+      <div id="fonctionnalités" className="py-16 px-6" style={{ background: '#1d1d1f' }}>
+        <div className="max-w-5xl mx-auto">
+          <Reveal className="text-center mb-12">
+            <p className="text-xs font-black uppercase tracking-[0.2em] mb-3" style={{ color: '#D4AF37' }}>Fonctionnalités</p>
+            <h2 className="font-display font-bold" style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', letterSpacing: '-0.035em', color: '#f5f5f7', lineHeight: 1.05 }}>
+              Fini de choisir au hasard.
+            </h2>
+            <p className="mt-3 text-sm max-w-xs mx-auto" style={{ color: '#6e6e73' }}>
+              Tout ce qu'il faut pour devenir un expert du vin.
+            </p>
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { icon: <Camera size={20}/>, title: 'Scanner en 3 secondes', desc: "GPT-4o identifie l'étiquette et calcule votre score personnalisé selon vos goûts et votre budget.", accent: '#722F37', tag: 'IA GPT-4o' },
+              { icon: <MessageCircle size={20}/>, title: 'Antoine, sommelier IA', desc: "Posez n'importe quelle question. Antoine répond comme un vrai expert 24h/24, en tenant compte de votre cave.", accent: '#c9a227', tag: '24h/24' },
+              { icon: <Wine size={20}/>, title: 'Cave virtuelle', desc: 'Cataloguez, valorisez et optimisez vos bouteilles. Prix IA mis à jour en temps réel.', accent: '#374151', tag: 'Temps réel' },
+              { icon: <TrendingUp size={20}/>, title: 'IA Investissement', desc: 'Prédictions de valeur à 1, 3 et 5 ans. Grade A+ → D. Simulez vos ventes au meilleur moment.', accent: '#065F46', tag: 'Exclusif' },
+            ].map((f, i) => (
+              <Reveal key={i} delay={i * 0.07}>
+                <motion.div whileHover={{ y: -3, transition: { duration: 0.2 } }}
+                  className="rounded-2xl p-6 h-full"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white"
+                      style={{ background: f.accent, boxShadow: `0 4px 16px ${f.accent}44` }}>
+                      {f.icon}
+                    </div>
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full"
+                      style={{ background: 'rgba(212,175,55,0.12)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.2)' }}>
+                      {f.tag}
+                    </span>
+                  </div>
+                  <h3 className="font-display font-bold text-base mb-2 text-white" style={{ letterSpacing: '-0.01em' }}>{f.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: '#86868b' }}>{f.desc}</p>
+                </motion.div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* ── PROGRESS STATS ── */}
@@ -371,66 +389,106 @@ export function Landing() {
               Simple et transparent.
             </h2>
           </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Mensuel */}
             <Reveal>
-              <div className="rounded-3xl p-7 h-full flex flex-col"
+              <div className="rounded-3xl p-6 h-full flex flex-col"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <p className="text-sm font-semibold mb-4" style={{ color: '#86868b' }}>Mensuel</p>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="font-display font-bold text-white" style={{ fontSize: '3rem', letterSpacing: '-0.04em', lineHeight: 1 }}>4,99€</span>
-                  <span className="text-sm" style={{ color: '#86868b' }}>/mois</span>
+                <p className="text-sm font-semibold mb-3" style={{ color: '#86868b' }}>Mensuel</p>
+                <div className="flex items-baseline gap-1 mb-5">
+                  <span className="font-display font-bold text-white" style={{ fontSize: '2.5rem', letterSpacing: '-0.04em', lineHeight: 1 }}>4,99€</span>
+                  <span className="text-xs" style={{ color: '#86868b' }}>/mois</span>
                 </div>
-                <div className="space-y-3 mb-7 flex-1">
+                <div className="space-y-2.5 mb-6 flex-1">
                   {['Scans illimités', 'Cave virtuelle', 'Chat Antoine 24h/24', 'Accords mets-vins'].map(f => (
-                    <div key={f} className="flex items-center gap-2.5">
-                      <CheckCircle2 size={14} color="#D4AF37"/>
-                      <span className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>{f}</span>
+                    <div key={f} className="flex items-center gap-2">
+                      <CheckCircle2 size={13} color="#D4AF37"/>
+                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>{f}</span>
                     </div>
                   ))}
                 </div>
                 <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
                   onClick={() => navigate('/auth')}
-                  className="w-full py-3 rounded-2xl font-semibold text-sm cursor-pointer"
-                  style={{ color: 'white', border: '1px solid rgba(255,255,255,0.2)', background: 'transparent' }}>
+                  className="w-full py-2.5 rounded-2xl font-semibold text-sm cursor-pointer"
+                  style={{ color: 'white', border: '1px solid rgba(255,255,255,0.18)', background: 'transparent' }}>
                   Commencer →
                 </motion.button>
               </div>
             </Reveal>
-            <Reveal delay={0.08}>
-              <div className="rounded-3xl p-7 h-full flex flex-col relative overflow-hidden"
-                style={{ background: 'linear-gradient(155deg, #2d0d14 0%, #180609 100%)', boxShadow: '0 0 0 1px rgba(212,175,55,0.3), 0 16px 48px rgba(114,47,55,0.3)' }}>
+
+            {/* Annuel — highlighted */}
+            <Reveal delay={0.07}>
+              <div className="rounded-3xl p-6 h-full flex flex-col relative overflow-hidden"
+                style={{ background: 'linear-gradient(155deg, #2d0d14 0%, #180609 100%)', boxShadow: '0 0 0 1px rgba(212,175,55,0.35), 0 16px 48px rgba(114,47,55,0.3)' }}>
                 <div className="absolute inset-0 opacity-20 pointer-events-none" style={{
                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E")`,
                   backgroundSize: '150px',
                 }}/>
-                <div className="absolute top-0 right-0 w-28 h-28 rounded-full blur-3xl -translate-y-6 translate-x-6 pointer-events-none"
-                  style={{ background: 'rgba(212,175,55,0.2)' }}/>
+                <div className="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl -translate-y-6 translate-x-6 pointer-events-none"
+                  style={{ background: 'rgba(212,175,55,0.22)' }}/>
                 <div className="relative z-10 flex flex-col h-full">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3">
                     <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.4)' }}>Annuel</p>
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-full"
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full"
                       style={{ background: 'rgba(212,175,55,0.18)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.3)' }}>
-                      ⭐ Meilleure valeur
+                      ⭐ Populaire
                     </span>
                   </div>
                   <div className="flex items-baseline gap-1 mb-1">
-                    <span className="font-display font-bold text-white" style={{ fontSize: '3rem', letterSpacing: '-0.04em', lineHeight: 1 }}>4€</span>
-                    <span className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>/mois</span>
+                    <span className="font-display font-bold text-white" style={{ fontSize: '2.5rem', letterSpacing: '-0.04em', lineHeight: 1 }}>4€</span>
+                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>/mois</span>
                   </div>
-                  <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.28)' }}>48€ facturé annuellement</p>
-                  <p className="text-xs mb-6" style={{ color: '#D4AF37' }}>✦ Économisez 11,88€/an</p>
-                  <div className="space-y-3 mb-7 flex-1">
-                    {['Tout du mensuel inclus', 'Priorité nouvelles features', 'IA Investissement avancée', 'Support prioritaire'].map(f => (
-                      <div key={f} className="flex items-center gap-2.5">
-                        <CheckCircle2 size={14} color="#D4AF37"/>
-                        <span className="text-sm" style={{ color: 'rgba(255,255,255,0.65)' }}>{f}</span>
+                  <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.28)' }}>48€/an</p>
+                  <p className="text-xs mb-5" style={{ color: '#D4AF37' }}>✦ Économisez 11,88€</p>
+                  <div className="space-y-2.5 mb-6 flex-1">
+                    {['Tout du mensuel', 'Nouvelles features en priorité', 'IA Investissement', 'Support prioritaire'].map(f => (
+                      <div key={f} className="flex items-center gap-2">
+                        <CheckCircle2 size={13} color="#D4AF37"/>
+                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>{f}</span>
                       </div>
                     ))}
                   </div>
                   <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
                     onClick={() => navigate('/auth')}
-                    className="w-full py-3 rounded-2xl font-bold text-sm cursor-pointer border-none"
+                    className="w-full py-2.5 rounded-2xl font-bold text-sm cursor-pointer border-none"
                     style={{ background: 'linear-gradient(135deg, #D4AF37, #c9a227)', color: '#1d1d1f' }}>
+                    Commencer →
+                  </motion.button>
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Prestige */}
+            <Reveal delay={0.14}>
+              <div className="rounded-3xl p-6 h-full flex flex-col relative overflow-hidden"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl -translate-y-4 translate-x-4 pointer-events-none"
+                  style={{ background: 'rgba(255,255,255,0.04)' }}/>
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-semibold" style={{ color: '#86868b' }}>Prestige</p>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                      style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      Premium
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="font-display font-bold text-white" style={{ fontSize: '2.5rem', letterSpacing: '-0.04em', lineHeight: 1 }}>14,99€</span>
+                    <span className="text-xs" style={{ color: '#86868b' }}>/mois</span>
+                  </div>
+                  <p className="text-xs mb-5" style={{ color: '#86868b' }}>Paiement unique</p>
+                  <div className="space-y-2.5 mb-6 flex-1">
+                    {["Tout de l'annuel", 'Consultation Antoine illimitée', 'Accès expert & dégustation', 'Badge Sommelier Prestige'].map(f => (
+                      <div key={f} className="flex items-center gap-2">
+                        <CheckCircle2 size={13} color="rgba(255,255,255,0.4)"/>
+                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                    onClick={() => navigate('/auth')}
+                    className="w-full py-2.5 rounded-2xl font-semibold text-sm cursor-pointer"
+                    style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent' }}>
                     Commencer →
                   </motion.button>
                 </div>
