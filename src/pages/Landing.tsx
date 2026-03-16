@@ -240,15 +240,62 @@ export function Landing() {
             {/* Glow behind bottle */}
             <div className="absolute inset-0 rounded-full blur-3xl"
               style={{ background: 'radial-gradient(circle, rgba(114,47,55,0.18) 0%, transparent 65%)', transform: 'scale(1.3)' }}/>
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Wine_bottle_and_glass.jpg/400px-Wine_bottle_and_glass.jpg"
-              alt="Bouteille de vin"
-              className="relative z-10"
-              style={{ height: 380, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 32px 64px rgba(114,47,55,0.25)) drop-shadow(0 8px 24px rgba(0,0,0,0.15))', maxWidth: '100%', borderRadius: 16 }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
+            <svg viewBox="0 0 120 340" fill="none" className="relative z-10" style={{ height: 380, width: 'auto', maxWidth: '100%', filter: 'drop-shadow(0 32px 64px rgba(114,47,55,0.3)) drop-shadow(0 8px 24px rgba(0,0,0,0.2))' }}>
+              <defs>
+                <linearGradient id="hbody" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#050103"/>
+                  <stop offset="18%" stopColor="#180608"/>
+                  <stop offset="45%" stopColor="#2d0d14"/>
+                  <stop offset="72%" stopColor="#180608"/>
+                  <stop offset="100%" stopColor="#050103"/>
+                </linearGradient>
+                <linearGradient id="hwine" x1="0%" y1="100%" x2="80%" y2="0%">
+                  <stop offset="0%" stopColor="#2a060a"/>
+                  <stop offset="100%" stopColor="#6b1520"/>
+                </linearGradient>
+                <linearGradient id="hcap" x1="0%" y1="0%" x2="20%" y2="100%">
+                  <stop offset="0%" stopColor="#f0cc60"/>
+                  <stop offset="45%" stopColor="#c9a227"/>
+                  <stop offset="100%" stopColor="#7a5f10"/>
+                </linearGradient>
+                <linearGradient id="hsheen" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="transparent"/>
+                  <stop offset="30%" stopColor="rgba(255,255,255,0.05)"/>
+                  <stop offset="45%" stopColor="rgba(255,255,255,0.18)"/>
+                  <stop offset="60%" stopColor="rgba(255,255,255,0.04)"/>
+                  <stop offset="100%" stopColor="transparent"/>
+                </linearGradient>
+                <linearGradient id="hlbl" cx="50%" cy="30%" r="70%" id="hlblr">
+                  <stop offset="0%" stopColor="#fffef8"/>
+                  <stop offset="100%" stopColor="#f5f0e8"/>
+                </linearGradient>
+                <clipPath id="hwclip"><rect x="18" y="205" width="84" height="100"/></clipPath>
+              </defs>
+              {/* Body */}
+              <path d="M42 108 C24 120 18 144 18 168 L18 272 C18 286 28 295 42 295 L78 295 C92 295 102 286 102 272 L102 168 C102 144 96 120 78 108 Z" fill="url(#hbody)"/>
+              <path d="M42 108 C24 120 18 144 18 168 L18 272 C18 286 28 295 42 295 L78 295 C92 295 102 286 102 272 L102 168 C102 144 96 120 78 108 Z" fill="url(#hwine)" clipPath="url(#hwclip)"/>
+              <path d="M42 108 C24 120 18 144 18 168 L18 272 C18 286 28 295 42 295 L78 295 C92 295 102 286 102 272 L102 168 C102 144 96 120 78 108 Z" fill="url(#hsheen)"/>
+              <path d="M24 152 C22 145 21 156 21 168 L21 258 C22 262 25 264 26 261 Z" fill="rgba(255,255,255,0.06)"/>
+              {/* Neck */}
+              <path d="M44 32 L44 108 L76 108 L76 32 Z" fill="url(#hbody)"/>
+              <path d="M44 32 L44 108 L76 108 L76 32 Z" fill="url(#hsheen)" opacity="0.8"/>
+              <rect x="42" y="102" width="36" height="8" rx="2" fill="rgba(0,0,0,0.4)"/>
+              <rect x="42" y="102" width="36" height="3" rx="1.5" fill="url(#hcap)" opacity="0.5"/>
+              {/* Capsule */}
+              <path d="M43 10 L43 34 Q43 39 60 39 Q77 39 77 34 L77 10 Q77 5 60 5 Q43 5 43 10 Z" fill="url(#hcap)"/>
+              <path d="M43 10 L43 16 Q43 20 60 20 Q77 20 77 16 L77 10 Q77 5 60 5 Q43 5 43 10 Z" fill="rgba(255,255,255,0.22)"/>
+              {/* Label */}
+              <rect x="22" y="168" width="76" height="82" rx="6" fill="#fffef8"/>
+              <rect x="22" y="168" width="76" height="5" rx="2.5" fill="url(#hcap)"/>
+              <rect x="22" y="245" width="76" height="5" rx="2.5" fill="url(#hcap)"/>
+              <rect x="26" y="177" width="68" height="65" rx="4" fill="none" stroke="#c9a227" strokeWidth="0.5" opacity="0.4"/>
+              <text x="60" y="196" textAnchor="middle" fill="#5a1420" fontSize="9.5" fontWeight="900" fontFamily="Georgia,serif" letterSpacing="3">SOMMELY</text>
+              <line x1="28" y1="202" x2="92" y2="202" stroke="#c9a227" strokeWidth="0.5" opacity="0.5"/>
+              <text x="60" y="212" textAnchor="middle" fill="#8b6068" fontSize="6" fontFamily="Georgia,serif" letterSpacing="1.5">SOMMELIER IA</text>
+              <line x1="34" y1="218" x2="86" y2="218" stroke="#c9a227" strokeWidth="0.3" opacity="0.35"/>
+              <text x="60" y="227" textAnchor="middle" fill="#a08080" fontSize="5.5" fontFamily="Georgia,serif" letterSpacing="1">BORDEAUX · 2023</text>
+              <text x="60" y="237" textAnchor="middle" fill="#c9a227" fontSize="5" fontFamily="Georgia,serif" letterSpacing="0.5">✦ ✦ ✦</text>
+            </svg>
             {/* Floating scan result card */}
             <motion.div
               animate={{ y: [0, -8, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
