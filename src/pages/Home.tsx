@@ -207,63 +207,89 @@ export function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-cream font-body">
+    <div className="min-h-screen font-body" style={{ background: '#FAFAF8' }}>
 
       {/* HEADER */}
-      <div className="bg-white px-6 pt-12 pb-6 border-b border-gray-light/20">
-        <div className="max-w-lg mx-auto">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-gray-dark text-sm">{timeOfDay}{firstName ? `, ${firstName}` : ''} 👋</p>
-              <h1 className="font-display text-2xl font-bold text-black-wine mt-0.5">
-                {isPremium ? '🌟 Sommely Pro' : 'Sommely'}
+      <div className="px-5 pt-12 pb-4" style={{ background: 'rgba(250,250,248,0.9)', backdropFilter: 'blur(20px)' }}>
+        <div className="max-w-lg mx-auto flex items-center justify-between">
+          <div>
+            <p className="text-sm mb-0.5" style={{ color: '#9E9E9E' }}>{timeOfDay}{firstName ? `, ${firstName}` : ''} 👋</p>
+            <div className="flex items-center gap-2">
+              <h1 className="font-display font-bold text-xl" style={{ color: '#1a0508', letterSpacing: '-0.02em' }}>
+                {isPremium ? 'Sommely Pro' : 'Sommely'}
               </h1>
-            </div>
-            <button onClick={() => navigate('/profile')} className="w-11 h-11 rounded-full bg-burgundy-dark flex items-center justify-center border-none cursor-pointer shadow-md">
-              {firstName ? (
-                <span className="font-display text-base font-bold text-white">{firstName[0].toUpperCase()}</span>
-              ) : (
-                <img src="/IMG_1639-transparent.png" alt="Sommely" width={24} height={24} className="object-contain" style={{ filter: 'brightness(0) invert(1)' }} onError={(e) => { (e.target as HTMLImageElement).src = '/Logo%20Sommely.jpeg'; (e.target as HTMLImageElement).style.filter = 'brightness(0) invert(1)'; }} />
+              {isPremium && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(212,175,55,0.15)', color: '#D4AF37' }}>
+                  ♾ Illimité
+                </span>
               )}
-            </button>
+            </div>
           </div>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/profile')}
+            className="w-10 h-10 rounded-2xl flex items-center justify-center border-none cursor-pointer font-display font-bold text-white text-base shadow-lg"
+            style={{ background: 'linear-gradient(135deg, #722F37, #8B4049)' }}
+          >
+            {firstName ? firstName[0].toUpperCase() : 'S'}
+          </motion.button>
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-5 py-5 space-y-5">
+      <div className="max-w-lg mx-auto px-5 pt-4 pb-8 space-y-4">
 
-        {/* CTA SCANNER PRINCIPAL */}
+        {/* SCANNER CTA — glassmorphism premium */}
         <motion.button
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => navigate('/scan')}
-          className="w-full bg-gradient-to-br from-burgundy-dark to-burgundy-medium rounded-3xl p-6 text-white border-none cursor-pointer shadow-xl hover:shadow-2xl active:scale-[0.98] transition-all text-left relative overflow-hidden"
+          className="w-full rounded-3xl p-6 text-left border-none cursor-pointer relative overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, #722F37 0%, #5a1e24 100%)',
+            boxShadow: '0 20px 60px rgba(114,47,55,0.25), 0 4px 16px rgba(114,47,55,0.15)',
+          }}
         >
-          <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/5 -translate-y-8 translate-x-8" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-white/5 translate-y-8 -translate-x-8" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center">
-                <Camera size={24} color="white" />
+          {/* Glass orbs */}
+          <div className="absolute top-0 right-0 w-40 h-40 rounded-full -translate-y-16 translate-x-16"
+            style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.2) 0%, transparent 70%)' }} />
+          <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full translate-y-12 -translate-x-12"
+            style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)' }} />
+
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)' }}>
+                <Camera size={22} color="white" />
               </div>
-              {!isPremium && (
-                <div className={`px-3 py-1.5 rounded-full text-xs font-bold ${scansRemaining > 1 ? 'bg-white/15 text-white' : scansRemaining === 1 ? 'bg-orange-400/30 text-orange-200' : 'bg-red-400/30 text-red-200'}`}>
-                  {scansRemaining > 0 ? `${scansRemaining} scan${scansRemaining > 1 ? 's' : ''} gratuit${scansRemaining > 1 ? 's' : ''}` : 'Limite atteinte'}
+              {!isPremium && scansRemaining > 0 && (
+                <div className="px-3 py-1.5 rounded-full text-xs font-bold"
+                  style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)' }}>
+                  {scansRemaining} scan{scansRemaining > 1 ? 's' : ''} gratuit{scansRemaining > 1 ? 's' : ''}
                 </div>
               )}
-              {isPremium && <div className="px-3 py-1.5 rounded-full text-xs font-bold bg-gold/30 text-gold">♾ Illimité</div>}
+              {isPremium && (
+                <div className="px-3 py-1 rounded-full text-xs font-bold"
+                  style={{ background: 'rgba(212,175,55,0.25)', color: '#D4AF37' }}>
+                  ♾ Illimité
+                </div>
+              )}
             </div>
-            <h2 className="font-display text-2xl font-bold mb-1">Scanner un vin en 3 secondes</h2>
-            <p className="text-white/60 text-sm">Photographiez l'étiquette, Antoine analyse et vous donne un score personnalisé selon vos goûts.</p>
-            <div className="flex items-center gap-2 mt-4">
-              <div className="flex-1 h-0.5 bg-white/10" />
-              <span className="text-white/40 text-xs">Appuyez pour commencer</span>
+            <h2 className="font-display font-bold text-xl text-white mb-1.5" style={{ letterSpacing: '-0.01em' }}>
+              Scanner une bouteille
+            </h2>
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              GPT-4o identifie l&apos;étiquette · Score personnalisé en 3 secondes
+            </p>
+            <div className="flex items-center gap-2 mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>Appuyer pour commencer</span>
               <ChevronRight size={14} color="rgba(255,255,255,0.4)" />
             </div>
           </div>
         </motion.button>
 
-        {/* STATS RAPIDES */}
+        {/* STATS */}
         {(scanCount > 0 || caveBottles > 0) && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -271,161 +297,156 @@ export function Home() {
             transition={{ delay: 0.1 }}
             className="grid grid-cols-3 gap-3"
           >
-            <div className="bg-white rounded-2xl border border-gray-light/30 p-3.5 text-center shadow-sm">
-              <p className="font-display text-2xl font-bold text-black-wine">{scanCount}</p>
-              <p className="text-xs text-gray-dark">Scans</p>
-            </div>
-            <button onClick={() => navigate('/cave')} className="bg-white rounded-2xl border border-gray-light/30 p-3.5 text-center shadow-sm hover:shadow-md transition-all cursor-pointer">
-              <p className="font-display text-2xl font-bold text-black-wine">{caveBottles}</p>
-              <p className="text-xs text-gray-dark">En cave</p>
-            </button>
-            <button onClick={() => navigate('/cave')} className="bg-white rounded-2xl border border-gray-light/30 p-3.5 text-center shadow-sm hover:shadow-md transition-all cursor-pointer">
-              <p className="font-display text-lg font-bold text-black-wine">{caveValue > 0 ? `${Math.round(caveValue / 1000 * 10) / 10}k€` : '...'}</p>
-              <p className="text-xs text-gray-dark">Cave</p>
-            </button>
+            {[
+              { label: 'Scans', value: scanCount, onClick: undefined },
+              { label: 'Bouteilles', value: caveBottles, onClick: () => navigate('/cave') },
+              { label: 'Cave', value: caveValue > 0 ? `${caveValue > 999 ? `${Math.round(caveValue/1000*10)/10}k` : caveValue}€` : '—', onClick: () => navigate('/cave') },
+            ].map((s, i) => (
+              <motion.div key={i} whileTap={{ scale: 0.97 }}
+                onClick={s.onClick}
+                className="rounded-2xl p-4 text-center border"
+                style={{ background: 'white', borderColor: 'rgba(0,0,0,0.06)', cursor: s.onClick ? 'pointer' : 'default', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                <p className="font-display font-bold text-xl" style={{ color: '#1a0508', letterSpacing: '-0.02em' }}>{s.value}</p>
+                <p className="text-xs mt-0.5" style={{ color: '#9E9E9E' }}>{s.label}</p>
+              </motion.div>
+            ))}
           </motion.div>
         )}
 
-        {/* CAVE VIRTUELLE */}
+        {/* CAVE */}
         <motion.button
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
           onClick={() => navigate('/cave')}
-          className="w-full bg-white rounded-2xl border border-gray-light/30 shadow-sm p-5 text-left cursor-pointer hover:shadow-md transition-all"
+          className="w-full rounded-2xl p-5 text-left border cursor-pointer"
+          style={{ background: 'white', borderColor: 'rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-burgundy-dark/5 flex items-center justify-center flex-shrink-0">
-              <span className="text-2xl">🍾</span>
-            </div>
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
+              style={{ background: 'rgba(114,47,55,0.06)' }}>🍾</div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-0.5">
-                <p className="font-semibold text-black-wine text-sm">Ma cave virtuelle</p>
-              </div>
-              <p className="text-xs text-gray-dark">
+              <p className="font-semibold text-sm mb-0.5" style={{ color: '#1a0508' }}>Ma cave virtuelle</p>
+              <p className="text-xs" style={{ color: '#9E9E9E' }}>
                 {caveBottles > 0
-                  ? `${caveBottles} bouteille${caveBottles > 1 ? 's' : ''} · Valeur : ${caveValue.toLocaleString('fr-FR')} €`
+                  ? `${caveBottles} bouteille${caveBottles > 1 ? 's' : ''} · ${caveValue.toLocaleString('fr-FR')} €`
                   : 'Gérez vos bouteilles · Prix en temps réel'}
               </p>
             </div>
-            <ChevronRight size={18} color="#D1CBC4" />
+            <ChevronRight size={16} style={{ color: '#D1CBC4', flexShrink: 0 }} />
           </div>
-          {caveValue > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-light/30 flex items-center gap-2">
-              <TrendingUp size={14} color="#2E7D32" />
-              <span className="text-xs text-green-700 font-semibold">Prix mis à jour par IA</span>
-              <span className="text-xs text-gray-dark ml-auto">Simulation vente →</span>
-            </div>
-          )}
         </motion.button>
 
-        {/* FONCTIONNALITÉS EXCLUSIVES */}
+        {/* FONCTIONNALITÉS */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <p className="font-display text-base font-bold text-black-wine">Fonctionnalités exclusives</p>
+            <p className="font-semibold text-sm" style={{ color: '#1a0508' }}>Fonctionnalités</p>
             <div className="flex items-center gap-1">
-              <Zap size={12} color="#D4AF37" fill="#D4AF37" />
-              <span className="text-xs text-gray-dark font-medium">Introuvable sur Vivino</span>
+              <Zap size={11} fill="#D4AF37" color="#D4AF37" />
+              <span className="text-xs font-medium" style={{ color: '#D4AF37' }}>Introuvable sur Vivino</span>
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {features.map((f, i) => (
               <motion.button
                 key={f.id}
-                initial={{ opacity: 0, x: -12 }}
+                initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + i * 0.08 }}
+                transition={{ delay: 0.2 + i * 0.06 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => navigate(f.route)}
-                className={`w-full bg-gradient-to-r ${f.color} rounded-2xl border ${f.border} p-4 text-left cursor-pointer hover:shadow-md transition-all`}
+                className="w-full rounded-2xl p-4 text-left border cursor-pointer flex items-center gap-3"
+                style={{ background: 'white', borderColor: 'rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl flex-shrink-0">{f.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <p className="font-semibold text-black-wine text-sm">{f.title}</p>
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${f.tagColor}`}>{f.tag}</span>
-                    </div>
-                    <p className="text-xs text-gray-dark">{f.subtitle}</p>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                  style={{ background: 'rgba(114,47,55,0.06)' }}>{f.emoji}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <p className="font-semibold text-sm" style={{ color: '#1a0508' }}>{f.title}</p>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${f.tagColor}`}>{f.tag}</span>
                   </div>
-                  <ChevronRight size={16} color="#D1CBC4" />
+                  <p className="text-xs" style={{ color: '#9E9E9E' }}>{f.subtitle}</p>
                 </div>
+                <ChevronRight size={15} style={{ color: '#D1CBC4', flexShrink: 0 }} />
               </motion.button>
             ))}
           </div>
         </div>
 
-        {/* BANNER PREMIUM si pas premium */}
+        {/* BANNER PREMIUM */}
         {!isPremium && (
           <motion.button
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.45 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/premium')}
-            className="w-full bg-gradient-to-r from-gold/20 to-amber-400/10 border border-gold/30 rounded-2xl p-5 text-left cursor-pointer hover:shadow-md transition-all"
+            className="w-full rounded-2xl p-5 text-left cursor-pointer relative overflow-hidden border-none"
+            style={{
+              background: 'linear-gradient(135deg, rgba(212,175,55,0.12) 0%, rgba(212,175,55,0.05) 100%)',
+              border: '1px solid rgba(212,175,55,0.25)',
+            }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gold/20 flex items-center justify-center flex-shrink-0">
-                <Star size={20} color="#D4AF37" fill="#D4AF37" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(212,175,55,0.2)' }}>
+                <Star size={18} fill="#D4AF37" color="#D4AF37" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-black-wine text-sm">Passer à Sommely Pro</p>
-                <p className="text-xs text-gray-dark">Scans illimités · Cave illimitée · Toutes les fonctionnalités</p>
+                <p className="font-semibold text-sm" style={{ color: '#1a0508' }}>Passer à Sommely Pro</p>
+                <p className="text-xs" style={{ color: '#9E9E9E' }}>Scans illimités · Cave illimitée · Antoine 24h/24</p>
               </div>
-              <ChevronRight size={16} color="#D4AF37" />
+              <ChevronRight size={16} style={{ color: '#D4AF37' }} />
             </div>
           </motion.button>
         )}
 
-        {/* DERNIÈRE ACTIVITÉ */}
+        {/* DERNIER SCAN */}
         {recentWine && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-4"
+            className="rounded-2xl p-4 border"
+            style={{ background: 'white', borderColor: 'rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
           >
-            <p className="text-xs font-bold text-gray-dark uppercase tracking-wide mb-3">Dernier vin scanné</p>
+            <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: '#9E9E9E' }}>Dernier scan</p>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-burgundy-dark/5 flex items-center justify-center flex-shrink-0">
-                <span className="text-xl">🍷</span>
-              </div>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                style={{ background: 'rgba(114,47,55,0.06)' }}>🍷</div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-black-wine text-sm truncate">{recentWine.name}</p>
-                <p className="text-xs text-gray-dark">{recentWine.year} · {recentWine.region}</p>
+                <p className="font-semibold text-sm truncate" style={{ color: '#1a0508' }}>{recentWine.name}</p>
+                <p className="text-xs" style={{ color: '#9E9E9E' }}>{recentWine.year} · {recentWine.region}</p>
               </div>
-              <button onClick={() => navigate('/scan')} className="bg-burgundy-dark text-white text-xs px-3 py-1.5 rounded-full border-none cursor-pointer font-semibold">
+              <button onClick={() => navigate('/scan')}
+                className="text-xs font-semibold px-3 py-1.5 rounded-full border-none cursor-pointer text-white"
+                style={{ background: '#722F37' }}>
                 Rescanner
               </button>
             </div>
           </motion.div>
         )}
 
-        {/* TIPS */}
+        {/* TIP */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.55 }}
-          className="bg-white rounded-2xl border border-gray-light/30 p-4"
+          className="rounded-2xl p-4 border"
+          style={{ background: 'rgba(114,47,55,0.03)', borderColor: 'rgba(114,47,55,0.1)' }}
         >
           <div className="flex items-start gap-3">
-            <span className="text-xl flex-shrink-0">💡</span>
+            <span className="text-base flex-shrink-0">💡</span>
             <div>
-              <p className="text-xs font-bold text-black-wine mb-1">Le saviez-vous ?</p>
-              <p className="text-xs text-gray-dark leading-relaxed">
-                Les restaurants majorent les vins en moyenne de 250%. Utilisez &quot;Carte du restaurant&quot; pour trouver les meilleures affaires sur n'importe quelle carte des vins.
+              <p className="text-xs font-bold mb-1" style={{ color: '#1a0508' }}>Le saviez-vous ?</p>
+              <p className="text-xs leading-relaxed" style={{ color: '#9E9E9E' }}>
+                Les restaurants majorent les vins en moyenne de 250%. Utilisez &quot;Carte du restaurant&quot; pour trouver les meilleures affaires.
               </p>
             </div>
           </div>
         </motion.div>
 
-        <div className="h-6" />
-
-        {/* Footer */}
-        <div className="text-center pb-4">
-          <button onClick={() => navigate('/privacy')} className="text-xs text-gray-dark/50 hover:text-burgundy-dark bg-transparent border-none cursor-pointer underline">
-            Politique de confidentialité
-          </button>
-        </div>
+        <div className="h-4" />
       </div>
     </div>
   );
