@@ -41,7 +41,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
   const showNav = !NAV_HIDDEN.some(p => pathname.startsWith(p));
   return (
     <>
-      <div className={showNav ? 'pb-20' : ''}>
+      <div className={showNav ? 'pb-28' : ''}>
         <ClarityScript />
         <GoogleAnalytics />
         <Routes>

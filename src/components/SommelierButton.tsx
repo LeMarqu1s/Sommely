@@ -5,8 +5,8 @@ export function SommelierButton() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const hiddenPaths = ['/sommelier', '/onboarding'];
-  if (hiddenPaths.includes(location.pathname)) return null;
+  const hiddenPaths = ['/sommelier', '/onboarding', '/auth', '/', '/privacy', '/profile', '/scan'];
+  if (hiddenPaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'))) return null;
 
   return (
     <motion.button
@@ -16,7 +16,7 @@ export function SommelierButton() {
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
       onClick={() => navigate('/sommelier')}
-      className="fixed bottom-24 right-5 z-30 w-14 h-14 rounded-full bg-burgundy-dark flex items-center justify-center border-none cursor-pointer shadow-[0_8px_32px_rgba(114,47,55,0.4)]"
+      className="fixed bottom-24 right-4 z-40 w-12 h-12 rounded-full bg-burgundy-dark flex items-center justify-center border-none cursor-pointer shadow-[0_8px_32px_rgba(114,47,55,0.4)]"
     >
       <span className="text-2xl">🍷</span>
     </motion.button>

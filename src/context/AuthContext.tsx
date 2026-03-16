@@ -91,8 +91,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // NE PAS nettoyer le hash ici — Supabase a besoin du access_token pour établir la session
     // getSession() va automatiquement détecter le token dans l'URL via detectSessionInUrl
+    // Essaie de rafraîchir la session si elle existe en localStorage
     supabase.auth.getSession()
-      .then(async ({ data: { session } }) => {
+      .then(async ({ data: { session }, error }) => {
+        // Si session expirée, tente un refresh
+        if (error || !session) {
+          const { data: refreshed } = await supabase.auth.refreshSession();
+          if (refreshed.session) {
+            setSession(refreshed.session);
+            setUser(refreshed.session.user);
+            const { data: p } = await getProfile(refreshed.session.user.id);
+            setProfile(p ?? null);
+            if (p?.onboarding_completed) localStorage.setItem('sommely_onboarding_done', 'true');
+            setIsLoading(false);
+            return;
+          }
+        }
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
