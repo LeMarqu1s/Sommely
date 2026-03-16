@@ -572,9 +572,9 @@ export function Profile() {
           className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           {[
-            { icon: Bell, label: 'Notifications', action: () => {}, color: '#6B5D56' },
-            { icon: Shield, label: 'Confidentialité', action: () => {}, color: '#6B5D56' },
-            { icon: Settings, label: 'Paramètres', action: () => {}, color: '#6B5D56' },
+            { icon: Bell, label: 'Notifications', action: () => alert('Notifications — bientôt disponible'), color: '#6B5D56' },
+            { icon: Shield, label: 'Confidentialité', action: () => navigate('/privacy'), color: '#6B5D56' },
+            { icon: Settings, label: 'Paramètres', action: () => navigate('/onboarding'), color: '#6B5D56' },
           ].map((item) => (
             <button
               key={item.label}
@@ -658,7 +658,7 @@ export function Profile() {
           </motion.div>
         )}
 
-        <div className="h-20" />
+        <div className="h-32" />
       </div>
     </div>
   );

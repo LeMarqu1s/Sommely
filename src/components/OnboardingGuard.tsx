@@ -26,9 +26,11 @@ export function OnboardingGuard() {
     }
 
     // Connecté mais onboarding pas fait
-    // On vérifie d'abord localStorage (plus fiable que Supabase en temps réel)
     const localDone = localStorage.getItem('sommely_onboarding_done');
-    if (localDone) return; // localStorage dit que c'est fait → OK
+    if (localDone) return;
+
+    // Ne jamais rediriger depuis /profile ou /cave — laisser l'utilisateur accéder
+    if (pathname === '/profile' || pathname === '/cave') return;
 
     // Sinon on vérifie Supabase
     if (profile && !profile.onboarding_completed) {
