@@ -374,20 +374,16 @@ export function Scanner() {
   // ─── RENDU ────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-black-wine flex flex-col font-body overflow-y-auto" style={{ background: "#1a0508" }}>
+    <div className="min-h-screen flex flex-col font-body overflow-y-auto" style={{ background: '#0a0a0a' }}>
 
-      <div className="flex items-center justify-between px-6 py-4 z-20 relative flex-shrink-0">
-        <div className="w-20" />
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-burgundy-dark flex items-center justify-center overflow-hidden p-0.5">
-            <img src="/IMG_1639-transparent.png" alt="Sommely" width={20} height={20} className="object-contain" style={{ filter: 'brightness(0) invert(1)' }} onError={(e) => { (e.target as HTMLImageElement).src = '/Logo%20Sommely.jpeg'; (e.target as HTMLImageElement).style.filter = 'brightness(0) invert(1)'; }} />
-          </div>
-          <span className="font-display text-lg font-bold text-white">Sommely</span>
-        </div>
-        <div className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
-          isPremium ? 'bg-gold/20 text-gold' : scansRemaining > 1 ? 'bg-white/10 text-white' : scansRemaining === 1 ? 'bg-warning/20 text-warning' : 'bg-danger/20 text-red-300'
-        }`}>
-          {isPremium ? '♾ Illimité' : scansRemaining > 0 ? `${scansRemaining} restant${scansRemaining > 1 ? 's' : ''}` : 'Limite atteinte'}
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 z-20 relative flex-shrink-0">
+        <div className="w-16" />
+        <span className="font-display font-bold text-white text-base" style={{ letterSpacing: '-0.01em' }}>Scanner</span>
+        <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+          isPremium ? 'text-yellow-300' : scansRemaining > 1 ? 'text-white/60' : scansRemaining === 1 ? 'text-orange-300' : 'text-red-400'
+        }`} style={{ background: 'rgba(255,255,255,0.08)' }}>
+          {isPremium ? '∞' : `${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''}`}
         </div>
       </div>
 
@@ -406,51 +402,55 @@ export function Scanner() {
 
           {scanState === 'idle' && !showManualSearch && (
             <motion.div key="idle" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex flex-col items-center text-center z-10 w-full max-w-sm">
-              <div className="relative mb-8">
-                {/* Outer glow */}
-                <motion.div className="absolute inset-0 rounded-3xl blur-2xl"
-                  style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.15) 0%, transparent 70%)' }}
-                  animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.3, 0.6, 0.3] }}
-                  transition={{ duration: 3, repeat: Infinity }} />
-                
+              {/* Viewfinder — full width Apple Camera style */}
+              <div className="relative w-full mb-6" style={{ maxWidth: 320 }}>
                 <motion.div
-                  animate={{ boxShadow: ['0 0 0 0 rgba(212,175,55,0)', '0 0 0 8px rgba(212,175,55,0.1)', '0 0 0 0 rgba(212,175,55,0)'] }}
-                  transition={{ duration: 2.5, repeat: Infinity }}
-                  className="w-64 h-64 rounded-3xl flex items-center justify-center relative overflow-hidden"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
+                  animate={{ opacity: [0.4, 0.8, 0.4] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="absolute -inset-4 rounded-full blur-3xl pointer-events-none"
+                  style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 70%)' }}
+                />
+                
+                <div className="relative rounded-[2rem] overflow-hidden"
+                  style={{ aspectRatio: '1/1', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
                   
-                  {/* Corner markers — Apple style */}
-                  {[['top-0 left-0', 'border-t-2 border-l-2 rounded-tl-2xl'],
-                    ['top-0 right-0', 'border-t-2 border-r-2 rounded-tr-2xl'],
-                    ['bottom-0 left-0', 'border-b-2 border-l-2 rounded-bl-2xl'],
-                    ['bottom-0 right-0', 'border-b-2 border-r-2 rounded-br-2xl']].map(([pos, style], i) => (
-                    <motion.div key={i} className={`absolute ${pos} w-10 h-10 ${style}`}
-                      style={{ borderColor: '#D4AF37' }}
-                      animate={{ opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }} />
+                  {/* Corner L-brackets */}
+                  {[
+                    { pos: 'top-4 left-4', style: { borderTop: '2px solid rgba(212,175,55,0.9)', borderLeft: '2px solid rgba(212,175,55,0.9)', borderRadius: '4px 0 0 0', width: 28, height: 28 } },
+                    { pos: 'top-4 right-4', style: { borderTop: '2px solid rgba(212,175,55,0.9)', borderRight: '2px solid rgba(212,175,55,0.9)', borderRadius: '0 4px 0 0', width: 28, height: 28 } },
+                    { pos: 'bottom-4 left-4', style: { borderBottom: '2px solid rgba(212,175,55,0.9)', borderLeft: '2px solid rgba(212,175,55,0.9)', borderRadius: '0 0 0 4px', width: 28, height: 28 } },
+                    { pos: 'bottom-4 right-4', style: { borderBottom: '2px solid rgba(212,175,55,0.9)', borderRight: '2px solid rgba(212,175,55,0.9)', borderRadius: '0 0 4px 0', width: 28, height: 28 } },
+                  ].map((c, i) => (
+                    <motion.div key={i} className={`absolute ${c.pos}`} style={c.style}
+                      animate={{ opacity: [0.6, 1, 0.6] }}
+                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.15 }} />
                   ))}
-                  
-                  <div className="flex flex-col items-center gap-3 relative z-10">
-                    <motion.div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                      style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)' }}
-                      animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 2, repeat: Infinity }}>
-                      <Camera size={30} color="rgba(255,255,255,0.7)" />
-                    </motion.div>
-                    <p className="text-xs px-4" style={{ color: 'rgba(255,255,255,0.35)' }}>Pointez vers l'étiquette</p>
+
+                  {/* Center reticle */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <motion.div animate={{ scale: [0.95, 1.02, 0.95], opacity: [0.3, 0.6, 0.3] }}
+                      transition={{ duration: 2.5, repeat: Infinity }}
+                      className="w-8 h-8 rounded-full"
+                      style={{ border: '1px solid rgba(212,175,55,0.5)' }} />
                   </div>
-                  
-                  {/* Scanning line */}
+
+                  {/* Scan line */}
                   <motion.div
-                    animate={{ y: [-80, 80, -80] }}
-                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute left-6 right-6 h-px"
-                    style={{ background: 'linear-gradient(90deg, transparent, rgba(212,175,55,0.8), transparent)' }} />
-                </motion.div>
+                    animate={{ y: ['-40%', '140%'] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'linear', repeatDelay: 0.5 }}
+                    className="absolute left-8 right-8 h-px"
+                    style={{ background: 'linear-gradient(90deg, transparent, rgba(212,175,55,0.7) 30%, rgba(212,175,55,0.9) 50%, rgba(212,175,55,0.7) 70%, transparent)', boxShadow: '0 0 8px rgba(212,175,55,0.4)' }} />
+                  
+                  {/* Vignette */}
+                  <div className="absolute inset-0 pointer-events-none" style={{
+                    background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 100%)',
+                  }}/>
+                </div>
               </div>
 
-              <h1 className="font-display text-2xl font-bold text-white mb-2">Scanner une bouteille</h1>
-              <p className="text-white/50 text-sm mb-8 leading-relaxed max-w-xs">
-                {isMobile ? "Prenez une photo ou importez depuis la galerie, notre IA identifie l'étiquette." : "Prenez en photo l'étiquette, notre IA GPT-4o l'identifie et vous donne un score personnalisé."}
+              <h1 className="font-display font-bold text-white mb-2 text-center" style={{ fontSize: '1.6rem', letterSpacing: '-0.02em' }}>Scanner une bouteille</h1>
+              <p className="text-center text-sm mb-6 leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                GPT-4o identifie l&apos;étiquette et calcule votre score en 3 secondes.
               </p>
 
               {isMobile ? (

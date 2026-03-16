@@ -4,58 +4,67 @@ import { useRef } from 'react';
 import { Camera, MessageCircle, TrendingUp, Wine, Star, ArrowRight } from 'lucide-react';
 
 // ─── Bottle SVG ───────────────────────────────────────────
-function Bottle({ className = '', style = {} }: { className?: string; style?: React.CSSProperties }) {
+function Bottle({ id = 'main', className = '', style = {} }: { id?: string; className?: string; style?: React.CSSProperties }) {
   return (
-    <svg viewBox="0 0 120 320" fill="none" className={className} style={style}>
+    <svg viewBox="0 0 100 280" fill="none" className={className} style={style}>
       <defs>
-        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#0d0205"/>
-          <stop offset="20%" stopColor="#1f0810"/>
-          <stop offset="50%" stopColor="#2d0d14"/>
-          <stop offset="80%" stopColor="#1f0810"/>
-          <stop offset="100%" stopColor="#0d0205"/>
+        <linearGradient id={`bg-${id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#0a0104"/>
+          <stop offset="15%" stopColor="#1a0608"/>
+          <stop offset="45%" stopColor="#2d0d14"/>
+          <stop offset="70%" stopColor="#1a0608"/>
+          <stop offset="100%" stopColor="#0a0104"/>
         </linearGradient>
-        <linearGradient id="wine" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#8B1a2a"/>
-          <stop offset="100%" stopColor="#3d0d12"/>
+        <linearGradient id={`wine-${id}`} x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#3d0a10"/>
+          <stop offset="100%" stopColor="#7a1825"/>
         </linearGradient>
-        <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+        <linearGradient id={`gold-${id}`} x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor="#F5D77C"/>
+          <stop offset="50%" stopColor="#D4AF37"/>
           <stop offset="100%" stopColor="#8B7010"/>
         </linearGradient>
-        <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="0%">
+        <linearGradient id={`refl-${id}`} x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="transparent"/>
-          <stop offset="35%" stopColor="rgba(255,255,255,0.08)"/>
-          <stop offset="50%" stopColor="rgba(255,255,255,0.2)"/>
-          <stop offset="65%" stopColor="rgba(255,255,255,0.06)"/>
+          <stop offset="25%" stopColor="rgba(255,255,255,0.06)"/>
+          <stop offset="40%" stopColor="rgba(255,255,255,0.15)"/>
+          <stop offset="55%" stopColor="rgba(255,255,255,0.04)"/>
           <stop offset="100%" stopColor="transparent"/>
         </linearGradient>
-        <clipPath id="wineClip">
-          <rect x="18" y="195" width="84" height="100"/>
+        <clipPath id={`clip-${id}`}>
+          <rect x="15" y="170" width="70" height="95"/>
         </clipPath>
       </defs>
-      {/* Body */}
-      <path d="M42 100 C24 112 18 136 18 162 L18 264 C18 278 30 288 44 288 L76 288 C90 288 102 278 102 264 L102 162 C102 136 96 112 78 100 Z" fill="url(#bg)"/>
-      {/* Wine */}
-      <path d="M42 100 C24 112 18 136 18 162 L18 264 C18 278 30 288 44 288 L76 288 C90 288 102 278 102 264 L102 162 C102 136 96 112 78 100 Z" fill="url(#wine)" clipPath="url(#wineClip)"/>
-      {/* Shine */}
-      <path d="M42 100 C24 112 18 136 18 162 L18 264 C18 278 30 288 44 288 L76 288 C90 288 102 278 102 264 L102 162 C102 136 96 112 78 100 Z" fill="url(#shine)"/>
-      {/* Left highlight */}
-      <path d="M26 145 C24 138 22 152 22 165 L22 248 C23 252 26 254 27 252 Z" fill="rgba(255,255,255,0.07)"/>
-      {/* Neck */}
-      <path d="M46 32 L46 100 L74 100 L74 32 Z" fill="url(#bg)"/>
-      <path d="M46 32 L46 100 L74 100 L74 32 Z" fill="url(#shine)" opacity="0.6"/>
-      {/* Cap */}
-      <rect x="44" y="16" width="32" height="20" rx="7" fill="url(#gold)"/>
-      <rect x="46" y="19" width="28" height="4" rx="2" fill="rgba(255,255,255,0.35)"/>
-      {/* Label */}
-      <rect x="26" y="158" width="68" height="76" rx="8" fill="rgba(255,255,255,0.96)"/>
-      <rect x="26" y="158" width="68" height="5" rx="3" fill="url(#gold)"/>
-      <rect x="26" y="229" width="68" height="5" rx="3" fill="url(#gold)"/>
-      <text x="60" y="182" textAnchor="middle" fill="#722F37" fontSize="10" fontWeight="900" fontFamily="Georgia,serif" letterSpacing="3">SOMMELY</text>
-      <line x1="32" y1="191" x2="88" y2="191" stroke="#D4AF37" strokeWidth="0.8" opacity="0.7"/>
-      <text x="60" y="202" textAnchor="middle" fill="#9E9E9E" fontSize="7.5" fontFamily="Georgia,serif" letterSpacing="1.5">SOMMELIER IA</text>
-      <text x="60" y="218" textAnchor="middle" fill="#C4989E" fontSize="7" fontFamily="Georgia,serif">2026</text>
+      {/* === BODY === */}
+      <path d="M35 88 C20 98 15 118 15 140 L15 232 C15 244 24 252 36 252 L64 252 C76 252 85 244 85 232 L85 140 C85 118 80 98 65 88 Z" fill={`url(#bg-${id})`}/>
+      {/* Wine fill */}
+      <path d="M35 88 C20 98 15 118 15 140 L15 232 C15 244 24 252 36 252 L64 252 C76 252 85 244 85 232 L85 140 C85 118 80 98 65 88 Z" fill={`url(#wine-${id})`} clipPath={`url(#clip-${id})`}/>
+      {/* Reflection */}
+      <path d="M35 88 C20 98 15 118 15 140 L15 232 C15 244 24 252 36 252 L64 252 C76 252 85 244 85 232 L85 140 C85 118 80 98 65 88 Z" fill={`url(#refl-${id})`}/>
+      {/* Left shine strip */}
+      <path d="M22 125 C20 118 19 128 19 138 L19 215 C20 218 22 219 23 217 Z" fill="rgba(255,255,255,0.06)"/>
+      {/* === NECK === */}
+      <path d="M38 28 L38 88 L62 88 L62 28 Z" fill={`url(#bg-${id})`}/>
+      <path d="M38 28 L38 88 L62 88 L62 28 Z" fill={`url(#refl-${id})`} opacity="0.8"/>
+      {/* Neck ring */}
+      <rect x="36" y="82" width="28" height="8" rx="2" fill="#1a0608" opacity="0.8"/>
+      <rect x="36" y="82" width="28" height="3" rx="1.5" fill={`url(#gold-${id})`} opacity="0.6"/>
+      {/* === CAPSULE === */}
+      <path d="M37 10 L37 30 Q37 35 50 35 Q63 35 63 30 L63 10 Q63 5 50 5 Q37 5 37 10 Z" fill={`url(#gold-${id})`}/>
+      <path d="M37 10 L37 14 Q37 18 50 18 Q63 18 63 14 L63 10 Q63 5 50 5 Q37 5 37 10 Z" fill="rgba(255,255,255,0.2)"/>
+      {/* === LABEL === */}
+      <rect x="20" y="138" width="60" height="66" rx="5" fill="rgba(252,250,245,0.97)"/>
+      {/* Label gold borders */}
+      <rect x="20" y="138" width="60" height="4" rx="2" fill={`url(#gold-${id})`}/>
+      <rect x="20" y="200" width="60" height="4" rx="2" fill={`url(#gold-${id})`}/>
+      {/* Label inner border */}
+      <rect x="23" y="145" width="54" height="52" rx="3" fill="none" stroke="#D4AF37" strokeWidth="0.4" opacity="0.4"/>
+      {/* Label text - compact */}
+      <text x="50" y="160" textAnchor="middle" fill="#722F37" fontSize="8" fontWeight="900" fontFamily="Georgia,serif" letterSpacing="2">SOMMELY</text>
+      <line x1="26" y1="165" x2="74" y2="165" stroke="#D4AF37" strokeWidth="0.5" opacity="0.6"/>
+      <text x="50" y="174" textAnchor="middle" fill="#8B6B70" fontSize="5.5" fontFamily="Georgia,serif" letterSpacing="1">SOMMELIER IA</text>
+      <line x1="30" y1="179" x2="70" y2="179" stroke="#D4AF37" strokeWidth="0.3" opacity="0.4"/>
+      <text x="50" y="188" textAnchor="middle" fill="#B8A0A4" fontSize="5" fontFamily="Georgia,serif">BORDEAUX · 2023</text>
     </svg>
   );
 }
@@ -341,7 +350,7 @@ export function Landing() {
       </div>
 
       {/* ── TESTIMONIALS — light ── */}
-      <div id="témoignages" className="py-20 px-6" style={{ background: 'white' }}>
+      <div id="témoignages" className="py-16 px-6" style={{ background: 'white' }}>
         <div className="max-w-5xl mx-auto">
           <FadeIn className="text-center mb-10">
             <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#D4AF37', letterSpacing: '0.2em' }}>Témoignages</p>
@@ -359,7 +368,7 @@ export function Landing() {
               <FadeIn key={i} delay={i * 0.08}>
                 <div className="rounded-2xl p-6" style={{ background: '#fafaf8', border: '1px solid rgba(0,0,0,0.06)' }}>
                   <div className="flex gap-0.5 mb-4">
-                    {[...Array(5)].map((_,j) => <Star key={j} size={12} fill="#D4AF37" color="#D4AF37"/>)}
+                    {[...Array((t as any).stars || 5)].map((_,j) => <Star key={j} size={12} fill="#D4AF37" color="#D4AF37"/>)}
                   </div>
                   <p className="text-sm leading-relaxed mb-5" style={{ color: '#374151', fontStyle: 'italic' }}>"{t.text}"</p>
                   <div className="flex items-center gap-3">
@@ -377,7 +386,7 @@ export function Landing() {
       </div>
 
       {/* ── FINAL CTA — Full bleed dark ── */}
-      <div className="py-24 px-6" style={{ background: '#1d1d1f' }}>
+      <div className="py-20 px-6" style={{ background: '#1d1d1f' }}>
         <div className="max-w-xl mx-auto text-center">
           <FadeIn>
             <div className="relative">
