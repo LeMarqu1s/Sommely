@@ -19,8 +19,9 @@ export function OnboardingGuard() {
     // Attendre fin du chargement
     if (isLoading) return;
 
-    // Pas connecté → page de connexion
+    // Pas connecté → page de connexion (sauf /profile et /cave accessibles en lecture)
     if (!user) {
+      if (pathname === '/profile' || pathname === '/cave') return;
       navigate('/auth', { replace: true });
       return;
     }
