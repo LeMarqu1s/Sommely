@@ -272,6 +272,7 @@ export function Scanner() {
         grapes: Array.isArray(wineAnalysis.grapes) ? wineAnalysis.grapes.join(', ') : (wineAnalysis.grapes || ''),
         alcohol: wineAnalysis.alcohol,
         classification: wineAnalysis.classification,
+        dosage: wineAnalysis.dosage,
         tastingNotes: wineAnalysis.tastingNotes || enrichedData.tastingNotes,
         servingTemp: wineAnalysis.servingTemp || enrichedData.servingTemp,
         decanting: wineAnalysis.decanting || enrichedData.decanting,
@@ -282,6 +283,7 @@ export function Scanner() {
         tips: wineAnalysis.tips || enrichedData.tips,
         description: enrichedData.description,
         avgPrice: enrichedData.avgPrice,
+        bottlePrices: (enrichedData.bottlePrices as { cl375?: number; cl750?: number; cl1500?: number } | undefined),
         confidence: wineAnalysis.confidence,
         labelReadability: wineAnalysis.labelReadability,
       };

@@ -109,8 +109,8 @@ export function Profile() {
 
   return (
     <div className="min-h-screen font-body" style={{ background: '#F5F0E8' }}>
-      <div className="px-5 py-4 flex items-center justify-between sticky top-0 z-20"
-        style={{ background: 'rgba(245,240,232,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+      <div className="px-5 flex items-center justify-between sticky top-0 z-20"
+        style={{ background: 'rgba(245,240,232,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(0,0,0,0.07)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingBottom: '16px' }}>
         <div className="w-8" />
         <div className="flex items-center gap-2">
           <span className="font-display font-bold text-sm" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>Profil</span>
@@ -199,26 +199,6 @@ export function Profile() {
               <p className="text-xs text-gray-dark">{stat.label}</p>
             </div>
           ))}
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 }}
-        >
-          <button
-            onClick={() => navigate('/menu')}
-            className="w-full flex items-center gap-4 bg-white rounded-2xl border border-gray-light/30 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all text-left"
-          >
-            <div className="w-12 h-12 rounded-2xl bg-gold/10 flex items-center justify-center flex-shrink-0">
-              <span className="text-2xl">📋</span>
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-black-wine text-sm">Scanner la carte</p>
-              <p className="text-xs text-gray-dark">Meilleur rapport qualité-prix au resto</p>
-            </div>
-            <ChevronRight size={16} color="#D1CBC4" />
-          </button>
         </motion.div>
 
         <motion.div

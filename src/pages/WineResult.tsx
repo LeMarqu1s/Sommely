@@ -1,5 +1,6 @@
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Logo } from '../components/Logo';
 import {
   ArrowLeft,
@@ -12,6 +13,8 @@ import {
   Grape,
   Star,
   ChevronRight,
+  X,
+  ExternalLink,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -112,6 +115,7 @@ export function WineResult() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [showScoreAnimation, setShowScoreAnimation] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [showPriceSheet, setShowPriceSheet] = useState(false);
 
   const wine = location.state?.wine;
   const score = location.state?.score || 75;
@@ -133,6 +137,39 @@ export function WineResult() {
   const pairings = (wine.type && FOOD_PAIRINGS[wine.type]) || DEFAULT_PAIRINGS;
   const explanation = (location.state as { explanation?: string })?.explanation ?? generateExplanation(wine, score, userProfile);
   const firstName = userProfile?.firstName || '';
+
+  const isChampagne = ['Champagne', 'Pétillant', 'Mousseux'].includes(wine.type || '');
+
+  type DetailItem = { icon: React.ComponentType<{ size?: number; color?: string }>; label: string; value: string };
+
+  const wineDetails: DetailItem[] = [
+    { icon: Wine, label: 'Type', value: wine.type || 'Non spécifié' },
+    { icon: MapPin, label: 'Région', value: wine.region || 'Non spécifié' },
+    { icon: Calendar, label: 'Millésime', value: wine.year != null ? String(wine.year) : 'Non millésimé' },
+    {
+      icon: Grape,
+      label: isChampagne ? 'Assemblage' : 'Cépages',
+      value: wine.grapes || 'Non spécifié',
+    },
+    ...(isChampagne && wine.dosage
+      ? [{ icon: Grape, label: 'Dosage / Sucre', value: wine.dosage }]
+      : []),
+  ];
+
+  const bottlePrices: { cl375?: number; cl750?: number; cl1500?: number } | undefined = wine.bottlePrices;
+  const priceRows: DetailItem[] = bottlePrices
+    ? [
+        ...(bottlePrices.cl375 != null
+          ? [{ icon: Star, label: 'Fillette (37,5cl)', value: `~ ${bottlePrices.cl375} €` }]
+          : []),
+        ...(bottlePrices.cl750 != null
+          ? [{ icon: Star, label: 'Bouteille (75cl)', value: `~ ${bottlePrices.cl750} €` }]
+          : []),
+        ...(bottlePrices.cl1500 != null
+          ? [{ icon: Star, label: 'Magnum (1,5L)', value: `~ ${bottlePrices.cl1500} €` }]
+          : []),
+      ]
+    : [{ icon: Star, label: 'Prix moyen', value: wine.avgPrice != null ? `~ ${wine.avgPrice} €` : 'Non spécifié' }];
 
   const handleFavorite = () => {
     setIsFavorite(!isFavorite);
@@ -245,13 +282,7 @@ export function WineResult() {
             <h2 className="font-display text-lg font-bold text-black-wine">Détails du vin</h2>
           </div>
           <div className="divide-y divide-gray-light/20">
-            {[
-              { icon: Wine, label: 'Type', value: wine.type || '...' },
-              { icon: MapPin, label: 'Région', value: wine.region || '...' },
-              { icon: Calendar, label: 'Millésime', value: wine.year != null ? String(wine.year) : '...' },
-              { icon: Grape, label: 'Cépages', value: wine.grapes || '...' },
-              { icon: Star, label: 'Prix moyen', value: wine.avgPrice != null ? `~ ${wine.avgPrice} €` : '...' },
-            ].map((item) => (
+            {[...wineDetails, ...priceRows].map((item) => (
               <div key={item.label} className="flex items-center gap-4 px-6 py-4">
                 <div className="w-8 h-8 rounded-lg bg-burgundy-dark/8 flex items-center justify-center flex-shrink-0">
                   <item.icon size={15} color="#722F37" />
@@ -521,9 +552,12 @@ export function WineResult() {
             Scanner une autre bouteille
           </button>
 
-          <button className="w-full py-4 bg-gold text-black-wine rounded-2xl font-semibold text-base flex items-center justify-center gap-3 hover:bg-gold-light active:scale-95 transition-all duration-200 shadow-md border-none cursor-pointer">
+          <button
+            onClick={() => setShowPriceSheet(true)}
+            className="w-full py-4 bg-gold text-black-wine rounded-2xl font-semibold text-base flex items-center justify-center gap-3 hover:bg-gold-light active:scale-95 transition-all duration-200 shadow-md border-none cursor-pointer"
+          >
             <ShoppingBag size={20} />
-            Trouver ce vin en ligne 🛒
+            Trouver moins cher 🔍
           </button>
 
           <button
@@ -566,6 +600,124 @@ export function WineResult() {
 
         <div className="h-4" />
       </div>
+
+      {/* ── PRICE COMPARISON BOTTOM SHEET ── */}
+      <AnimatePresence>
+        {showPriceSheet && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => setShowPriceSheet(false)}
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl overflow-hidden"
+              style={{ maxHeight: '85vh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            >
+              <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-light/20">
+                <div>
+                  <h3 className="font-display text-lg font-bold text-black-wine">Trouver moins cher</h3>
+                  <p className="text-xs text-gray-dark mt-0.5 truncate max-w-[240px]">
+                    {wine.name}{wine.year ? ` · ${wine.year}` : ''}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowPriceSheet(false)}
+                  className="w-8 h-8 rounded-full bg-gray-light/30 flex items-center justify-center border-none cursor-pointer"
+                >
+                  <X size={16} color="#6B5D56" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto px-6 py-5 space-y-3">
+                {/* Badge partenaire */}
+                <div className="bg-burgundy-dark/5 border border-burgundy-dark/15 rounded-2xl px-4 py-3 flex items-center gap-3">
+                  <span className="text-xl flex-shrink-0">🤝</span>
+                  <div>
+                    <p className="text-xs font-bold text-burgundy-dark">Partenaire Sommely</p>
+                    <p className="text-xs text-gray-dark">Commandez via nos liens et soutenez Sommely sans surcoût pour vous.</p>
+                  </div>
+                </div>
+
+                {/* Revendeurs */}
+                {[
+                  {
+                    name: 'Wine-Searcher',
+                    desc: 'Comparateur mondial · Prix en temps réel',
+                    emoji: '🌍',
+                    url: `https://www.wine-searcher.com/find/${encodeURIComponent(`${wine.name}${wine.year ? ' ' + wine.year : ''}`)}`,
+                    tag: 'Mondial',
+                    tagColor: 'bg-blue-100 text-blue-700',
+                  },
+                  {
+                    name: 'Millésima',
+                    desc: 'Cave en ligne · Bordeaux & Grands crus',
+                    emoji: '🏰',
+                    url: `https://www.millesima.fr/recherche.html?q=${encodeURIComponent(wine.name)}`,
+                    tag: 'Partenaire',
+                    tagColor: 'bg-gold/20 text-yellow-800',
+                    isAffiliate: true,
+                  },
+                  {
+                    name: 'iDealwine',
+                    desc: 'Ventes aux enchères & occasions',
+                    emoji: '🔨',
+                    url: `https://www.idealwine.com/fr/recherche-vins/?q=${encodeURIComponent(wine.name)}`,
+                    tag: 'Enchères',
+                    tagColor: 'bg-orange-100 text-orange-700',
+                  },
+                  {
+                    name: 'La Cave à Vin',
+                    desc: 'Grands crus & vins en primeur',
+                    emoji: '🍾',
+                    url: `https://www.lacaveduvin.com/recherche?q=${encodeURIComponent(wine.name)}`,
+                    tag: 'Primeurs',
+                    tagColor: 'bg-purple-100 text-purple-700',
+                  },
+                ].map((shop) => (
+                  <a
+                    key={shop.name}
+                    href={shop.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 bg-white border border-gray-light/30 rounded-2xl p-4 hover:border-burgundy-dark/20 hover:shadow-md transition-all no-underline"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-cream flex items-center justify-center flex-shrink-0 text-xl">
+                      {shop.emoji}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                        <span className="font-semibold text-sm text-black-wine">{shop.name}</span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${shop.tagColor}`}>{shop.tag}</span>
+                        {shop.isAffiliate && (
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-burgundy-dark/10 text-burgundy-dark">♥ Sommely</span>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-dark">{shop.desc}</span>
+                    </div>
+                    <ExternalLink size={15} color="#D1CBC4" className="flex-shrink-0" />
+                  </a>
+                ))}
+
+                {wine.avgPrice != null && (
+                  <div className="bg-cream rounded-2xl p-4 text-center">
+                    <p className="text-xs text-gray-dark mb-1">Prix de référence estimé</p>
+                    <p className="font-display text-xl font-bold text-burgundy-dark">~ {wine.avgPrice} €</p>
+                    <p className="text-xs text-gray-dark mt-1">pour une bouteille de 75 cl</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

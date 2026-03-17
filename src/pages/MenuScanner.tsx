@@ -31,6 +31,7 @@ interface MenuAnalysis {
   bestValue: MenuWine;
   topPicks: MenuWine[];
   overpriced: MenuWine[];
+  allWines?: MenuWine[];
   sommelierAdvice: string;
   budgetRecommendation: string;
 }
@@ -53,12 +54,13 @@ Tu analyses la carte des vins d'un restaurant pour identifier le meilleur rappor
 CONTEXTE : Les restaurants majorent généralement les vins de 200 à 400% par rapport au prix de détail.
 Un bon rapport qualité-prix = un vin majoré moins que la moyenne ET de bonne qualité.
 
+⚠️ RÈGLE ABSOLUE : Tu DOIS lire et lister CHAQUE référence vin ET champagne visible sur la carte, sans exception, sans sélection partielle. Balayage complet ligne par ligne. Si 30 vins sont visibles, tu retournes 30 vins dans allWines.
+
 INSTRUCTIONS :
-1. Identifie TOUS les vins visibles sur cette carte
-2. Pour chaque vin, estime son prix de détail habituel selon tes connaissances
-3. Calcule le taux de majoration du restaurant
-4. Attribue un score qualité-prix de 0 à 100
-5. Identifie le meilleur choix absolu pour le client
+1. Balayage COMPLET de l'image : lis TOUTES les lignes de la carte (vins rouges, blancs, rosés, champagnes, vins doux)
+2. Pour CHAQUE référence visible, crée une entrée dans "allWines" avec son prix carte et son estimation marché
+3. Calcule le taux de majoration pour chaque vin
+4. Identifie le meilleur choix absolu (bestValue), les bons choix (topPicks) et les plus surévalués (overpriced)
 
 Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.
 
@@ -66,8 +68,25 @@ Format JSON attendu :
 {
   "restaurantStyle": "Brasserie parisienne / Restaurant gastronomique / Bistrot...",
   "totalWinesFound": 12,
+  "allWines": [
+    {
+      "name": "Nom EXACT de chaque vin tel qu'écrit sur la carte",
+      "year": 2020,
+      "region": "Bordeaux",
+      "type": "Rouge",
+      "priceMenu": 45,
+      "estimatedRetailPrice": 18,
+      "markupPercent": 150,
+      "score": 85,
+      "valueScore": 80,
+      "recommendation": "excellent",
+      "reason": "Raison courte (1 phrase)",
+      "grapes": "Cabernet Sauvignon, Merlot",
+      "appellation": "AOC Bordeaux Supérieur"
+    }
+  ],
   "bestValue": {
-    "name": "Nom exact du vin sur la carte",
+    "name": "Nom exact du meilleur choix",
     "year": 2020,
     "region": "Bordeaux",
     "type": "Rouge",
@@ -77,7 +96,7 @@ Format JSON attendu :
     "score": 88,
     "valueScore": 95,
     "recommendation": "excellent",
-    "reason": "Ce Bordeaux est vendu 45€ sur la carte alors qu'il vaut 18€ en cave. Majoré seulement 150% vs 250% en moyenne. Excellent rapport qualité-prix.",
+    "reason": "Ce Bordeaux est vendu 45€ sur la carte alors qu'il vaut 18€ en cave. Majoré seulement 150% vs 250% en moyenne.",
     "grapes": "Cabernet Sauvignon, Merlot",
     "appellation": "AOC Bordeaux Supérieur"
   },
@@ -110,13 +129,13 @@ Format JSON attendu :
       "score": 87,
       "valueScore": 20,
       "recommendation": "avoid",
-      "reason": "Majoré à 414% alors que la moyenne est 250%. Vous pouvez trouver mieux sur cette carte.",
+      "reason": "Majoré à 414% alors que la moyenne est 250%.",
       "grapes": "Pinot Noir",
       "appellation": "AOC Gevrey-Chambertin"
     }
   ],
-  "sommelierAdvice": "Cette carte propose quelques pépites cachées. Le meilleur choix est clairement le Bordeaux Supérieur, excellent rapport qualité-prix pour un dîner.",
-  "budgetRecommendation": "Pour un dîner à 2, je recommande le premier choix à 45€. Vous économisez environ 30€ par rapport aux vins surévalués de cette carte."
+  "sommelierAdvice": "Cette carte propose quelques pépites cachées. Le meilleur choix est clairement le Bordeaux Supérieur.",
+  "budgetRecommendation": "Pour un dîner à 2, je recommande le premier choix à 45€."
 }
 
 Si l'image n'est pas une carte des vins ou menu, retourne :
@@ -138,7 +157,7 @@ export function MenuScanner() {
   const [menuAnalysis, setMenuAnalysis] = useState<MenuAnalysis | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [showCamera, setShowCamera] = useState(false);
-  const [activeTab, setActiveTab] = useState<'best' | 'top' | 'avoid'>('best');
+  const [activeTab, setActiveTab] = useState<'best' | 'top' | 'avoid' | 'all'>('best');
 
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
@@ -249,7 +268,7 @@ export function MenuScanner() {
             ],
           },
         ],
-        max_tokens: 2000,
+        max_tokens: 3500,
         temperature: 0.1,
         response_format: { type: 'json_object' },
       });
@@ -470,16 +489,17 @@ export function MenuScanner() {
               </div>
 
               {/* Onglets */}
-              <div className="flex gap-2 bg-white rounded-2xl p-1.5 border border-gray-light/30">
+              <div className="grid grid-cols-4 gap-1.5 bg-white rounded-2xl p-1.5 border border-gray-light/30">
                 {[
-                  { id: 'best', label: '🏆 Meilleur choix', count: 1 },
-                  { id: 'top', label: '👍 Top sélection', count: menuAnalysis.topPicks?.length || 0 },
-                  { id: 'avoid', label: '⚠️ À éviter', count: menuAnalysis.overpriced?.length || 0 },
+                  { id: 'best', label: '🏆 Top' },
+                  { id: 'top', label: '👍 Bons' },
+                  { id: 'avoid', label: '⚠️ Éviter' },
+                  { id: 'all', label: `📋 Tous (${menuAnalysis.allWines?.length || menuAnalysis.totalWinesFound})` },
                 ].map(tab => (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as 'best' | 'top' | 'avoid')}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border-none cursor-pointer ${activeTab === tab.id ? 'bg-burgundy-dark text-white shadow-sm' : 'text-gray-dark bg-transparent hover:bg-cream'}`}
+                    onClick={() => setActiveTab(tab.id as 'best' | 'top' | 'avoid' | 'all')}
+                    className={`py-2 rounded-xl text-xs font-bold transition-all border-none cursor-pointer ${activeTab === tab.id ? 'bg-burgundy-dark text-white shadow-sm' : 'text-gray-dark bg-transparent hover:bg-cream'}`}
                   >
                     {tab.label}
                   </button>
@@ -522,6 +542,26 @@ export function MenuScanner() {
                   ) : (
                     <div className="bg-white rounded-2xl border border-gray-light/30 p-6 text-center">
                       <p className="text-gray-dark text-sm">Aucun vin abusivement surévalué détecté.</p>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Liste complète */}
+              {activeTab === 'all' && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+                  {(menuAnalysis.allWines && menuAnalysis.allWines.length > 0) ? (
+                    <>
+                      <p className="text-xs text-gray-dark text-center">
+                        {menuAnalysis.allWines.length} référence{menuAnalysis.allWines.length > 1 ? 's' : ''} identifiée{menuAnalysis.allWines.length > 1 ? 's' : ''} sur la carte
+                      </p>
+                      {menuAnalysis.allWines.map((wine, i) => (
+                        <WineCard key={i} wine={wine} />
+                      ))}
+                    </>
+                  ) : (
+                    <div className="bg-white rounded-2xl border border-gray-light/30 p-6 text-center">
+                      <p className="text-gray-dark text-sm">La liste complète n'a pas pu être extraite. Rephotographiez la carte en cadrant toutes les sections.</p>
                     </div>
                   )}
                 </motion.div>

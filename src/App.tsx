@@ -24,6 +24,7 @@ import { Success } from './pages/Success';
 import { Cave } from './pages/Cave';
 import { Investment } from './pages/Investment';
 import { BottomNav } from './components/BottomNav';
+import { GlobalLogoHeader } from './components/GlobalLogoHeader';
 import { Privacy } from './pages/Privacy';
 
 const NAV_HIDDEN = ['/', '/onboarding', '/privacy', '/result', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/success', '/cave-meal', '/shop'];
@@ -41,6 +42,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
   const showNav = !NAV_HIDDEN.some(p => pathname.startsWith(p));
   return (
     <>
+      <GlobalLogoHeader />
       <div className={showNav ? 'pb-28' : ''}>
         <ClarityScript />
         <GoogleAnalytics />

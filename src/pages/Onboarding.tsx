@@ -25,10 +25,10 @@ const STEPS = [
   { id: 'name', title: 'Comment vous appelez-vous ?', subtitle: 'Pour personnaliser votre expérience' },
   { id: 'experience', title: 'Votre niveau en vin ?', subtitle: 'Pas de jugement, on s\'adapte à vous' },
   { id: 'budget', title: 'Votre budget par bouteille ?', subtitle: 'En moyenne, combien dépensez-vous ?' },
-  { id: 'regions', title: 'Régions que vous aimez ?', subtitle: 'Sélectionnez vos préférences' },
+  { id: 'preferences', title: 'Vos vins préférés ?', subtitle: 'Sélectionnez tout ce qui vous attire' },
   { id: 'occasions', title: 'Quand buvez-vous du vin ?', subtitle: 'Plusieurs réponses possibles' },
   { id: 'intensity', title: 'Quelle intensité préférez-vous ?', subtitle: 'Des vins légers aux plus charpentés' },
-  { id: 'preferences', title: 'Vos vins préférés ?', subtitle: 'Sélectionnez tout ce qui vous attire' },
+  { id: 'regions', title: 'Régions que vous aimez ?', subtitle: 'Pour votre type de vin préféré' },
   { id: 'ready', title: 'Votre sommelier IA est prêt !', subtitle: '' },
 ];
 
@@ -177,7 +177,7 @@ export function Onboarding() {
   const progress = step > 0 && step < STEPS.length - 1 ? (step / questionCount) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-black-wine flex flex-col font-body overflow-hidden">
+    <div className="min-h-screen bg-black-wine flex flex-col font-body">
 
       {/* BARRE PROGRESSION */}
       {step > 0 && step < STEPS.length - 1 && (
@@ -200,7 +200,7 @@ export function Onboarding() {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col px-6 py-6 overflow-hidden">
+      <div className="flex-1 flex flex-col px-6 py-6 overflow-y-auto">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step}
@@ -407,29 +407,32 @@ export function Onboarding() {
               </div>
             )}
 
-            {/* ══ ÉTAPE 4 : RÉGIONS ══ */}
+            {/* ══ ÉTAPE 4 : PRÉFÉRENCES ══ */}
             {step === 4 && (
               <div className="flex-1 flex flex-col">
                 <h2 className="font-display text-3xl font-bold text-white mb-2">{currentStep.title}</h2>
                 <p className="text-white/50 text-sm mb-6">{currentStep.subtitle}</p>
 
                 <div className="grid grid-cols-2 gap-3 mb-6 flex-1 overflow-y-auto">
-                  {REGION_OPTIONS.map(opt => {
-                    const selected = data.regions.includes(opt.id);
+                  {WINE_TYPES.map(type => {
+                    const selected = data.favoriteTypes.includes(type.id);
                     return (
                       <button
-                        key={opt.id}
+                        key={type.id}
                         type="button"
-                        onClick={() => toggleMulti('regions', opt.id)}
-                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer text-left ${selected ? 'border-gold bg-gold/15' : 'border-white/15 bg-white/5 hover:border-white/30'}`}
+                        onClick={() => toggleType(type.id)}
+                        className={`flex flex-col items-start p-4 rounded-2xl border-2 transition-all cursor-pointer text-left ${selected ? 'border-gold bg-gold/15' : 'border-white/15 bg-white/5 hover:border-white/30'}`}
                       >
-                        <span className="text-2xl flex-shrink-0">{opt.emoji}</span>
-                        <p className={`font-semibold text-sm flex-1 ${selected ? 'text-gold' : 'text-white'}`}>{opt.label}</p>
-                        {selected && (
-                          <div className="w-5 h-5 rounded-full bg-gold flex items-center justify-center">
-                            <Check size={12} color="#2C1810" strokeWidth={3} />
-                          </div>
-                        )}
+                        <div className="flex items-center justify-between w-full mb-2">
+                          <span className="text-2xl">{type.emoji}</span>
+                          {selected && (
+                            <div className="w-5 h-5 rounded-full bg-gold flex items-center justify-center">
+                              <Check size={12} color="#2C1810" strokeWidth={3} />
+                            </div>
+                          )}
+                        </div>
+                        <p className={`font-semibold text-sm leading-tight ${selected ? 'text-gold' : 'text-white'}`}>{type.label}</p>
+                        <p className="text-white/40 text-xs mt-0.5">{type.desc}</p>
                       </button>
                     );
                   })}
@@ -438,9 +441,10 @@ export function Onboarding() {
                 <button
                   type="button"
                   onClick={goNext}
-                  className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
+                  disabled={data.favoriteTypes.length === 0}
+                  className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
-                  Continuer {data.regions.length > 0 && `(${data.regions.length})`} <ChevronRight size={20} />
+                  Continuer ({data.favoriteTypes.length} sélectionné{data.favoriteTypes.length > 1 ? 's' : ''}) <ChevronRight size={20} />
                 </button>
               </div>
             )}
@@ -521,32 +525,29 @@ export function Onboarding() {
               </div>
             )}
 
-            {/* ══ ÉTAPE 7 : PRÉFÉRENCES ══ */}
+            {/* ══ ÉTAPE 7 : RÉGIONS ══ */}
             {step === 7 && (
               <div className="flex-1 flex flex-col">
                 <h2 className="font-display text-3xl font-bold text-white mb-2">{currentStep.title}</h2>
                 <p className="text-white/50 text-sm mb-6">{currentStep.subtitle}</p>
 
                 <div className="grid grid-cols-2 gap-3 mb-6 flex-1 overflow-y-auto">
-                  {WINE_TYPES.map(type => {
-                    const selected = data.favoriteTypes.includes(type.id);
+                  {REGION_OPTIONS.map(opt => {
+                    const selected = data.regions.includes(opt.id);
                     return (
                       <button
-                        key={type.id}
+                        key={opt.id}
                         type="button"
-                        onClick={() => toggleType(type.id)}
-                        className={`flex flex-col items-start p-4 rounded-2xl border-2 transition-all cursor-pointer text-left ${selected ? 'border-gold bg-gold/15' : 'border-white/15 bg-white/5 hover:border-white/30'}`}
+                        onClick={() => toggleMulti('regions', opt.id)}
+                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer text-left ${selected ? 'border-gold bg-gold/15' : 'border-white/15 bg-white/5 hover:border-white/30'}`}
                       >
-                        <div className="flex items-center justify-between w-full mb-2">
-                          <span className="text-2xl">{type.emoji}</span>
-                          {selected && (
-                            <div className="w-5 h-5 rounded-full bg-gold flex items-center justify-center">
-                              <Check size={12} color="#2C1810" strokeWidth={3} />
-                            </div>
-                          )}
-                        </div>
-                        <p className={`font-semibold text-sm leading-tight ${selected ? 'text-gold' : 'text-white'}`}>{type.label}</p>
-                        <p className="text-white/40 text-xs mt-0.5">{type.desc}</p>
+                        <span className="text-2xl flex-shrink-0">{opt.emoji}</span>
+                        <p className={`font-semibold text-sm flex-1 ${selected ? 'text-gold' : 'text-white'}`}>{opt.label}</p>
+                        {selected && (
+                          <div className="w-5 h-5 rounded-full bg-gold flex items-center justify-center">
+                            <Check size={12} color="#2C1810" strokeWidth={3} />
+                          </div>
+                        )}
                       </button>
                     );
                   })}
@@ -555,10 +556,9 @@ export function Onboarding() {
                 <button
                   type="button"
                   onClick={goNext}
-                  disabled={data.favoriteTypes.length === 0}
-                  className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
-                  Continuer ({data.favoriteTypes.length} sélectionné{data.favoriteTypes.length > 1 ? 's' : ''}) <ChevronRight size={20} />
+                  Continuer {data.regions.length > 0 && `(${data.regions.length})`} <ChevronRight size={20} />
                 </button>
               </div>
             )}

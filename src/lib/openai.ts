@@ -49,6 +49,16 @@ export interface WineAnalysis {
   tips?: string[];
   story?: string;
 
+  // Champagne / Pétillant spécifique
+  dosage?: string; // ex: "Brut Nature", "Extra Brut", "Brut", "Demi-sec"
+
+  // Prix par format de bouteille (undefined = format non disponible pour cette référence)
+  bottlePrices?: {
+    cl375?: number;  // Fillette / demi-bouteille
+    cl750?: number;  // Bouteille standard
+    cl1500?: number; // Magnum
+  };
+
   // Meta
   confidence: number;
   labelReadability?: 'excellent' | 'good' | 'poor';
@@ -120,11 +130,18 @@ Format JSON attendu :
     "good": ["Bon accord 1", "Bon accord 2", "Bon accord 3"],
     "avoid": ["À éviter 1", "À éviter 2"]
   },
+  "dosage": "Pour Champagne/Mousseux/Pétillant UNIQUEMENT : Brut Nature | Extra Brut | Brut | Extra Dry | Sec | Demi-sec | Doux. Mettre null pour tout vin tranquille.",
+  "bottlePrices": {
+    "cl375": null,
+    "cl750": 25,
+    "cl1500": null
+  },
   "tips": ["Conseil 1", "Conseil 2", "Conseil 3"],
   "story": "Anecdote ou histoire courte sur ce vin ou sa région (2-3 phrases)",
   "confidence": 90,
   "labelReadability": "excellent|good|poor"
 }
+RÈGLE bottlePrices : cl750 = toujours rempli avec prix estimé. cl375 et cl1500 = remplis UNIQUEMENT si ce vin est notoire dans ce format (ex: grande maison de Champagne → magnum fréquent). Sinon mettre null.
 Si pas une étiquette de vin : {"error": "not_wine", "confidence": 0}`;
 
 // ─── ANALYSE PRINCIPALE ───────────────────────────────────
@@ -148,7 +165,7 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
         ]
       }
     ],
-    max_tokens: 1000,
+    max_tokens: 1300,
     temperature: 0.1,
     response_format: { type: 'json_object' }
   });
@@ -322,8 +339,17 @@ function generateTastingNotes(
 
 export async function enrichWineData(wine: WineAnalysis): Promise<Record<string, unknown>> {
   const pairings = wine.foodPairings?.perfect || getDefaultFoodPairings(wine.type)?.perfect || [];
+  const estimatedPrice = calculateEstimatedPrice(wine);
+
+  // Bottle prices : use AI data if present, fallback to cl750 only
+  const bottlePrices: { cl375?: number; cl750?: number; cl1500?: number } =
+    wine.bottlePrices && wine.bottlePrices.cl750
+      ? wine.bottlePrices
+      : { cl750: estimatedPrice };
+
   return {
-    avgPrice: calculateEstimatedPrice(wine),
+    avgPrice: bottlePrices.cl750 ?? estimatedPrice,
+    bottlePrices,
     rating: calculateEstimatedRating(wine),
     description: wine.story || wine.tastingNotes?.structure || 'Un vin d\'excellente facture.',
     foodPairings: Array.isArray(pairings) ? pairings : [pairings],

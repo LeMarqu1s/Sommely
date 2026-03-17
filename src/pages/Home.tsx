@@ -1,7 +1,41 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Camera, ChevronRight, TrendingUp, Star, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Camera, ChevronRight, Star, Zap } from 'lucide-react';
+
+// ─── 30 CONSEILS FIXES — rotation toutes les 10 secondes ──────────────────
+const WINE_TIPS = [
+  "Les restaurants majorent les vins en moyenne de 250 %. Utilisez \"Carte du restaurant\" pour trouver les meilleures affaires.",
+  "Un vin rouge servi trop chaud perd ses arômes délicats. La température idéale est entre 16 et 18 °C.",
+  "Le Champagne se conserve mieux que vous ne le pensez : un non-millésimé peut se garder 3 à 5 ans.",
+  "Le verre Bourgogne en ballon permet aux arômes complexes de se développer. Essayez-le avec un Pinot Noir.",
+  "\"Terroir\" désigne l'ensemble des facteurs naturels (sol, climat, exposition) qui influencent le goût d'un vin.",
+  "Le carafage n'est pas réservé aux grands vins : même un vin à 10 € peut s'ouvrir après 20 minutes en carafe.",
+  "Un bouchon qui sent le carton mouillé = un vin \"bouchonné\". Défaut courant causé par le TCA, pas par vous.",
+  "Le millésime 2020 est exceptionnel en Bordeaux et en Bourgogne. Profitez-en avant que les prix ne s'envolent.",
+  "En Champagne, \"Blanc de Blancs\" = 100 % Chardonnay, frais et minéral. \"Blanc de Noirs\" = Pinot, plus charpenté.",
+  "La Provence représente 40 % de la production mondiale de rosé. Pour un rosé de qualité, cherchez une robe pâle.",
+  "Le Sancerre et le Pouilly-Fumé sont tous deux à base de Sauvignon Blanc, à seulement 5 km de distance.",
+  "Un Sauternes peut se conserver 50 ans. Sa richesse en sucre et son acidité en font un vin d'exception.",
+  "Plus il fait chaud, plus les raisins sont sucrés, et plus le vin aura un fort degré d'alcool.",
+  "L'astringence des tannins s'adoucit avec le temps. C'est pourquoi les grands Bordeaux se gardent des décennies.",
+  "\"AOC\" garantit que le vin respecte des règles strictes de production dans sa région d'origine.",
+  "Le Viognier est le seul cépage blanc autorisé dans l'appellation Condrieu, réputée pour ses arômes floraux.",
+  "Un vin orange est un vin blanc vinifié comme un rouge, avec macération des peaux. Tendance, complexe, polarisant.",
+  "Barolo et Barbaresco sont deux grands vins italiens du même cépage — le Nebbiolo — mais aux personnalités très distinctes.",
+  "Stockage idéal : 12-14 °C, obscurité totale, bouteille à l'horizontale, humidité 60-70 %, sans vibrations.",
+  "En Bourgogne, un \"premier cru\" est en dessous d'un \"grand cru\". L'inverse de la hiérarchie bordelaise !",
+  "Le Gewurztraminer d'Alsace est l'un des vins les plus aromatiques du monde : rose, litchi, épices orientales.",
+  "Pomerol est le seul grand vignoble de Bordeaux sans classement officiel. Et pourtant, Pétrus y vaut plus de 3 000 €.",
+  "\"Sur lie\" signifie que le vin a élevé en contact avec les levures mortes — texture plus riche et crémeuse.",
+  "Le Chablis, en Bourgogne, est réputé pour sa minéralité crayeuse unique. Accord parfait avec les huîtres.",
+  "La biodynamie en viticulture suit les cycles lunaires. Controversée mais adoptée par de nombreux grands domaines.",
+  "L'Amarone della Valpolicella est fait de raisins séchés 3-4 mois. D'où sa concentration et sa puissance uniques.",
+  "Le Rioja Gran Reserva vieillit au minimum 5 ans avant commercialisation, dont 2 ans en barrique de chêne.",
+  "Un vin peut être \"végétal\" (poivron vert, herbe) à cause de Cabernet Sauvignon vendangé trop tôt.",
+  "Dans le Nouveau Monde, le cépage figure sur l'étiquette. En Europe, c'est l'appellation qui prime.",
+  "La Romanée-Conti est le vin le plus convoité du monde : plus de 15 000 € la bouteille pour un millésime récent.",
+];
 import { useAuth } from '../context/AuthContext';
 import { getCaveBottles, getScansCountTotal } from '../lib/supabase';
 
@@ -39,6 +73,8 @@ export function Home() {
   const [caveBottles, setCaveBottles] = useState(0);
   const [timeOfDay, setTimeOfDay] = useState('');
   const [recentWine, setRecentWine] = useState<{ name: string; year?: number; region?: string } | null>(null);
+  const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * WINE_TIPS.length));
+  const tipIndexRef = useRef(tipIndex);
 
   const firstName = (profile?.taste_profile as any)?.firstName || profile?.name?.split(' ')[0] || '';
   const isPremium = subscriptionState.isPro || subscriptionState.isTrial;
@@ -49,6 +85,18 @@ export function Home() {
     if (h < 12) setTimeOfDay('Bonjour');
     else if (h < 18) setTimeOfDay('Bon après-midi');
     else setTimeOfDay('Bonsoir');
+  }, []);
+
+  // Rotation du conseil toutes les 10 secondes
+  useEffect(() => {
+    tipIndexRef.current = tipIndex;
+  }, [tipIndex]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipIndex(i => (i + 1) % WINE_TIPS.length);
+    }, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -427,22 +475,46 @@ export function Home() {
           </motion.div>
         )}
 
-        {/* TIP */}
+        {/* TIP — rotation toutes les 10 secondes parmi 30 conseils */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.55 }}
-          className="rounded-2xl p-4 border"
+          className="rounded-2xl border overflow-hidden"
           style={{ background: 'rgba(114,47,55,0.03)', borderColor: 'rgba(114,47,55,0.1)' }}
         >
-          <div className="flex items-start gap-3">
-            <span className="text-base flex-shrink-0">💡</span>
-            <div>
-              <p className="text-xs font-bold mb-1" style={{ color: '#1a0508' }}>Le saviez-vous ?</p>
-              <p className="text-xs leading-relaxed" style={{ color: '#9E9E9E' }}>
-                Les restaurants majorent les vins en moyenne de 250%. Utilisez &quot;Carte du restaurant&quot; pour trouver les meilleures affaires.
-              </p>
-            </div>
+          <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+            <span className="text-sm">💡</span>
+            <p className="text-xs font-bold" style={{ color: '#1a0508' }}>Le saviez-vous ?</p>
+            <span className="ml-auto text-xs font-medium tabular-nums" style={{ color: 'rgba(114,47,55,0.4)' }}>
+              {tipIndex + 1}/{WINE_TIPS.length}
+            </span>
+          </div>
+          <div className="relative min-h-[48px] px-4 pb-4">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={tipIndex}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="text-xs leading-relaxed"
+                style={{ color: '#9E9E9E' }}
+              >
+                {WINE_TIPS[tipIndex]}
+              </motion.p>
+            </AnimatePresence>
+          </div>
+          {/* Barre de progression */}
+          <div className="h-0.5 w-full" style={{ background: 'rgba(114,47,55,0.06)' }}>
+            <motion.div
+              key={`progress-${tipIndex}`}
+              className="h-full"
+              style={{ background: 'rgba(114,47,55,0.25)', transformOrigin: 'left' }}
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 10, ease: 'linear' }}
+            />
           </div>
         </motion.div>
 

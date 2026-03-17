@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
 
 body {
   @apply bg-cream text-black-wine font-body antialiased;

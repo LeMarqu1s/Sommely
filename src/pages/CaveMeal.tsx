@@ -5,6 +5,7 @@ import { ArrowLeft, Utensils, Wine, Thermometer, RotateCcw, Sparkles } from 'luc
 import { canAccessFeature } from '../utils/subscription';
 import { useAuth } from '../context/AuthContext';
 import { fetchOpenAI } from '../lib/openai';
+import { getCaveBottles } from '../lib/supabase';
 
 interface CaveBottle {
   id: string;
@@ -36,7 +37,7 @@ const PLAT_SUGGESTIONS = [
 
 export function CaveMeal() {
   const navigate = useNavigate();
-  const { subscriptionState } = useAuth();
+  const { subscriptionState, user } = useAuth();
   const [dish, setDish] = useState('');
   const [cave, setCave] = useState<CaveBottle[]>([]);
   const [result, setResult] = useState<{
@@ -54,47 +55,90 @@ export function CaveMeal() {
       navigate('/premium');
       return;
     }
-    const c = localStorage.getItem('sommely_cave_v3');
-    if (c) {
-      try {
-        setCave(JSON.parse(c));
-      } catch {
-        setCave([]);
+
+    const loadFromLocalStorage = () => {
+      const c = localStorage.getItem('sommely_cave_v3');
+      if (c) {
+        try { setCave(JSON.parse(c)); } catch { setCave([]); }
       }
+    };
+
+    if (user?.id) {
+      // Priorité : Supabase
+      getCaveBottles(user.id).then(({ data }) => {
+        if (data && data.length > 0) {
+          const mapped: CaveBottle[] = data.map(b => ({
+            id: b.id,
+            name: b.name,
+            year: b.vintage,
+            region: b.region || '',
+            type: b.wine_type || '',
+            quantity: b.quantity,
+            purchasePrice: b.price_paid,
+            estimatedCurrentValue: b.current_price,
+            status: b.peak_year
+              ? (new Date().getFullYear() >= b.peak_year - 1 && new Date().getFullYear() <= b.peak_year + 2
+                ? 'apogee'
+                : new Date().getFullYear() < (b.drink_from ?? 0) ? 'trop_tot' : 'boire_maintenant')
+              : 'boire_maintenant',
+          }));
+          setCave(mapped);
+        } else {
+          loadFromLocalStorage();
+        }
+      });
+    } else {
+      loadFromLocalStorage();
     }
-  }, [navigate, subscriptionState]);
+  }, [navigate, subscriptionState, user?.id]);
 
   const askAntoine = async (dishText: string) => {
-    if (!dishText.trim() || cave.length === 0) return;
+    if (!dishText.trim()) return;
 
     setResult(null);
     setIsLoading(true);
 
     try {
-      const caveContext = cave
-        .slice(0, 15)
-        .map(
-          (b: CaveBottle) =>
-            `- ${b.name} ${b.year} (${b.quantity}x) · ${b.type} · ${b.region} · Statut: ${b.status || 'ok'}`
-        )
-        .join('\n');
+      let systemPrompt: string;
 
-      const systemPrompt = `Tu es Antoine, sommelier expert. L'utilisateur a une cave virtuelle et cuisine un plat. Choisis LA meilleure bouteille de sa cave pour accompagner ce plat.
+      if (cave.length > 0) {
+        const caveContext = cave
+          .slice(0, 20)
+          .map(b => `- ${b.name} ${b.year} (${b.quantity}x) · ${b.type} · ${b.region} · Statut: ${b.status || 'ok'}`)
+          .join('\n');
+
+        systemPrompt = `Tu es Antoine, sommelier expert. L'utilisateur cuisine un plat et veut savoir quelle bouteille de sa cave ouvrir.
 
 CAVE (${cave.length} références) :
 ${caveContext}
 
 PLAT : ${dishText}
 
-Réponds UNIQUEMENT en JSON valide, sans markdown, sans backticks :
+Choisis LA meilleure bouteille parmi celles listées. Réponds UNIQUEMENT en JSON valide, sans markdown, sans backticks :
 {
-  "topPick": { "name": "Nom du vin", "year": 2018, "score": 92, "reason": "Pourquoi ce vin est parfait pour ce plat (2 phrases)" },
+  "topPick": { "name": "Nom exact du vin de la cave", "year": 2018, "score": 92, "reason": "Pourquoi ce vin est parfait pour ce plat (2 phrases)" },
   "alternatives": [ { "name": "Nom vin 2", "year": 2020, "reason": "Pourquoi bien aussi" } ],
-  "avoid": [ { "name": "Nom vin à éviter", "reason": "Pourquoi" } ],
+  "avoid": [ { "name": "Nom vin à éviter", "reason": "Pourquoi ce serait une erreur" } ],
   "advice": "Conseil sommelier court (1-2 phrases)",
   "servingTemp": "14-16°C",
-  "decanting": "Carafage 30 min recommandé" ou "Pas besoin de carafage"
+  "decanting": "Carafage 30 min recommandé"
 }`;
+      } else {
+        // Cave vide : recommandations générales d'achat
+        systemPrompt = `Tu es Antoine, sommelier expert. L'utilisateur cuisine un plat mais n'a pas encore de cave. Recommande-lui les meilleurs types de vins à acheter pour accompagner ce plat.
+
+PLAT : ${dishText}
+
+Réponds UNIQUEMENT en JSON valide, sans markdown, sans backticks :
+{
+  "topPick": { "name": "Type/style de vin idéal (ex: Bourgogne Rouge, Sancerre Blanc...)", "year": 0, "score": 92, "reason": "Pourquoi ce style de vin est parfait pour ce plat (2 phrases)" },
+  "alternatives": [ { "name": "2ème style recommandé", "year": 0, "reason": "Bon choix alternatif" } ],
+  "avoid": [ { "name": "Style à éviter", "reason": "Pourquoi" } ],
+  "advice": "Conseil d'achat et fourchette de prix recommandée pour ce plat (1-2 phrases)",
+  "servingTemp": "14-16°C",
+  "decanting": "Carafage 30 min recommandé"
+}`;
+      }
 
       const res = await fetchOpenAI({
         model: 'gpt-4o',
@@ -156,7 +200,7 @@ Réponds UNIQUEMENT en JSON valide, sans markdown, sans backticks :
                   setDish(p.label);
                   askAntoine(p.label);
                 }}
-                disabled={isLoading || cave.length === 0}
+                disabled={isLoading}
                 className="flex items-center gap-2 p-3 rounded-xl border border-gray-light/40 bg-cream/50 hover:bg-orange-50 hover:border-orange-200 transition-all cursor-pointer disabled:opacity-50"
               >
                 <span className="text-xl">{p.emoji}</span>
@@ -179,7 +223,7 @@ Réponds UNIQUEMENT en JSON valide, sans markdown, sans backticks :
             />
             <button
               onClick={() => askAntoine(dish)}
-              disabled={!dish.trim() || isLoading || cave.length === 0}
+              disabled={!dish.trim() || isLoading}
               className="px-5 py-3 bg-burgundy-dark text-white rounded-xl font-semibold text-sm border-none cursor-pointer disabled:opacity-40 hover:bg-burgundy-medium transition-colors flex items-center gap-2"
             >
               {isLoading ? (
@@ -193,13 +237,12 @@ Réponds UNIQUEMENT en JSON valide, sans markdown, sans backticks :
         </div>
 
         {cave.length === 0 && (
-          <div className="bg-white rounded-2xl border border-dashed border-gray-light p-8 text-center">
-            <span className="text-5xl block mb-3">🍾</span>
-            <p className="font-display text-lg font-bold text-black-wine mb-2">Cave vide</p>
-            <p className="text-gray-dark text-sm mb-4">Ajoutez des bouteilles dans Ma cave pour utiliser cette fonctionnalité.</p>
-            <button onClick={() => navigate('/cave')} className="bg-burgundy-dark text-white px-6 py-3 rounded-full font-semibold text-sm border-none cursor-pointer">
-              Aller à Ma cave
-            </button>
+          <div className="bg-gold/8 rounded-2xl border border-gold/30 p-4 flex items-start gap-3">
+            <span className="text-xl flex-shrink-0">💡</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-black-wine mb-1">Cave vide — mode conseil général activé</p>
+              <p className="text-xs text-gray-dark leading-relaxed">Antoine va vous recommander les meilleurs types de vins à acheter pour votre plat. Ajoutez vos bouteilles dans <button onClick={() => navigate('/cave')} className="text-burgundy-dark font-semibold bg-transparent border-none cursor-pointer underline p-0">Ma cave</button> pour des recommandations personnalisées.</p>
+            </div>
           </div>
         )}
 
