@@ -258,7 +258,7 @@ export function Home() {
     <div className="min-h-screen font-body" style={{ background: '#FAFAF8' }}>
 
       {/* HEADER */}
-      <div className="px-5 pt-12 pb-4" style={{ background: 'rgba(250,250,248,0.9)', backdropFilter: 'blur(20px)' }}>
+      <div className="px-5 pb-4" style={{ background: 'rgba(250,250,248,0.9)', backdropFilter: 'blur(20px)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 48px)' }}>
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div>
             <p className="text-sm mb-0.5" style={{ color: '#9E9E9E' }}>{timeOfDay}{firstName ? `, ${firstName}` : ''} 👋</p>
