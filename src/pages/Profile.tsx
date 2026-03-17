@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Wine,
-  Camera,
   Settings,
   Crown,
   LogOut,
@@ -57,8 +56,6 @@ export function Profile() {
   } catch { /* ignore */ }
   const isPro = subscriptionState.isPro || subscriptionState.isTrial;
   const subscriptionTier = isPro ? (subscriptionState.plan || 'annual') : 'free';
-  const localFavorites = JSON.parse(localStorage.getItem('sommely_favorites') || '[]');
-
   const firstName = (localProfile.firstName as string) || profile?.name || user?.user_metadata?.full_name?.split(' ')[0] || 'Vous';
   const email = user?.email || profile?.email || '';
   const subInfo = SUBSCRIPTION_LABELS[subscriptionTier] || SUBSCRIPTION_LABELS.free;
@@ -72,8 +69,11 @@ export function Profile() {
   const nextBadge = BADGES.find((b) => scanCountTotal < b.threshold);
 
   useEffect(() => {
-    setFavorites(localFavorites);
-  }, [localFavorites]);
+    try {
+      const stored = localStorage.getItem('sommely_favorites');
+      setFavorites(stored ? JSON.parse(stored) : []);
+    } catch { /* ignore */ }
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -109,21 +109,14 @@ export function Profile() {
 
   return (
     <div className="min-h-screen font-body" style={{ background: '#F5F0E8' }}>
-      <div className="px-5 flex items-center justify-between sticky top-0 z-20"
-        style={{ background: 'rgba(245,240,232,0.98)', borderBottom: '1px solid rgba(0,0,0,0.07)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingBottom: '16px' }}>
-        <div className="w-8" />
+      <div className="px-5 flex items-center justify-center"
+        style={{ background: '#F5F0E8', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingBottom: '16px' }}>
         <div className="flex items-center gap-2">
           <span className="font-display font-bold text-sm" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>Profil</span>
           {isPro && (
             <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(212,175,55,0.15)', color: '#D4AF37' }}>Pro</span>
           )}
         </div>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={() => navigate('/scan')}
-          className="flex items-center gap-1.5 border-none cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold"
-          style={{ background: 'linear-gradient(135deg, #722F37, #8B4049)', color: 'white' }}>
-          <Camera size={12} />
-          Scanner
-        </motion.button>
       </div>
 
       <div className="max-w-lg mx-auto px-6 py-6 space-y-5">

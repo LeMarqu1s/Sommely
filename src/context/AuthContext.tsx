@@ -89,11 +89,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   useEffect(() => {
+    // Timeout de sécurité : isLoading ne reste jamais bloqué plus de 5s (réseau lent, iOS background...)
+    const safetyTimer = setTimeout(() => setIsLoading(false), 5000);
+
     // NE PAS nettoyer le hash ici — Supabase a besoin du access_token pour établir la session
     // getSession() va automatiquement détecter le token dans l'URL via detectSessionInUrl
     // Essaie de rafraîchir la session si elle existe en localStorage
     supabase.auth.getSession()
       .then(async ({ data: { session }, error }) => {
+        clearTimeout(safetyTimer);
         // Si session expirée, tente un refresh
         if (error || !session) {
           const { data: refreshed } = await supabase.auth.refreshSession();
@@ -135,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       })
       .catch((err) => {
+        clearTimeout(safetyTimer);
         console.warn('Supabase session:', err);
         setIsLoading(false);
       });
@@ -193,7 +198,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     });
 
-    return () => sub.unsubscribe();
+    return () => {
+      sub.unsubscribe();
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
   useEffect(() => {
