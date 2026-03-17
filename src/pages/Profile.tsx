@@ -110,7 +110,7 @@ export function Profile() {
   return (
     <div className="min-h-screen font-body" style={{ background: '#F5F0E8' }}>
       <div className="px-5 flex items-center justify-between sticky top-0 z-20"
-        style={{ background: 'rgba(245,240,232,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(0,0,0,0.07)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingBottom: '16px' }}>
+        style={{ background: 'rgba(245,240,232,0.98)', borderBottom: '1px solid rgba(0,0,0,0.07)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingBottom: '16px' }}>
         <div className="w-8" />
         <div className="flex items-center gap-2">
           <span className="font-display font-bold text-sm" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>Profil</span>

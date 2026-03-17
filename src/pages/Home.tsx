@@ -403,14 +403,14 @@ export function Home() {
                 transition={{ delay: 0.2 + i * 0.06 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => navigate(f.route)}
-                className="w-full rounded-2xl p-4 text-left border cursor-pointer flex items-center gap-3"
+                className="w-full rounded-2xl p-4 text-left border cursor-pointer flex items-center gap-2"
                 style={{ background: 'white', borderColor: 'rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
               >
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
                   style={{ background: 'rgba(114,47,55,0.06)' }}>{f.emoji}</div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className="font-semibold text-sm" style={{ color: '#1a0508' }}>{f.title}</p>
+                  <div className="flex items-center gap-2 mb-0.5 min-w-0">
+                    <p className="font-semibold text-sm flex-shrink-0" style={{ color: '#1a0508' }}>{f.title}</p>
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${f.tagColor}`}>{f.tag}</span>
                   </div>
                   <p className="text-xs" style={{ color: '#9E9E9E' }}>{f.subtitle}</p>
