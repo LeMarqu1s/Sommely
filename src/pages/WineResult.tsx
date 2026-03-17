@@ -15,6 +15,7 @@ import {
   ChevronRight,
   X,
   ExternalLink,
+  type LucideIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -140,7 +141,7 @@ export function WineResult() {
 
   const isChampagne = ['Champagne', 'Pétillant', 'Mousseux'].includes(wine.type || '');
 
-  type DetailItem = { icon: React.ComponentType<{ size?: number; color?: string }>; label: string; value: string };
+  type DetailItem = { icon: LucideIcon; label: string; value: string };
 
   const wineDetails: DetailItem[] = [
     { icon: Wine, label: 'Type', value: wine.type || 'Non spécifié' },
