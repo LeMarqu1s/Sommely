@@ -5,8 +5,9 @@ import { ArrowLeft, Check, Zap, Star, TrendingUp, Wine, Shield } from 'lucide-re
 import { useAuth } from '../context/AuthContext';
 import { redirectToCheckout } from '../utils/stripe';
 import { useTheme } from '../context/ThemeContext';
+import { PRICE_PLANS } from '../context/ThemeContext';
 
-type Plan = 'monthly' | 'annual' | 'prestige';
+type Plan = 'monthly' | 'quarterly' | 'annual';
 
 export function Premium() {
   const navigate = useNavigate();
@@ -27,34 +28,31 @@ export function Premium() {
 
   const plans = [
     {
-      id: 'prestige' as Plan,
-      label: 'Prestige',
-      price: formatPrice(14.99),
-      period: '/mois',
-      sub: 'Accès prioritaire aux nouvelles features',
-      badge: '👑 Premium',
-      highlight: false,
-      anchor: false,
-    },
-    {
       id: 'annual' as Plan,
       label: 'Annuel',
-      price: formatPrice(48),
+      price: formatPrice(PRICE_PLANS.annual),
       period: '/an',
-      sub: `Soit ${formatPrice(4)}/mois · Économisez ${formatPrice(Math.round(14.99 * 12 - 48))} vs Prestige`,
-      badge: '⭐ Meilleure valeur',
+      sub: `Soit ${formatPrice(PRICE_PLANS.annual / 12)}/mois · Économisez 52% vs mensuel`,
+      badge: 'Meilleure valeur ⭐ -52%',
       highlight: true,
-      anchor: false,
+    },
+    {
+      id: 'quarterly' as Plan,
+      label: 'Trimestriel',
+      price: formatPrice(PRICE_PLANS.quarterly),
+      period: '/3 mois',
+      sub: `Soit ${formatPrice(4.99)}/mois`,
+      badge: null,
+      highlight: false,
     },
     {
       id: 'monthly' as Plan,
       label: 'Mensuel',
-      price: formatPrice(4.99),
+      price: formatPrice(PRICE_PLANS.monthly),
       period: '/mois',
       sub: 'Sans engagement',
       badge: null,
       highlight: false,
-      anchor: false,
     },
   ];
 
@@ -177,9 +175,7 @@ export function Premium() {
               }`}
             >
               {plan.badge && (
-                <span className={`absolute -top-3 left-4 text-xs font-bold px-3 py-1 rounded-full ${
-                  plan.id === 'prestige' ? 'bg-gold/20 text-gold border border-gold/40' : 'bg-burgundy-dark text-white'
-                }`}>
+                <span className="absolute -top-3 left-4 text-xs font-bold px-3 py-1 rounded-full bg-burgundy-dark text-white">
                   {plan.badge}
                 </span>
               )}

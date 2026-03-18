@@ -11,6 +11,9 @@ export const CURRENCIES: Currency[] = [
   { code: 'CHF', symbol: 'CHF', rate: 0.95 },
 ];
 
+/** Montants EUR de base pour les plans Pro */
+export const PRICE_PLANS = { monthly: 6.99, quarterly: 14.99, annual: 39.99 } as const;
+
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;

@@ -483,7 +483,7 @@ export function Profile() {
                   className="w-full py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer hover:bg-burgundy-medium transition-colors shadow-md"
                 >
                   <Crown size={16} />
-                  {`Passer à Pro · ${formatPrice(4.99)}/mois`}
+                  {`Passer à Pro · ${formatPrice(6.99)}/mois`}
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -505,7 +505,7 @@ export function Profile() {
                   className="w-full py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer hover:bg-burgundy-medium transition-colors shadow-md"
                 >
                   <Crown size={16} />
-                  {`Passer à Pro · ${formatPrice(4.99)}/mois`}
+                  {`Passer à Pro · ${formatPrice(6.99)}/mois`}
                   <ChevronRight size={16} />
                 </button>
               </div>
