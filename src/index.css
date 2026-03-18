@@ -68,3 +68,10 @@ input[type='range']::-moz-range-thumb {
   --bg-input: #2a1215;
 }
 
+/* Tailwind génère du CSS statique — ces 5 règles mappent les classes Tailwind vers les CSS variables dark */
+[data-theme="dark"] .bg-white       { background-color: var(--bg-card); }
+[data-theme="dark"] .bg-cream       { background-color: var(--bg-cream); }
+[data-theme="dark"] .text-black-wine { color: var(--text-primary); }
+[data-theme="dark"] .text-gray-dark  { color: var(--text-secondary); }
+[data-theme="dark"] .border-gray-light { border-color: var(--border); }
+
