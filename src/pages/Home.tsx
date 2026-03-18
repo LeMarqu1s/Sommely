@@ -258,7 +258,7 @@ export function Home() {
     <div className="min-h-screen font-body" style={{ background: '#FAFAF8' }}>
 
       {/* HEADER */}
-      <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '16px', paddingRight: '16px', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)', paddingBottom: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '16px', paddingRight: '16px', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 28px)', paddingBottom: '12px' }}>
         <div style={{ width: '44px' }} />
         <div style={{ flex: 1, textAlign: 'center' }}>
           <p style={{ color: '#9E9E9E', fontSize: '13px', marginBottom: '2px' }}>{timeOfDay}{firstName ? `, ${firstName}` : ''} 👋</p>
