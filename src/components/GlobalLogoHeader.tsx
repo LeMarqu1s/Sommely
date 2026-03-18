@@ -34,7 +34,7 @@ export function GlobalLogoHeader() {
           alignItems: 'center',
           gap: '6px',
           margin: '8px 14px',
-          padding: '6px 12px 6px 8px',
+          padding: '8px 10px',
           background: 'rgba(44, 24, 16, 0.82)',
           borderRadius: '999px',
           border: '1px solid rgba(255,255,255,0.18)',
@@ -43,19 +43,7 @@ export function GlobalLogoHeader() {
           boxShadow: '0 2px 10px rgba(0,0,0,0.25)',
         }}
       >
-        <Logo size={18} variant="white" />
-        <span
-          style={{
-            fontFamily: "'DM Serif Display', serif",
-            fontWeight: 700,
-            color: 'rgba(255,255,255,0.92)',
-            fontSize: '13px',
-            letterSpacing: '-0.01em',
-            lineHeight: 1,
-          }}
-        >
-          Sommely
-        </span>
+        <Logo size={26} variant="white" />
       </button>
     </div>
   );
