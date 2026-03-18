@@ -26,9 +26,9 @@ const STEPS = [
   { id: 'experience', title: 'Votre niveau en vin ?', subtitle: 'Pas de jugement, on s\'adapte à vous' },
   { id: 'budget', title: 'Votre budget par bouteille ?', subtitle: 'En moyenne, combien dépensez-vous ?' },
   { id: 'preferences', title: 'Vos vins préférés ?', subtitle: 'Sélectionnez tout ce qui vous attire' },
+  { id: 'regions', title: 'Régions que vous aimez ?', subtitle: 'Pour votre type de vin préféré' },
   { id: 'occasions', title: 'Quand buvez-vous du vin ?', subtitle: 'Plusieurs réponses possibles' },
   { id: 'intensity', title: 'Quelle intensité préférez-vous ?', subtitle: 'Des vins légers aux plus charpentés' },
-  { id: 'regions', title: 'Régions que vous aimez ?', subtitle: 'Pour votre type de vin préféré' },
   { id: 'ready', title: 'Votre sommelier IA est prêt !', subtitle: '' },
 ];
 
@@ -187,8 +187,8 @@ export function Onboarding() {
   // Texte dynamique du bouton selon l'étape
   const continueLabel = (() => {
     if (step === 4) return `Continuer (${data.favoriteTypes.length} sélectionné${data.favoriteTypes.length > 1 ? 's' : ''})`;
-    if (step === 5 && data.occasions.length > 0) return `Continuer (${data.occasions.length})`;
-    if (step === 7 && data.regions.length > 0) return `Continuer (${data.regions.length})`;
+    if (step === 5 && data.regions.length > 0) return `Continuer (${data.regions.length})`;
+    if (step === 6 && data.occasions.length > 0) return `Continuer (${data.occasions.length})`;
     return 'Continuer';
   })();
 
@@ -433,8 +433,39 @@ export function Onboarding() {
               </div>
             )}
 
-            {/* ══ ÉTAPE 5 : OCCASIONS ══ */}
+            {/* ══ ÉTAPE 5 : RÉGIONS ══ */}
             {step === 5 && (
+              <div className="flex-1 flex flex-col">
+                <h2 className="font-display text-3xl font-bold text-white mb-2">{currentStep.title}</h2>
+                <p className="text-white/50 text-sm mb-6">{currentStep.subtitle}</p>
+
+                <div className="grid grid-cols-2 gap-3 mb-6 flex-1 overflow-y-auto">
+                  {REGION_OPTIONS.map(opt => {
+                    const selected = data.regions.includes(opt.id);
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => toggleMulti('regions', opt.id)}
+                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer text-left ${selected ? 'border-gold bg-gold/15' : 'border-white/15 bg-white/5 hover:border-white/30'}`}
+                      >
+                        <span className="text-2xl flex-shrink-0">{opt.emoji}</span>
+                        <p className={`font-semibold text-sm flex-1 ${selected ? 'text-gold' : 'text-white'}`}>{opt.label}</p>
+                        {selected && (
+                          <div className="w-5 h-5 rounded-full bg-gold flex items-center justify-center">
+                            <Check size={12} color="#2C1810" strokeWidth={3} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+              </div>
+            )}
+
+            {/* ══ ÉTAPE 6 : OCCASIONS ══ */}
+            {step === 6 && (
               <div className="flex-1 flex flex-col">
                 <h2 className="font-display text-3xl font-bold text-white mb-2">{currentStep.title}</h2>
                 <p className="text-white/50 text-sm mb-6">{currentStep.subtitle}</p>
@@ -464,8 +495,8 @@ export function Onboarding() {
               </div>
             )}
 
-            {/* ══ ÉTAPE 6 : INTENSITÉ ══ */}
-            {step === 6 && (
+            {/* ══ ÉTAPE 7 : INTENSITÉ ══ */}
+            {step === 7 && (
               <div className="flex-1 flex flex-col justify-center">
                 <h2 className="font-display text-3xl font-bold text-white mb-2">{currentStep.title}</h2>
                 <p className="text-white/50 text-sm mb-8">{currentStep.subtitle}</p>
@@ -490,37 +521,6 @@ export function Onboarding() {
                       )}
                     </button>
                   ))}
-                </div>
-
-              </div>
-            )}
-
-            {/* ══ ÉTAPE 7 : RÉGIONS ══ */}
-            {step === 7 && (
-              <div className="flex-1 flex flex-col">
-                <h2 className="font-display text-3xl font-bold text-white mb-2">{currentStep.title}</h2>
-                <p className="text-white/50 text-sm mb-6">{currentStep.subtitle}</p>
-
-                <div className="grid grid-cols-2 gap-3 mb-6 flex-1 overflow-y-auto">
-                  {REGION_OPTIONS.map(opt => {
-                    const selected = data.regions.includes(opt.id);
-                    return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => toggleMulti('regions', opt.id)}
-                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer text-left ${selected ? 'border-gold bg-gold/15' : 'border-white/15 bg-white/5 hover:border-white/30'}`}
-                      >
-                        <span className="text-2xl flex-shrink-0">{opt.emoji}</span>
-                        <p className={`font-semibold text-sm flex-1 ${selected ? 'text-gold' : 'text-white'}`}>{opt.label}</p>
-                        {selected && (
-                          <div className="w-5 h-5 rounded-full bg-gold flex items-center justify-center">
-                            <Check size={12} color="#2C1810" strokeWidth={3} />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
                 </div>
 
               </div>
