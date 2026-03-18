@@ -157,32 +157,53 @@ export function WineResult() {
       : []),
   ];
 
-  const bottlePrices: { cl1875?: number; cl375?: number; cl750?: number; cl1500?: number; cl3000?: number; cl6000?: number } | undefined = wine.bottlePrices;
+  const bp = (wine.bottlePrices || {}) as Record<string, number | null | undefined>;
   const priceRange: { min: number; max: number } | undefined = wine.priceRange;
 
-  // Pour la 75cl uniquement : afficher la fourchette si disponible
+  // Prix de référence 75cl : AI > avgPrice > 0
+  const ref750 = (bp['cl750'] && bp['cl750'] > 0 ? bp['cl750'] : null) ?? wine.avgPrice ?? 0;
+
+  // Fourchette pour la 75cl uniquement
   const format75cl = (price: number) =>
-    priceRange ? `${priceRange.min}€ – ${priceRange.max}€` : `~ ${price}€`;
+    priceRange && priceRange.min > 0 && priceRange.max > 0
+      ? `${priceRange.min}€ – ${priceRange.max}€`
+      : `~ ${price}€`;
 
-  const BOTTLE_FORMATS: { key: keyof typeof bottlePrices; label: string; champagneLabel?: string }[] = [
-    { key: 'cl1875', label: 'Piccolo (18,75cl)',     champagneLabel: 'Piccolo / Quart (18,75cl)' },
-    { key: 'cl375',  label: 'Demi-bouteille (37,5cl)', champagneLabel: 'Demi (37,5cl)' },
-    { key: 'cl750',  label: 'Bouteille (75cl)' },
-    { key: 'cl1500', label: 'Magnum (1,5L)' },
-    { key: 'cl3000', label: 'Double Magnum (3L)',    champagneLabel: 'Jéroboam (3L)' },
-    { key: 'cl6000', label: 'Impériale (6L)',         champagneLabel: 'Mathusalem (6L)' },
-  ];
-
-  const priceRows: DetailItem[] = bottlePrices
-    ? BOTTLE_FORMATS
-        .filter(f => bottlePrices[f.key] != null)
-        .map(f => {
-          const price = bottlePrices[f.key]!;
-          const label = (isChampagne && f.champagneLabel) ? f.champagneLabel : f.label;
-          const value = f.key === 'cl750' ? format75cl(price) : `~ ${price}€`;
-          return { icon: Star, label, value };
-        })
-    : [{ icon: Star, label: 'Prix moyen (75cl)', value: wine.avgPrice != null ? format75cl(wine.avgPrice) : 'Non spécifié' }];
+  // Toujours calculer les 3 formats de base + optionnels si IA les fournit
+  const priceRows: DetailItem[] = [
+    // Piccolo 18,75cl : champagne = toujours calculé ; vin tranquille = seulement si AI le précise
+    ...(isChampagne || (bp['cl1875'] && bp['cl1875'] > 0) ? [{
+      icon: Star,
+      label: isChampagne ? 'Piccolo / Quart (18,75cl)' : 'Piccolo (18,75cl)',
+      value: `~ ${bp['cl1875'] && bp['cl1875'] > 0 ? bp['cl1875'] : Math.round(ref750 * 0.55)}€`,
+    }] : []),
+    // Demi-bouteille 37,5cl : toujours affiché
+    {
+      icon: Star,
+      label: isChampagne ? 'Demi (37,5cl)' : 'Demi-bouteille (37,5cl)',
+      value: `~ ${bp['cl375'] && bp['cl375'] > 0 ? bp['cl375'] : Math.round(ref750 * 0.60)}€`,
+    },
+    // Bouteille standard 75cl : toujours affiché avec fourchette
+    { icon: Star, label: 'Bouteille (75cl)', value: format75cl(ref750) },
+    // Magnum 1,5L : toujours affiché
+    {
+      icon: Star,
+      label: 'Magnum (1,5L)',
+      value: `~ ${bp['cl1500'] && bp['cl1500'] > 0 ? bp['cl1500'] : Math.round(ref750 * 1.85)}€`,
+    },
+    // Jéroboam/Double Magnum 3L : seulement si AI le précise
+    ...(bp['cl3000'] && bp['cl3000'] > 0 ? [{
+      icon: Star,
+      label: isChampagne ? 'Jéroboam (3L)' : 'Double Magnum (3L)',
+      value: `~ ${bp['cl3000']}€`,
+    }] : []),
+    // Mathusalem/Impériale 6L : seulement si AI le précise
+    ...(bp['cl6000'] && bp['cl6000'] > 0 ? [{
+      icon: Star,
+      label: isChampagne ? 'Mathusalem (6L)' : 'Impériale (6L)',
+      value: `~ ${bp['cl6000']}€`,
+    }] : []),
+  ].filter(r => ref750 > 0);
 
   const handleFavorite = () => {
     setIsFavorite(!isFavorite);

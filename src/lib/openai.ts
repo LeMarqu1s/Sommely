@@ -446,12 +446,32 @@ export async function enrichWineData(wine: WineAnalysis): Promise<Record<string,
 }
 
 function calculateEstimatedPrice(wine: WineAnalysis): number {
-  const premiumKeywords = ['Margaux', 'Pauillac', 'Pomerol', 'Romanée', 'Chambolle', 'Gevrey', 'Montrachet', 'Yquem', 'Petrus'];
-  const midKeywords = ['Bordeaux', 'Bourgogne', 'Champagne', 'Sancerre', 'Pouilly', 'Saint-Émilion', 'Châteauneuf'];
-  const fullText = [wine.name, wine.appellation, wine.region, wine.chateau].filter(Boolean).join(' ');
+  const fullText = [wine.name, wine.appellation, wine.region, wine.chateau, wine.producer].filter(Boolean).join(' ').toLowerCase();
 
-  if (premiumKeywords.some(k => fullText.includes(k))) return Math.floor(Math.random() * 200) + 80;
+  // Tier 0 : vins iconiques à prix connus (fallback stable si IA échoue)
+  const iconicPrices: [string, number][] = [
+    ['petrus', 3500], ['romanée-conti', 12000], ['romanee conti', 12000],
+    ['screaming eagle', 2500], ['masseto', 350], ['opus one', 220],
+    ['le pin', 3000], ['lafleur', 800], ['cheval blanc', 600],
+    ['mouton rothschild', 500], ['haut-brion', 450], ['ausone', 800],
+    ['montrachet', 300], ["yquem", 400], ["d'yquem", 400],
+  ];
+  for (const [key, price] of iconicPrices) {
+    if (fullText.includes(key)) return price;
+  }
+
+  // Tier 1 : grands crus, appellations prestige
+  const ultraKeywords = ['romanée', 'chambertin', 'musigny', 'richebourg', 'corton', 'montrachet'];
+  if (ultraKeywords.some(k => fullText.includes(k))) return Math.floor(Math.random() * 300) + 150;
+
+  // Tier 2 : appellations premium
+  const premiumKeywords = ['margaux', 'pauillac', 'pomerol', 'chambolle', 'gevrey', 'meursault', 'puligny'];
+  if (premiumKeywords.some(k => fullText.includes(k))) return Math.floor(Math.random() * 150) + 60;
+
+  // Tier 3 : appellations intermédiaires
+  const midKeywords = ['bordeaux', 'bourgogne', 'champagne', 'sancerre', 'pouilly', 'saint-émilion', 'saint-emilion', 'châteauneuf', 'chateauneuf'];
   if (midKeywords.some(k => fullText.includes(k))) return Math.floor(Math.random() * 30) + 18;
+
   if (wine.classification?.includes('Cru')) return Math.floor(Math.random() * 40) + 25;
   return Math.floor(Math.random() * 15) + 7;
 }
