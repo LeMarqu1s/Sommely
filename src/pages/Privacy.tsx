@@ -123,7 +123,7 @@ export function Privacy() {
           </p>
         </div>
 
-        <div className="h-6" />
+        <div style={{ height: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }} />
       </div>
     </div>
   );
