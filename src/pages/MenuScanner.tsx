@@ -320,7 +320,7 @@ export function MenuScanner() {
 
       {/* HEADER */}
       <div className="bg-white border-b border-gray-light/30 px-6 py-4 flex items-center justify-between sticky top-0 z-20">
-        <button onClick={() => navigate('/scan')} className="flex items-center gap-2 bg-transparent border-none cursor-pointer">
+        <button onClick={() => navigate('/home')} className="flex items-center gap-2 bg-transparent border-none cursor-pointer">
           <ArrowLeft size={20} color="#722F37" />
         </button>
         <div className="flex items-center gap-2">
