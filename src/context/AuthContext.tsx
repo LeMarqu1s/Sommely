@@ -97,45 +97,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Essaie de rafraîchir la session si elle existe en localStorage
     supabase.auth.getSession()
       .then(async ({ data: { session }, error }) => {
-        clearTimeout(safetyTimer);
-        // Si session expirée, tente un refresh
-        if (error || !session) {
-          const { data: refreshed } = await supabase.auth.refreshSession();
-          if (refreshed.session) {
-            setSession(refreshed.session);
-            setUser(refreshed.session.user);
-            const { data: p } = await getProfile(refreshed.session.user.id);
+        try {
+          // Si session expirée, tente un refresh
+          if (error || !session) {
+            const { data: refreshed } = await supabase.auth.refreshSession();
+            if (refreshed.session) {
+              setSession(refreshed.session);
+              setUser(refreshed.session.user);
+              const { data: p } = await getProfile(refreshed.session.user.id);
+              setProfile(p ?? null);
+              if (p?.onboarding_completed) localStorage.setItem('sommely_onboarding_done', 'true');
+              clearTimeout(safetyTimer);
+              setIsLoading(false);
+              return;
+            }
+          }
+          setSession(session);
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            const { data: p } = await getProfile(session.user.id);
             setProfile(p ?? null);
-            if (p?.onboarding_completed) localStorage.setItem('sommely_onboarding_done', 'true');
-            setIsLoading(false);
-            return;
+            // Sync localStorage avec Supabase
+            if (p?.onboarding_completed) {
+              localStorage.setItem('sommely_onboarding_done', 'true');
+            }
+            const { data: existingSub } = await getSubscription(session.user.id);
+            if (!existingSub) {
+              const trialEnd = new Date();
+              trialEnd.setDate(trialEnd.getDate() + 7);
+              await supabase.from('subscriptions').insert({
+                user_id: session.user.id,
+                plan: 'free',
+                status: 'trial',
+                trial_ends_at: trialEnd.toISOString(),
+              });
+            }
           }
-        }
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          const { data: p } = await getProfile(session.user.id);
-          setProfile(p ?? null);
-          // Sync localStorage avec Supabase
-          if (p?.onboarding_completed) {
-            localStorage.setItem('sommely_onboarding_done', 'true');
+          // Nettoie le hash seulement APRÈS que Supabase a traité le token
+          if (window.location.hash && window.location.hash.includes('access_token')) {
+            window.history.replaceState(null, '', window.location.pathname);
           }
-          const { data: existingSub } = await getSubscription(session.user.id);
-          if (!existingSub) {
-            const trialEnd = new Date();
-            trialEnd.setDate(trialEnd.getDate() + 7);
-            await supabase.from('subscriptions').insert({
-              user_id: session.user.id,
-              plan: 'free',
-              status: 'trial',
-              trial_ends_at: trialEnd.toISOString(),
-            });
-          }
-        }
-        setIsLoading(false);
-        // Nettoie le hash seulement APRÈS que Supabase a traité le token
-        if (window.location.hash && window.location.hash.includes('access_token')) {
-          window.history.replaceState(null, '', window.location.pathname);
+        } finally {
+          clearTimeout(safetyTimer);
+          setIsLoading(false);
         }
       })
       .catch((err) => {
