@@ -52,11 +52,14 @@ export interface WineAnalysis {
   // Champagne / Pétillant spécifique
   dosage?: string; // ex: "Brut Nature", "Extra Brut", "Brut", "Demi-sec"
 
-  // Prix par format de bouteille (undefined = format non disponible pour cette référence)
+  // Prix par format de bouteille (null = format inexistant pour ce vin)
   bottlePrices?: {
-    cl375?: number;  // Fillette / demi-bouteille
+    cl1875?: number; // Piccolo / Quart (champagne principalement)
+    cl375?: number;  // Demi-bouteille / Fillette
     cl750?: number;  // Bouteille standard
-    cl1500?: number; // Magnum
+    cl1500?: number; // Magnum (1,5L)
+    cl3000?: number; // Jéroboam champagne / Double Magnum vin tranquille (3L)
+    cl6000?: number; // Mathusalem champagne / Impériale Bordeaux (6L)
   };
 
   // Fourchette de prix marché pour la 75cl (min = prix le plus bas, max = prix boutique normal)
@@ -156,9 +159,12 @@ Format JSON attendu :
   },
   "dosage": "Pour Champagne/Mousseux/Pétillant UNIQUEMENT : Brut Nature | Extra Brut | Brut | Extra Dry | Sec | Demi-sec | Doux. Mettre null pour tout vin tranquille.",
   "bottlePrices": {
+    "cl1875": null,
     "cl375": null,
     "cl750": 14,
-    "cl1500": null
+    "cl1500": null,
+    "cl3000": null,
+    "cl6000": null
   },
   "priceRange": {
     "min": 11,
@@ -169,7 +175,10 @@ Format JSON attendu :
   "confidence": 90,
   "labelReadability": "excellent|good|poor"
 }
-RÈGLE bottlePrices : cl750 = prix marché RÉEL de la bouteille identifiée (pas une approximation génériques, cherche le prix réel de ce vin spécifique). cl375 et cl1500 = remplis UNIQUEMENT si ce vin est notoire dans ce format. Sinon null.
+RÈGLE bottlePrices : cl750 = TOUJOURS rempli avec le prix marché réel de ce vin spécifique.
+Formats VINS TRANQUILLES : cl375 si demi-bouteille disponible pour ce domaine, cl1500 si magnum commercialisé, cl3000 et cl6000 uniquement pour les grands crus/cuvées de prestige qui existent en grand format. cl1875 = null sauf exception rarissime.
+Formats CHAMPAGNE/MOUSSEUX/PÉTILLANT : cl1875 si la maison commercialise des piccolo/quart (ex: Moët, Veuve Clicquot, Laurent-Perrier...), cl375 (demi très courant en champagne), cl1500 (magnum très courant), cl3000 (jéroboam, grandes maisons), cl6000 (mathusalem, maisons de prestige uniquement).
+Mettre null pour tout format non commercialisé par ce producteur spécifique.
 RÈGLE priceRange : fourchette réelle constatée sur le marché pour ce vin en 75cl. min = prix le plus bas (grande surface / achat direct), max = prix boutique spécialisée / caviste. Écart typique 20-40%. Si incertain sur le prix exact, élargir la fourchette PLUTÔT QUE d'inventer un chiffre précis (ex: min:10, max:20 vaut mieux que cl750:15 inventé). Ne jamais mettre min==max sauf si le prix est vérifié avec certitude absolue.
 Si pas une étiquette de vin : {"error": "not_wine", "confidence": 0}`;
 
@@ -376,7 +385,7 @@ export async function enrichWineData(wine: WineAnalysis): Promise<Record<string,
   const estimatedPrice = calculateEstimatedPrice(wine);
 
   // Bottle prices : use AI data if present, fallback to cl750 only
-  const bottlePrices: { cl375?: number; cl750?: number; cl1500?: number } =
+  const bottlePrices: { cl1875?: number; cl375?: number; cl750?: number; cl1500?: number; cl3000?: number; cl6000?: number } =
     wine.bottlePrices && wine.bottlePrices.cl750
       ? wine.bottlePrices
       : { cl750: estimatedPrice };

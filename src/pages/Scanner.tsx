@@ -283,7 +283,7 @@ export function Scanner() {
         tips: wineAnalysis.tips || enrichedData.tips,
         description: enrichedData.description,
         avgPrice: enrichedData.avgPrice,
-        bottlePrices: (enrichedData.bottlePrices as { cl375?: number; cl750?: number; cl1500?: number } | undefined),
+        bottlePrices: (enrichedData.bottlePrices as { cl1875?: number; cl375?: number; cl750?: number; cl1500?: number; cl3000?: number; cl6000?: number } | undefined),
         priceRange: (enrichedData.priceRange as { min: number; max: number } | undefined),
         confidence: wineAnalysis.confidence,
         labelReadability: wineAnalysis.labelReadability,

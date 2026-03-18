@@ -157,25 +157,32 @@ export function WineResult() {
       : []),
   ];
 
-  const bottlePrices: { cl375?: number; cl750?: number; cl1500?: number } | undefined = wine.bottlePrices;
+  const bottlePrices: { cl1875?: number; cl375?: number; cl750?: number; cl1500?: number; cl3000?: number; cl6000?: number } | undefined = wine.bottlePrices;
   const priceRange: { min: number; max: number } | undefined = wine.priceRange;
 
-  const formatPrice = (single: number) =>
-    priceRange ? `${priceRange.min}€ – ${priceRange.max}€` : `~ ${single} €`;
+  // Pour la 75cl uniquement : afficher la fourchette si disponible
+  const format75cl = (price: number) =>
+    priceRange ? `${priceRange.min}€ – ${priceRange.max}€` : `~ ${price}€`;
+
+  const BOTTLE_FORMATS: { key: keyof typeof bottlePrices; label: string; champagneLabel?: string }[] = [
+    { key: 'cl1875', label: 'Piccolo (18,75cl)',     champagneLabel: 'Piccolo / Quart (18,75cl)' },
+    { key: 'cl375',  label: 'Demi-bouteille (37,5cl)', champagneLabel: 'Demi (37,5cl)' },
+    { key: 'cl750',  label: 'Bouteille (75cl)' },
+    { key: 'cl1500', label: 'Magnum (1,5L)' },
+    { key: 'cl3000', label: 'Double Magnum (3L)',    champagneLabel: 'Jéroboam (3L)' },
+    { key: 'cl6000', label: 'Impériale (6L)',         champagneLabel: 'Mathusalem (6L)' },
+  ];
 
   const priceRows: DetailItem[] = bottlePrices
-    ? [
-        ...(bottlePrices.cl375 != null
-          ? [{ icon: Star, label: 'Fillette (37,5cl)', value: `~ ${bottlePrices.cl375} €` }]
-          : []),
-        ...(bottlePrices.cl750 != null
-          ? [{ icon: Star, label: 'Bouteille (75cl)', value: formatPrice(bottlePrices.cl750) }]
-          : []),
-        ...(bottlePrices.cl1500 != null
-          ? [{ icon: Star, label: 'Magnum (1,5L)', value: `~ ${bottlePrices.cl1500} €` }]
-          : []),
-      ]
-    : [{ icon: Star, label: 'Prix moyen', value: wine.avgPrice != null ? formatPrice(wine.avgPrice) : 'Non spécifié' }];
+    ? BOTTLE_FORMATS
+        .filter(f => bottlePrices[f.key] != null)
+        .map(f => {
+          const price = bottlePrices[f.key]!;
+          const label = (isChampagne && f.champagneLabel) ? f.champagneLabel : f.label;
+          const value = f.key === 'cl750' ? format75cl(price) : `~ ${price}€`;
+          return { icon: Star, label, value };
+        })
+    : [{ icon: Star, label: 'Prix moyen (75cl)', value: wine.avgPrice != null ? format75cl(wine.avgPrice) : 'Non spécifié' }];
 
   const handleFavorite = () => {
     setIsFavorite(!isFavorite);
