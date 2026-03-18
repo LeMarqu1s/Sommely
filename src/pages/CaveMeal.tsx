@@ -240,7 +240,7 @@ Réponds UNIQUEMENT en JSON valide, sans markdown, sans backticks :
           <div className="bg-gold/8 rounded-2xl border border-gold/30 p-4 flex items-start gap-3">
             <span className="text-xl flex-shrink-0">💡</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-black-wine mb-1">Cave vide — mode conseil général activé</p>
+              <p className="text-sm font-semibold text-black-wine mb-1">Cave vide · mode conseil général activé</p>
               <p className="text-xs text-gray-dark leading-relaxed">Antoine va vous recommander les meilleurs types de vins à acheter pour votre plat. Ajoutez vos bouteilles dans <button onClick={() => navigate('/cave')} className="text-burgundy-dark font-semibold bg-transparent border-none cursor-pointer underline p-0">Ma cave</button> pour des recommandations personnalisées.</p>
             </div>
           </div>
