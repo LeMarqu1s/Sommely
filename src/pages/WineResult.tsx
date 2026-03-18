@@ -200,14 +200,33 @@ export function WineResult() {
   ].filter(() => ref750 > 0);
 
   const handleShare = async () => {
-    const shareText = `🍷 ${wine.name} ${wine.year || ''}\n📍 ${wine.region || ''}\n⭐ Score Sommely : ${score}/100\n\nAnalysé avec Sommely — sommely.shop`;
+    const scoreLabel = score >= 85 ? 'Coup de cœur' : score >= 70 ? 'Excellent' : score >= 50 ? 'Correct' : 'Pas mon style';
+    const params = new URLSearchParams({
+      wine: wine.name || '',
+      score: String(score),
+      region: wine.region || '',
+      type: wine.type || '',
+      year: String(wine.year || ''),
+      grapes: Array.isArray(wine.grapes) ? wine.grapes.join(',') : (wine.grapes || ''),
+    });
+    const shareUrl = `https://sommely.shop/share?${params.toString()}`;
+    const shareText = [
+      `🍷 ${wine.name}${wine.year ? ` · ${wine.year}` : ''}`,
+      '',
+      `⭐ Score Sommely : ${score}/100 — ${scoreLabel}`,
+      '',
+      wine.region ? `📍 ${wine.region}` : '',
+      '',
+      '✦ Voir le résultat complet :',
+      shareUrl,
+    ].filter(Boolean).join('\n');
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${wine.name} — Sommely`,
+          title: `${wine.name} · ${score}/100 — Sommely`,
           text: shareText,
-          url: 'https://sommely.shop',
+          url: shareUrl,
         });
       } catch {
         // Annulé par l'utilisateur — ne rien faire

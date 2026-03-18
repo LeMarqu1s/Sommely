@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const PUBLIC_ROUTES = ['/onboarding', '/auth', '/success', '/privacy', '/'];
+const PUBLIC_ROUTES = ['/onboarding', '/auth', '/success', '/privacy', '/', '/share'];
 
 export function OnboardingGuard() {
   const navigate = useNavigate();

@@ -27,8 +27,9 @@ import { Investment } from './pages/Investment';
 import { BottomNav } from './components/BottomNav';
 import { GlobalLogoHeader } from './components/GlobalLogoHeader';
 import { Privacy } from './pages/Privacy';
+import { ShareResult } from './pages/ShareResult';
 
-const NAV_HIDDEN = ['/', '/onboarding', '/privacy', '/result', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/success', '/cave-meal', '/shop'];
+const NAV_HIDDEN = ['/', '/onboarding', '/privacy', '/result', '/share', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/success', '/cave-meal', '/shop'];
 
 function AppContent({ onReady }: { onReady?: () => void }) {
   const { pathname } = useLocation();
@@ -59,6 +60,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
           <Route path="/menu" element={<MenuScanner />} />
           <Route path="/food-pairing" element={<FoodPairing />} />
           <Route path="/result" element={<WineResult />} />
+          <Route path="/share" element={<ShareResult />} />
           <Route path="/premium" element={<Premium />} />
           <Route path="/sommelier" element={<Sommelier />} />
           <Route path="/cave-meal" element={<CaveMeal />} />
