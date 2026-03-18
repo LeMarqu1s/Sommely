@@ -24,7 +24,10 @@ const ThemeContext = createContext<ThemeContextType>({
   toggleTheme: () => {},
   currency: CURRENCIES[0],
   setCurrency: () => {},
-  formatPrice: (n) => `${Math.round(n)} €`,
+  formatPrice: (n) => {
+    const c = Math.round(n * 100) / 100;
+    return `${c % 1 === 0 ? c.toString() : c.toFixed(2).replace('.', ',')} €`;
+  },
 });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -56,7 +59,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const formatPrice = (amount: number): string => {
     if (!amount) return '';
-    return `${Math.round(amount * currency.rate)} ${currency.symbol}`;
+    const converted = Math.round(amount * currency.rate * 100) / 100;
+    const formatted = converted % 1 === 0
+      ? converted.toString()
+      : converted.toFixed(2).replace('.', ',');
+    return `${formatted} ${currency.symbol}`;
   };
 
   return (
