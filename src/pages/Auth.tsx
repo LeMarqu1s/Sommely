@@ -70,8 +70,8 @@ export function Auth() {
       } else {
         const { error } = await signInWithEmail(email, password);
         if (error) throw error;
-        const done = localStorage.getItem('sommely_onboarding_done');
-        navigate(done ? '/home' : '/onboarding');
+        // Navigation is handled by the useEffect watching isAuthenticated
+        // to ensure auth context has updated before leaving /auth
       }
     } catch (err: any) {
       setError(err.message || 'Erreur de connexion. Vérifiez vos identifiants.');

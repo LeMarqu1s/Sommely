@@ -111,27 +111,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setIsLoading(false);
               return;
             }
+            // No session and refresh failed — do NOT call setUser(null) here.
+            // onAuthStateChange is the single source of truth for null user state,
+            // preventing a race where getSession() overwrites a valid user already
+            // set by the SIGNED_IN event (common during Google OAuth / PKCE flow).
+            return;
           }
           setSession(session);
-          setUser(session?.user ?? null);
-          if (session?.user) {
-            const { data: p } = await getProfile(session.user.id);
-            setProfile(p ?? null);
-            // Sync localStorage avec Supabase
-            if (p?.onboarding_completed) {
-              localStorage.setItem('sommely_onboarding_done', 'true');
-            }
-            const { data: existingSub } = await getSubscription(session.user.id);
-            if (!existingSub) {
-              const trialEnd = new Date();
-              trialEnd.setDate(trialEnd.getDate() + 7);
-              await supabase.from('subscriptions').insert({
-                user_id: session.user.id,
-                plan: 'free',
-                status: 'trial',
-                trial_ends_at: trialEnd.toISOString(),
-              });
-            }
+          setUser(session.user);
+          const { data: p } = await getProfile(session.user.id);
+          setProfile(p ?? null);
+          // Sync localStorage avec Supabase
+          if (p?.onboarding_completed) {
+            localStorage.setItem('sommely_onboarding_done', 'true');
+          }
+          const { data: existingSub } = await getSubscription(session.user.id);
+          if (!existingSub) {
+            const trialEnd = new Date();
+            trialEnd.setDate(trialEnd.getDate() + 7);
+            await supabase.from('subscriptions').insert({
+              user_id: session.user.id,
+              plan: 'free',
+              status: 'trial',
+              trial_ends_at: trialEnd.toISOString(),
+            });
           }
           // Nettoie le hash seulement APRÈS que Supabase a traité le token
           if (window.location.hash && window.location.hash.includes('access_token')) {
