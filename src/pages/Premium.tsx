@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Check, Zap, Star, TrendingUp, Wine, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { redirectToCheckout } from '../utils/stripe';
+import { useTheme } from '../context/ThemeContext';
 
 type Plan = 'monthly' | 'annual' | 'prestige';
 
@@ -13,6 +14,7 @@ export function Premium() {
   const [isLoading, setIsLoading] = useState(false);
   const { subscriptionState } = useAuth();
   const { isPro, isTrial, daysLeftInTrial } = subscriptionState;
+  const { formatPrice, currency } = useTheme();
 
   const handleSubscribe = async (plan: Plan) => {
     setIsLoading(true);
@@ -27,7 +29,7 @@ export function Premium() {
     {
       id: 'prestige' as Plan,
       label: 'Prestige',
-      price: '14,99€',
+      price: formatPrice(14.99),
       period: '/mois',
       sub: 'Accès prioritaire aux nouvelles features',
       badge: '👑 Premium',
@@ -37,9 +39,9 @@ export function Premium() {
     {
       id: 'annual' as Plan,
       label: 'Annuel',
-      price: '48€',
+      price: formatPrice(48),
       period: '/an',
-      sub: 'Soit 4€/mois · Économisez 131€ vs Prestige',
+      sub: `Soit ${formatPrice(4)}/mois · Économisez ${formatPrice(Math.round(14.99 * 12 - 48))} vs Prestige`,
       badge: '⭐ Meilleure valeur',
       highlight: true,
       anchor: false,
@@ -47,7 +49,7 @@ export function Premium() {
     {
       id: 'monthly' as Plan,
       label: 'Mensuel',
-      price: '4,99€',
+      price: formatPrice(4.99),
       period: '/mois',
       sub: 'Sans engagement',
       badge: null,
