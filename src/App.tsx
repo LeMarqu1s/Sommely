@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ClarityScript } from './components/analytics/Clarity';
 import { GoogleAnalytics } from './components/analytics/Analytics';
 import { Landing } from './pages/Landing';
@@ -32,7 +32,6 @@ const NAV_HIDDEN = ['/', '/onboarding', '/privacy', '/result', '/sommelier', '/m
 
 function AppContent({ onReady }: { onReady?: () => void }) {
   const { pathname } = useLocation();
-  const { theme } = useTheme();
   useEffect(() => {
     onReady?.();
   }, [onReady]);
@@ -43,7 +42,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
 
   const showNav = !NAV_HIDDEN.some(p => pathname.startsWith(p));
   return (
-    <div style={{ filter: theme === 'dark' ? 'invert(1) hue-rotate(180deg)' : 'none', minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh' }}>
       <GlobalLogoHeader />
       <div className={showNav ? 'pb-28' : ''}>
         <ClarityScript />

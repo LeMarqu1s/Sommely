@@ -7,6 +7,9 @@
 
 body {
   @apply bg-cream text-black-wine font-body antialiased;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 input[type='range'] {
@@ -44,9 +47,24 @@ input[type='range']::-moz-range-thumb {
   box-shadow: 0 2px 8px rgba(114, 47, 55, 0.4);
 }
 
-[data-theme="dark"] img,
-[data-theme="dark"] video,
-[data-theme="dark"] .no-invert {
-  filter: invert(1) hue-rotate(180deg);
+
+:root {
+  --bg-app: #FAFAF8;
+  --bg-card: #FFFFFF;
+  --bg-cream: #FAF9F6;
+  --text-primary: #1a0508;
+  --text-secondary: #9E9E9E;
+  --border: rgba(0,0,0,0.06);
+  --bg-input: #F5F0E8;
+}
+
+[data-theme="dark"] {
+  --bg-app: #0d0608;
+  --bg-card: #1a0a0d;
+  --bg-cream: #220d10;
+  --text-primary: #FAF9F6;
+  --text-secondary: rgba(250,249,246,0.55);
+  --border: rgba(255,255,255,0.08);
+  --bg-input: #2a1215;
 }
 

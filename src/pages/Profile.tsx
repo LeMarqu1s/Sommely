@@ -112,11 +112,11 @@ export function Profile() {
   };
 
   return (
-    <div className="min-h-screen font-body" style={{ background: '#F5F0E8' }}>
+    <div className="min-h-screen font-body" style={{ background: 'var(--bg-app)' }}>
       <div className="px-5 flex items-center justify-center"
-        style={{ background: '#F5F0E8', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingBottom: '16px' }}>
+        style={{ background: 'var(--bg-app)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingBottom: '16px' }}>
         <div className="flex items-center gap-2">
-          <span className="font-display font-bold text-sm" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>Profil</span>
+          <span className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Profil</span>
           {isPro && (
             <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(212,175,55,0.15)', color: '#D4AF37' }}>Pro</span>
           )}
@@ -127,7 +127,7 @@ export function Profile() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl overflow-hidden" style={{ background: 'white', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.05)' }}
+          className="rounded-3xl overflow-hidden" style={{ background: 'var(--bg-card)', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid var(--border)' }}
         >
           <div className="h-24 relative -z-0"
             style={{ background: 'linear-gradient(150deg, #2d0d14 0%, #1a0508 100%)' }}>
@@ -202,7 +202,7 @@ export function Profile() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+          className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
             <h2 className="font-display text-base font-bold text-black-wine">Mes badges 🏅</h2>
@@ -262,7 +262,7 @@ export function Profile() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
-          className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+          className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
             <h2 className="font-display text-base font-bold text-black-wine">Mon profil de dégustation</h2>
@@ -333,7 +333,7 @@ export function Profile() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+          className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
             <h2 className="font-display text-base font-bold text-black-wine">Mes scans récents</h2>
@@ -392,7 +392,7 @@ export function Profile() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.17 }}
-            className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+            className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
           >
             <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
               <h2 className="font-display text-base font-bold text-black-wine">Mes vins favoris ❤️</h2>
@@ -428,7 +428,7 @@ export function Profile() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18 }}
-            className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+            className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
           >
             <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
               <h2 className="font-display text-base font-bold text-black-wine">Parrainer des amis</h2>
@@ -458,7 +458,7 @@ export function Profile() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+          className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           <div className="px-6 py-4 border-b border-gray-light/20">
             <h2 className="font-display text-base font-bold text-black-wine">Mon abonnement</h2>
@@ -546,7 +546,7 @@ export function Profile() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.22 }}
-          className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+          className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           {[
             { icon: Bell, label: 'Notifications', action: () => setShowNotifications(true), color: '#6B5D56' },

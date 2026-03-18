@@ -81,11 +81,7 @@ export function Home() {
   const isPremium = subscriptionState.isPro || subscriptionState.isTrial;
   const scansRemaining = isPremium ? 999 : Math.max(0, 3 - subscriptionState.scansThisMonth);
 
-  const { theme, formatPrice } = useTheme();
-  const isDark   = theme === 'dark';
-  const cardBg   = isDark ? '#1f0a0d'               : 'white';
-  const textPri  = isDark ? '#FAF9F6'               : '#1a0508';
-  const textSec  = isDark ? 'rgba(250,249,246,0.5)' : '#9E9E9E';
+  const { formatPrice } = useTheme();
 
   useEffect(() => {
     const h = new Date().getHours();
@@ -262,15 +258,15 @@ export function Home() {
   }
 
   return (
-    <div className="min-h-screen font-body" style={{ background: isDark ? '#0d0608' : '#FAFAF8' }}>
+    <div className="min-h-screen font-body" style={{ background: 'var(--bg-app)' }}>
 
       {/* HEADER */}
       <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '16px', paddingRight: '16px', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 28px)', paddingBottom: '12px' }}>
         <div style={{ width: '44px' }} />
         <div style={{ flex: 1, textAlign: 'center' }}>
-          <p style={{ color: textSec, fontSize: '13px', marginBottom: '2px' }}>{timeOfDay}{firstName ? `, ${firstName}` : ''} 👋</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '2px' }}>{timeOfDay}{firstName ? `, ${firstName}` : ''} 👋</p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <h1 style={{ fontFamily: 'DM Serif Display', fontWeight: 700, fontSize: '20px', color: textPri, letterSpacing: '-0.02em', margin: 0 }}>
+            <h1 style={{ fontFamily: 'DM Serif Display', fontWeight: 700, fontSize: '20px', color: 'var(--text-primary)', letterSpacing: '-0.02em', margin: 0 }}>
               {isPremium ? 'Sommely Pro' : 'Sommely'}
             </h1>
             {isPremium && <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '999px', background: 'rgba(212,175,55,0.15)', color: '#D4AF37' }}>♾ Illimité</span>}
@@ -351,9 +347,9 @@ export function Home() {
               <motion.div key={i} whileTap={{ scale: 0.97 }}
                 onClick={s.onClick}
                 className="rounded-2xl p-4 text-center border"
-                style={{ background: cardBg, borderColor: 'rgba(0,0,0,0.06)', cursor: s.onClick ? 'pointer' : 'default', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                <p className="font-display font-bold text-xl" style={{ color: textPri, letterSpacing: '-0.02em' }}>{s.value}</p>
-                <p className="text-xs mt-0.5" style={{ color: textSec }}>{s.label}</p>
+                style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', cursor: s.onClick ? 'pointer' : 'default', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                <p className="font-display font-bold text-xl" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>{s.value}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{s.label}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -366,14 +362,14 @@ export function Home() {
           transition={{ delay: 0.15 }}
           onClick={() => navigate('/cave')}
           className="w-full rounded-2xl p-5 text-left border cursor-pointer"
-          style={{ background: cardBg, borderColor: 'rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+          style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           <div className="flex items-center gap-4">
             <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
               style={{ background: 'rgba(114,47,55,0.06)' }}>🍾</div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm mb-0.5" style={{ color: textPri }}>Ma cave virtuelle</p>
-              <p className="text-xs" style={{ color: textSec }}>
+              <p className="font-semibold text-sm mb-0.5" style={{ color: 'var(--text-primary)' }}>Ma cave virtuelle</p>
+              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                 {caveBottles > 0
                   ? `${caveBottles} bouteille${caveBottles > 1 ? 's' : ''} · ${formatPrice(caveValue)}`
                   : 'Gérez vos bouteilles · Prix en temps réel'}
@@ -386,7 +382,7 @@ export function Home() {
         {/* FONCTIONNALITÉS */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <p className="font-semibold text-sm" style={{ color: textPri }}>Fonctionnalités</p>
+            <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>Fonctionnalités</p>
             <div className="flex items-center gap-1">
               <Zap size={11} fill="#D4AF37" color="#D4AF37" />
               <span className="text-xs font-medium" style={{ color: '#D4AF37' }}>Introuvable sur Vivino</span>
@@ -402,16 +398,16 @@ export function Home() {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => navigate(f.route)}
                 className="w-full rounded-2xl p-4 text-left border cursor-pointer flex items-center gap-2"
-                style={{ background: cardBg, borderColor: 'rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+                style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
               >
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
                   style={{ background: 'rgba(114,47,55,0.06)' }}>{f.emoji}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5 min-w-0">
-                    <p className="font-semibold text-sm flex-shrink-0" style={{ color: textPri }}>{f.title}</p>
+                    <p className="font-semibold text-sm flex-shrink-0" style={{ color: 'var(--text-primary)' }}>{f.title}</p>
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${f.tagColor}`}>{f.tag}</span>
                   </div>
-                  <p className="text-xs" style={{ color: textSec }}>{f.subtitle}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{f.subtitle}</p>
                 </div>
                 <ChevronRight size={15} style={{ color: '#D1CBC4', flexShrink: 0 }} />
               </motion.button>
@@ -439,8 +435,8 @@ export function Home() {
                 <Star size={18} fill="#D4AF37" color="#D4AF37" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-sm" style={{ color: textPri }}>Passer à Sommely Pro</p>
-                <p className="text-xs" style={{ color: textSec }}>Scans illimités · Cave illimitée · Antoine 24h/24</p>
+                <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>Passer à Sommely Pro</p>
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Scans illimités · Cave illimitée · Antoine 24h/24</p>
               </div>
               <ChevronRight size={16} style={{ color: '#D4AF37' }} />
             </div>
@@ -454,15 +450,15 @@ export function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
             className="rounded-2xl p-4 border"
-            style={{ background: cardBg, borderColor: 'rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+            style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
           >
-            <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: textSec }}>Dernier scan</p>
+            <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: 'var(--text-secondary)' }}>Dernier scan</p>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
                 style={{ background: 'rgba(114,47,55,0.06)' }}>🍷</div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate" style={{ color: textPri }}>{recentWine.name}</p>
-                <p className="text-xs" style={{ color: textSec }}>{recentWine.year} · {recentWine.region}</p>
+                <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{recentWine.name}</p>
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{recentWine.year} · {recentWine.region}</p>
               </div>
               <button onClick={() => navigate('/scan')}
                 className="text-xs font-semibold px-3 py-1.5 rounded-full border-none cursor-pointer text-white"
@@ -483,7 +479,7 @@ export function Home() {
         >
           <div className="flex items-center gap-2 px-4 pt-4 pb-2">
             <span className="text-sm">💡</span>
-            <p className="text-xs font-bold" style={{ color: textPri }}>Le saviez-vous ?</p>
+            <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Le saviez-vous ?</p>
             <span className="ml-auto text-xs font-medium tabular-nums" style={{ color: 'rgba(114,47,55,0.4)' }}>
               {tipIndex + 1}/{WINE_TIPS.length}
             </span>
@@ -497,7 +493,7 @@ export function Home() {
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                 className="text-xs leading-relaxed"
-                style={{ color: textSec }}
+                style={{ color: 'var(--text-secondary)' }}
               >
                 {WINE_TIPS[tipIndex]}
               </motion.p>

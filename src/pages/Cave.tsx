@@ -351,14 +351,14 @@ export function Cave() {
     });
 
   return (
-    <div className="min-h-screen font-body" style={{ background: '#F5F0E8' }}>
+    <div className="min-h-screen font-body" style={{ background: 'var(--bg-app)' }}>
 
       {/* HEADER */}
       <div className="px-5 flex items-center justify-between sticky top-0 z-20"
-        style={{ background: 'rgba(245,240,232,0.98)', borderBottom: '1px solid rgba(0,0,0,0.07)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)', paddingBottom: '8px' }}>
+        style={{ background: 'var(--bg-app)', borderBottom: '1px solid var(--border)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)', paddingBottom: '8px' }}>
         <div className="w-8" />
         <div className="flex items-center gap-2">
-          <span className="font-display font-bold text-sm" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>Ma cave</span>
+          <span className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Ma cave</span>
           {isUpdating && <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}><RefreshCw size={12} color="#D4AF37" /></motion.div>}
         </div>
         <div className="flex items-center gap-2">
