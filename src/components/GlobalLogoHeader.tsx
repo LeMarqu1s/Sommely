@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Logo } from './Logo';
 
 // Pages où le header global est masqué (elles ont leur propre branding full-screen)
-const HIDDEN_ROUTES = ['/', '/onboarding', '/auth', '/auth/callback', '/invite', '/sommelier', '/privacy'];
+const HIDDEN_ROUTES = ['/', '/onboarding', '/auth', '/auth/callback', '/invite', '/sommelier', '/privacy', '/result'];
 
 export function GlobalLogoHeader() {
   const { pathname } = useLocation();

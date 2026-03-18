@@ -59,6 +59,9 @@ export interface WineAnalysis {
     cl1500?: number; // Magnum
   };
 
+  // Fourchette de prix marché pour la 75cl (min = prix le plus bas, max = prix boutique normal)
+  priceRange?: { min: number; max: number };
+
   // Meta
   confidence: number;
   labelReadability?: 'excellent' | 'good' | 'poor';
@@ -154,15 +157,20 @@ Format JSON attendu :
   "dosage": "Pour Champagne/Mousseux/Pétillant UNIQUEMENT : Brut Nature | Extra Brut | Brut | Extra Dry | Sec | Demi-sec | Doux. Mettre null pour tout vin tranquille.",
   "bottlePrices": {
     "cl375": null,
-    "cl750": 25,
+    "cl750": 14,
     "cl1500": null
+  },
+  "priceRange": {
+    "min": 11,
+    "max": 18
   },
   "tips": ["Conseil 1", "Conseil 2", "Conseil 3"],
   "story": "Anecdote ou histoire courte sur ce vin ou sa région (2-3 phrases)",
   "confidence": 90,
   "labelReadability": "excellent|good|poor"
 }
-RÈGLE bottlePrices : cl750 = toujours rempli avec prix estimé. cl375 et cl1500 = remplis UNIQUEMENT si ce vin est notoire dans ce format (ex: grande maison de Champagne → magnum fréquent). Sinon mettre null.
+RÈGLE bottlePrices : cl750 = prix marché RÉEL de la bouteille identifiée (pas une approximation génériques, cherche le prix réel de ce vin spécifique). cl375 et cl1500 = remplis UNIQUEMENT si ce vin est notoire dans ce format. Sinon null.
+RÈGLE priceRange : fourchette réelle constatée sur le marché pour ce vin en 75cl. min = prix le plus bas (grande surface / achat direct), max = prix boutique spécialisée / caviste. Écart typique 20-40%. Si incertain sur le prix exact, élargir la fourchette PLUTÔT QUE d'inventer un chiffre précis (ex: min:10, max:20 vaut mieux que cl750:15 inventé). Ne jamais mettre min==max sauf si le prix est vérifié avec certitude absolue.
 Si pas une étiquette de vin : {"error": "not_wine", "confidence": 0}`;
 
 // ─── ANALYSE PRINCIPALE ───────────────────────────────────
@@ -373,9 +381,18 @@ export async function enrichWineData(wine: WineAnalysis): Promise<Record<string,
       ? wine.bottlePrices
       : { cl750: estimatedPrice };
 
+  const mid = bottlePrices.cl750 ?? estimatedPrice;
+
+  // Price range : use AI-provided range if valid, otherwise compute ±25-30% around mid
+  const priceRange: { min: number; max: number } =
+    wine.priceRange && wine.priceRange.min > 0 && wine.priceRange.max > wine.priceRange.min
+      ? wine.priceRange
+      : { min: Math.max(1, Math.round(mid * 0.72)), max: Math.round(mid * 1.32) };
+
   return {
     avgPrice: bottlePrices.cl750 ?? estimatedPrice,
     bottlePrices,
+    priceRange,
     rating: calculateEstimatedRating(wine),
     description: wine.story || wine.tastingNotes?.structure || 'Un vin d\'excellente facture.',
     foodPairings: Array.isArray(pairings) ? pairings : [pairings],

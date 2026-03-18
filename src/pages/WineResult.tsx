@@ -158,19 +158,24 @@ export function WineResult() {
   ];
 
   const bottlePrices: { cl375?: number; cl750?: number; cl1500?: number } | undefined = wine.bottlePrices;
+  const priceRange: { min: number; max: number } | undefined = wine.priceRange;
+
+  const formatPrice = (single: number) =>
+    priceRange ? `${priceRange.min}€ – ${priceRange.max}€` : `~ ${single} €`;
+
   const priceRows: DetailItem[] = bottlePrices
     ? [
         ...(bottlePrices.cl375 != null
           ? [{ icon: Star, label: 'Fillette (37,5cl)', value: `~ ${bottlePrices.cl375} €` }]
           : []),
         ...(bottlePrices.cl750 != null
-          ? [{ icon: Star, label: 'Bouteille (75cl)', value: `~ ${bottlePrices.cl750} €` }]
+          ? [{ icon: Star, label: 'Bouteille (75cl)', value: formatPrice(bottlePrices.cl750) }]
           : []),
         ...(bottlePrices.cl1500 != null
           ? [{ icon: Star, label: 'Magnum (1,5L)', value: `~ ${bottlePrices.cl1500} €` }]
           : []),
       ]
-    : [{ icon: Star, label: 'Prix moyen', value: wine.avgPrice != null ? `~ ${wine.avgPrice} €` : 'Non spécifié' }];
+    : [{ icon: Star, label: 'Prix moyen', value: wine.avgPrice != null ? formatPrice(wine.avgPrice) : 'Non spécifié' }];
 
   const handleFavorite = () => {
     setIsFavorite(!isFavorite);
