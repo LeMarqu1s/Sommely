@@ -73,6 +73,15 @@ export function Scanner() {
     if (navigator.mediaDevices) startCamera();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // iOS Safari: le <video> n'est monté qu'APRÈS setScanState('camera_active').
+  // Ce useEffect attache le stream au videoRef dès que l'élément est disponible.
+  useEffect(() => {
+    if (scanState === 'camera_active' && videoRef.current && streamRef.current && !videoRef.current.srcObject) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [scanState]);
+
   // ─── CAMÉRA ──────────────────────────────────────────────
 
   const startCamera = async () => {
@@ -85,11 +94,13 @@ export function Scanner() {
           height: { ideal: 1080 },
         },
       });
+      // Stocker le stream AVANT setScanState pour que le useEffect puisse l'attacher
+      // quand le <video> sera monté (iOS Safari: videoRef.current est null ici)
+      streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
-      streamRef.current = stream;
       setScanState('camera_active');
     } catch (err: any) {
       if (err.name === 'NotAllowedError') {
@@ -465,8 +476,8 @@ export function Scanner() {
               </div>
             </div>
 
-            {/* Conseil */}
-            <div style={{ position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 148px)', left: 32, right: 32, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
+            {/* Conseil — au-dessus du bouton capture */}
+            <div style={{ position: 'fixed', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 182px)', left: 32, right: 32, display: 'flex', justifyContent: 'center', zIndex: 15, pointerEvents: 'none' }}>
               <AnimatePresence mode="wait">
                 <motion.p key={currentTip} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, textAlign: 'center' }}>
@@ -475,13 +486,14 @@ export function Scanner() {
               </AnimatePresence>
             </div>
 
-            {/* Bouton capture rond 72px */}
+            {/* Bouton capture rond 72px — fixed pour passer au-dessus de la BottomNav */}
             <div style={{
-              position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10,
-              paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 48px)',
+              position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20,
+              paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 90px)',
               paddingTop: 60,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              display: 'flex', justifyContent: 'center',
               background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%)',
+              pointerEvents: 'none',
             }}>
               <motion.button
                 whileTap={{ scale: 0.88 }}
@@ -489,10 +501,11 @@ export function Scanner() {
                 style={{
                   width: 72, height: 72, borderRadius: '50%',
                   background: 'white',
-                  border: 'none',
-                  boxShadow: '0 0 0 5px rgba(255,255,255,0.25), 0 8px 32px rgba(0,0,0,0.5)',
+                  border: '4px solid rgba(255,255,255,0.3)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
                   cursor: 'pointer',
                   flexShrink: 0,
+                  pointerEvents: 'auto',
                 }}
               />
             </div>
