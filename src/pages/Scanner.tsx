@@ -469,11 +469,8 @@ export function Scanner() {
                 </span>
               </div>
 
-              {/* Galerie */}
-              <motion.button whileTap={{ scale: 0.9 }} onClick={() => fileInputRef.current?.click()}
-                style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <Upload size={18} color="white" />
-              </motion.button>
+              {/* Spacer droit pour équilibrer la mise en page */}
+              <div style={{ width: 40 }} />
             </div>
 
             {/* Viseur doré — centré légèrement au-dessus du milieu pour laisser place au bouton */}
