@@ -1,7 +1,7 @@
 {
-  "name": "Sommely - Votre Sommelier IA",
+  "name": "Sommely",
   "short_name": "Sommely",
-  "description": "Scannez une bouteille, recevez votre score personnalise",
+  "description": "Le Yuka du vin — Votre sommelier IA personnel",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FAF9F6",
@@ -9,13 +9,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/IMG_1639-transparent.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/IMG_1639-transparent.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
