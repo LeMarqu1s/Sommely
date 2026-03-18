@@ -74,7 +74,14 @@ export async function fetchOpenAI(body: Record<string, unknown>): Promise<Respon
   const url = isProd ? '/api/openai-proxy' : '/v1/chat/completions';
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (!isProd) headers['Authorization'] = `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`;
-  return fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 58000); // 58s max côté client
+  try {
+    return await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 // ─── CACHE ────────────────────────────────────────────────

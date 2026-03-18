@@ -316,12 +316,16 @@ export function Scanner() {
       clearInterval(stepInterval);
       console.error('❌ Erreur analyse IA:', error);
 
-      if (error?.message?.includes('API key') || error?.status === 401) {
+      if (error?.name === 'AbortError') {
+        setErrorMessage("L'analyse a pris trop de temps. Vérifiez votre connexion et réessayez.");
+      } else if (error?.message?.includes('API key') || error?.status === 401) {
         setErrorMessage('Clé OpenAI invalide. Vérifiez VITE_OPENAI_API_KEY dans votre fichier .env');
       } else if (error?.status === 429) {
         setErrorMessage('Quota OpenAI dépassé. Attendez quelques secondes et réessayez.');
-      } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
-        setErrorMessage('Erreur réseau. Vérifiez votre connexion internet.');
+      } else if (error?.status === 504 || error?.message?.includes('timeout') || error?.message?.includes('trop longue')) {
+        setErrorMessage("L'analyse a pris trop de temps. Réessayez avec une photo plus petite ou vérifiez votre connexion.");
+      } else if (error?.message?.includes('network') || error?.message?.includes('fetch') || error?.message?.includes('Load failed') || error?.message?.includes('Failed to fetch')) {
+        setErrorMessage('Erreur réseau. Vérifiez votre connexion internet et réessayez.');
       } else if (error?.status === 400) {
         setErrorMessage("Image non reconnue par l'IA. Réessayez avec une photo plus nette.");
       } else {

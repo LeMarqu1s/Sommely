@@ -13,14 +13,23 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(req.body),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 55000);
+
+    let response;
+    try {
+      response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(req.body),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     const data = await response.json();
 
@@ -31,6 +40,9 @@ export default async function handler(req, res) {
     return res.status(200).json(data);
   } catch (err) {
     console.error('OpenAI proxy error:', err);
-    return res.status(500).json({ error: err.message || 'Erreur serveur' });
+    if (err.name === 'AbortError') {
+      return res.status(504).json({ error: { message: 'OpenAI timeout — analyse trop longue, réessayez.' } });
+    }
+    return res.status(500).json({ error: { message: err.message || 'Erreur serveur' } });
   }
 }
