@@ -16,7 +16,8 @@ export function SommelierButton() {
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
       onClick={() => navigate('/sommelier')}
-      className="fixed bottom-24 right-4 z-40 w-12 h-12 rounded-full bg-burgundy-dark flex items-center justify-center border-none cursor-pointer shadow-[0_8px_32px_rgba(114,47,55,0.4)]"
+      className="fixed right-4 z-40 w-12 h-12 rounded-full bg-burgundy-dark flex items-center justify-center border-none cursor-pointer shadow-[0_8px_32px_rgba(114,47,55,0.4)]"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 90px)' }}
     >
       <span className="text-2xl">🍷</span>
     </motion.button>

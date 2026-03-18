@@ -518,7 +518,7 @@ export function Home() {
           </div>
         </motion.div>
 
-        <div className="h-4" />
+        <div className="h-28" />
       </div>
     </div>
   );
