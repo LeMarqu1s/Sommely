@@ -258,30 +258,21 @@ export function Home() {
     <div className="min-h-screen font-body" style={{ background: '#FAFAF8' }}>
 
       {/* HEADER */}
-      <div className="px-5 pb-4" style={{ background: 'rgba(250,250,248,0.9)', backdropFilter: 'blur(20px)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 48px)', paddingLeft: '72px' }}>
-        <div className="max-w-lg mx-auto flex items-center justify-between">
-          <div>
-            <p className="text-sm mb-0.5" style={{ color: '#9E9E9E' }}>{timeOfDay}{firstName ? `, ${firstName}` : ''} 👋</p>
-            <div className="flex items-center gap-2">
-              <h1 className="font-display font-bold text-xl" style={{ color: '#1a0508', letterSpacing: '-0.02em' }}>
-                {isPremium ? 'Sommely Pro' : 'Sommely'}
-              </h1>
-              {isPremium && (
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(212,175,55,0.15)', color: '#D4AF37' }}>
-                  ♾ Illimité
-                </span>
-              )}
-            </div>
+      <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '16px', paddingRight: '16px', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)', paddingBottom: '12px' }}>
+        <div style={{ width: '44px' }} />
+        <div style={{ flex: 1, textAlign: 'center' }}>
+          <p style={{ color: '#9E9E9E', fontSize: '13px', marginBottom: '2px' }}>{timeOfDay}{firstName ? `, ${firstName}` : ''} 👋</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <h1 style={{ fontFamily: 'DM Serif Display', fontWeight: 700, fontSize: '20px', color: '#1a0508', letterSpacing: '-0.02em', margin: 0 }}>
+              {isPremium ? 'Sommely Pro' : 'Sommely'}
+            </h1>
+            {isPremium && <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '999px', background: 'rgba(212,175,55,0.15)', color: '#D4AF37' }}>♾ Illimité</span>}
           </div>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/profile')}
-            className="w-10 h-10 rounded-2xl flex items-center justify-center border-none cursor-pointer font-display font-bold text-white text-base shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #722F37, #8B4049)' }}
-          >
-            {firstName ? firstName[0].toUpperCase() : 'S'}
-          </motion.button>
         </div>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={() => navigate('/profile')}
+          style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #722F37, #8B4049)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontFamily: 'DM Serif Display', fontWeight: 700, fontSize: '16px', boxShadow: '0 4px 12px rgba(114,47,55,0.3)', flexShrink: 0 }}>
+          {firstName ? firstName[0].toUpperCase() : 'S'}
+        </motion.button>
       </div>
 
       <div className="max-w-lg mx-auto px-5 pt-4 pb-8 space-y-4">
