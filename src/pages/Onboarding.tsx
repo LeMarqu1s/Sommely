@@ -602,7 +602,7 @@ export function Onboarding() {
 
       {/* BOUTON CONTINUER — hors du scroll, toujours visible en bas */}
       {step > 0 && step < STEPS.length - 1 && (
-        <div className="px-6" style={{ paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)', background: '#1a0508' }}>
+        <div className="px-6" style={{ paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)', background: 'transparent' }}>
           <button
             type="button"
             onClick={goNext}
