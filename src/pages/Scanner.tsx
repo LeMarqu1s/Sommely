@@ -226,16 +226,22 @@ export function Scanner() {
       setAnalysisProgress(Math.round((step / (ANALYSIS_STEPS.length - 1)) * 100));
     }, 1200);
 
+    // Timeout de sécurité : 30s max pour éviter le chargement infini
+    const analysisTimeout = setTimeout(() => {
+      setErrorMessage("L'analyse a pris trop de temps. Vérifiez votre connexion et réessayez.");
+      setScanState('error');
+    }, 30000);
+
     try {
       console.log('🔍 Envoi de l\'image à OpenAI GPT-4o Vision...');
 
       // ═══════════════════════════════════════════════════════
       // APPEL OPENAI VISION AVEC LA VRAIE IMAGE BASE64
       // analyzeWineLabel() dans src/lib/openai.ts
+      // En prod Vercel : doit passer par /api/openai-proxy, pas VITE_OPENAI_API_KEY
       // ═══════════════════════════════════════════════════════
       const wineAnalysis = await analyzeWineLabel(base64);
 
-      clearInterval(stepInterval);
       setAnalysisStep(ANALYSIS_STEPS.length - 1);
       setAnalysisProgress(100);
 
@@ -328,14 +334,19 @@ export function Scanner() {
       });
 
     } catch (error: any) {
-      clearInterval(stepInterval);
       console.error('❌ Erreur analyse IA:', error);
+      console.error('❌ Détails erreur:', {
+        message: error?.message,
+        status: error?.status,
+        name: error?.name,
+        stack: error?.stack?.slice?.(0, 400),
+      });
 
       if (error?.message?.includes('API key') || error?.status === 401) {
-        setErrorMessage('Clé OpenAI invalide. Vérifiez VITE_OPENAI_API_KEY dans votre fichier .env');
+        setErrorMessage('Erreur d\'authentification OpenAI. Le proxy Vercel (/api/openai-proxy) est peut-être mal configuré.');
       } else if (error?.status === 429) {
         setErrorMessage('Quota OpenAI dépassé. Attendez quelques secondes et réessayez.');
-      } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
+      } else if (error?.message?.includes('Failed to fetch') || error?.message?.includes('network') || error?.message?.includes('fetch')) {
         setErrorMessage('Erreur réseau. Vérifiez votre connexion internet.');
       } else if (error?.status === 400) {
         setErrorMessage("Image non reconnue par l'IA. Réessayez avec une photo plus nette.");
@@ -344,6 +355,10 @@ export function Scanner() {
         setErrorMessage(msg.length > 120 ? `${msg.slice(0, 120)}...` : msg || "Erreur lors de l'analyse.");
       }
       setScanState('error');
+    } finally {
+      // Nettoyage garanti dans TOUS les cas (succès, erreur, timeout)
+      clearInterval(stepInterval);
+      clearTimeout(analysisTimeout);
     }
   };
 
