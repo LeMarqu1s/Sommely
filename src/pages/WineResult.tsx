@@ -132,6 +132,7 @@ export function WineResult() {
   const [showScoreAnimation, setShowScoreAnimation] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [showPriceSheet, setShowPriceSheet] = useState(false);
+  const [showCopied, setShowCopied] = useState(false);
 
   const wine = location.state?.wine;
   const score = location.state?.score || 75;
@@ -198,6 +199,30 @@ export function WineResult() {
     ...(extractNumber(bp['cl6000']) > 0 ? [{ icon: Star, label: isChampagne ? 'Mathusalem (6L)' : 'Impériale (6L)', value: sanitizePrice(bp['cl6000']!, formatPrice) }] : []),
   ].filter(() => ref750 > 0);
 
+  const handleShare = async () => {
+    const shareText = `🍷 ${wine.name} ${wine.year || ''}\n📍 ${wine.region || ''}\n⭐ Score Sommely : ${score}/100\n\nAnalysé avec Sommely — sommely.shop`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${wine.name} — Sommely`,
+          text: shareText,
+          url: 'https://sommely.shop',
+        });
+      } catch {
+        // Annulé par l'utilisateur — ne rien faire
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareText);
+        setShowCopied(true);
+        setTimeout(() => setShowCopied(false), 2000);
+      } catch (e) {
+        console.error('Share failed:', e);
+      }
+    }
+  };
+
   const handleFavorite = () => {
     setIsFavorite(!isFavorite);
     const favorites = JSON.parse(localStorage.getItem('sommely_favorites') || '[]');
@@ -238,9 +263,28 @@ export function WineResult() {
           >
             <Heart size={16} fill={isFavorite ? '#722F37' : 'none'} color={isFavorite ? '#722F37' : '#6B5D56'} />
           </button>
-          <button className="w-9 h-9 rounded-full bg-white border border-gray-light/50 flex items-center justify-center shadow-sm cursor-pointer transition-all hover:scale-110" aria-label="Partager">
-            <Share2 size={16} color="#6B5D56" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={handleShare}
+              className="w-9 h-9 rounded-full bg-white border border-gray-light/50 flex items-center justify-center shadow-sm cursor-pointer transition-all hover:scale-110"
+              aria-label="Partager"
+            >
+              <Share2 size={16} color="#6B5D56" />
+            </button>
+            <AnimatePresence>
+              {showCopied && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.9 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-10 right-0 bg-black-wine text-white text-xs font-semibold px-3 py-1.5 rounded-xl whitespace-nowrap shadow-lg"
+                >
+                  ✓ Copié !
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
