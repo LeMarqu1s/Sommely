@@ -318,14 +318,16 @@ export function Onboarding() {
                   />
                 </div>
 
-                <button
-                  type="button"
-                  onClick={goNext}
-                  disabled={!data.name.trim()}
-                  className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  Continuer <ChevronRight size={20} />
-                </button>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    disabled={!data.name.trim()}
+                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    Continuer <ChevronRight size={20} />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -357,14 +359,16 @@ export function Onboarding() {
                   ))}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={goNext}
-                  disabled={!data.experience}
-                  className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  Continuer <ChevronRight size={20} />
-                </button>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    disabled={!data.experience}
+                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    Continuer <ChevronRight size={20} />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -396,14 +400,16 @@ export function Onboarding() {
                   ))}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={goNext}
-                  disabled={!data.budget}
-                  className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  Continuer <ChevronRight size={20} />
-                </button>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    disabled={!data.budget}
+                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    Continuer <ChevronRight size={20} />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -438,14 +444,16 @@ export function Onboarding() {
                   })}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={goNext}
-                  disabled={data.favoriteTypes.length === 0}
-                  className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  Continuer ({data.favoriteTypes.length} sélectionné{data.favoriteTypes.length > 1 ? 's' : ''}) <ChevronRight size={20} />
-                </button>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    disabled={data.favoriteTypes.length === 0}
+                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    Continuer ({data.favoriteTypes.length} sélectionné{data.favoriteTypes.length > 1 ? 's' : ''}) <ChevronRight size={20} />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -477,13 +485,15 @@ export function Onboarding() {
                   })}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={goNext}
-                  className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  Continuer {data.occasions.length > 0 && `(${data.occasions.length})`} <ChevronRight size={20} />
-                </button>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    Continuer {data.occasions.length > 0 && `(${data.occasions.length})`} <ChevronRight size={20} />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -515,13 +525,15 @@ export function Onboarding() {
                   ))}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={goNext}
-                  className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  Continuer <ChevronRight size={20} />
-                </button>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    Continuer <ChevronRight size={20} />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -553,13 +565,15 @@ export function Onboarding() {
                   })}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={goNext}
-                  className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  Continuer {data.regions.length > 0 && `(${data.regions.length})`} <ChevronRight size={20} />
-                </button>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    Continuer {data.regions.length > 0 && `(${data.regions.length})`} <ChevronRight size={20} />
+                  </button>
+                </div>
               </div>
             )}
 

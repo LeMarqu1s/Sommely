@@ -516,7 +516,7 @@ export function Cave() {
                   <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="bg-burgundy-dark text-white px-6 py-3 rounded-full font-semibold text-sm border-none cursor-pointer">Ajouter une bouteille</button>
                 </div>
               )}
-              <div className="h-4" />
+              <div className="h-28" />
             </motion.div>
           )}
 
@@ -583,7 +583,7 @@ export function Cave() {
                   })}
                 </div>
               )}
-              <div className="h-4" />
+              <div className="h-28" />
             </motion.div>
           )}
 
@@ -693,7 +693,7 @@ export function Cave() {
                     <ArrowLeft size={16} /> Retour
                   </button>
                 </div>
-                <div className="h-4" />
+                <div className="h-28" />
               </motion.div>
             );
           })()}
@@ -750,7 +750,7 @@ export function Cave() {
                 </button>
               </div>
               <p className="text-xs text-gray-dark text-center leading-relaxed">⚠️ Simulation indicative. Ne constitue pas un conseil financier.</p>
-              <div className="h-4" />
+              <div className="h-28" />
             </motion.div>
           )}
 
@@ -797,7 +797,7 @@ export function Cave() {
                 {isAdding ? (<><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-5 h-5 rounded-full border-2 border-white border-t-transparent" />L'IA évalue ce vin...</>) : (<><Plus size={20} />Ajouter à ma cave</>)}
               </button>
               <p className="text-xs text-gray-dark text-center">💡 L'IA calcule automatiquement la valeur actuelle et la fenêtre de garde</p>
-              <div className="h-4" />
+              <div className="h-28" />
             </motion.div>
           )}
 
