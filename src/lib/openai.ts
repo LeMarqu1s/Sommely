@@ -394,17 +394,43 @@ export async function enrichWineData(wine: WineAnalysis): Promise<Record<string,
   const pairings = wine.foodPairings?.perfect || getDefaultFoodPairings(wine.type)?.perfect || [];
   const estimatedPrice = calculateEstimatedPrice(wine);
 
-  // Bottle prices : uniquement les formats confirmés par l'IA (non-null, non-zero)
+  // Bottle prices : formats confirmés par l'IA + lookup pour vins iconiques connus
   const aiBP = wine.bottlePrices;
   const cl750 = (aiBP?.cl750 && aiBP.cl750 > 0) ? aiBP.cl750 : estimatedPrice;
 
+  // Table des formats RÉELS pour vins iconiques (ratio prix établis par le marché)
+  // cl375 ≈ 58%, cl1500 ≈ 210%, cl3000 ≈ 430%, cl6000 ≈ 870% du prix 75cl
+  const KNOWN_MULTI_FORMAT: { keys: string[]; formats: ('cl375'|'cl1500'|'cl3000'|'cl6000')[] }[] = [
+    { keys: ['petrus','pétrus'],              formats: ['cl375','cl1500','cl3000','cl6000'] },
+    { keys: ['romanée-conti','romanee conti','drc'], formats: ['cl375','cl1500','cl3000'] },
+    { keys: ['le pin'],                       formats: ['cl375','cl1500','cl3000'] },
+    { keys: ['lafleur','la fleur'],           formats: ['cl375','cl1500'] },
+    { keys: ['cheval blanc'],                 formats: ['cl375','cl1500','cl3000'] },
+    { keys: ['ausone'],                       formats: ['cl375','cl1500','cl3000'] },
+    { keys: ['mouton rothschild'],            formats: ['cl375','cl1500','cl3000','cl6000'] },
+    { keys: ['lafite','lafite-rothschild'],   formats: ['cl375','cl1500','cl3000','cl6000'] },
+    { keys: ['latour'],                       formats: ['cl375','cl1500','cl3000','cl6000'] },
+    { keys: ['margaux','château margaux'],    formats: ['cl375','cl1500','cl3000'] },
+    { keys: ['haut-brion','haut brion'],      formats: ['cl375','cl1500','cl3000'] },
+    { keys: ['yquem',"d'yquem"],              formats: ['cl375','cl1500','cl3000'] },
+    { keys: ['opus one'],                     formats: ['cl375','cl1500','cl3000'] },
+    { keys: ['masseto'],                      formats: ['cl375','cl1500'] },
+  ];
+  const fullText = [wine.name, wine.chateau, wine.producer].filter(Boolean).join(' ').toLowerCase();
+  const knownEntry = KNOWN_MULTI_FORMAT.find(e => e.keys.some(k => fullText.includes(k)));
+
+  const RATIO: Record<string, number> = { cl375: 0.58, cl1500: 2.10, cl3000: 4.30, cl6000: 8.70 };
+
   const bottlePrices: { cl1875?: number; cl375?: number; cl750?: number; cl1500?: number; cl3000?: number; cl6000?: number } = {
     ...(aiBP?.cl1875 && aiBP.cl1875 > 0 ? { cl1875: aiBP.cl1875 } : {}),
-    ...(aiBP?.cl375  && aiBP.cl375  > 0 ? { cl375:  aiBP.cl375  } : {}),
     cl750,
-    ...(aiBP?.cl1500 && aiBP.cl1500 > 0 ? { cl1500: aiBP.cl1500 } : {}),
-    ...(aiBP?.cl3000 && aiBP.cl3000 > 0 ? { cl3000: aiBP.cl3000 } : {}),
-    ...(aiBP?.cl6000 && aiBP.cl6000 > 0 ? { cl6000: aiBP.cl6000 } : {}),
+    // Pour chaque format : AI en priorité → sinon lookup iconique → sinon rien
+    ...(['cl375','cl1500','cl3000','cl6000'] as const).reduce((acc, fmt) => {
+      const aiVal = aiBP?.[fmt];
+      if (aiVal && aiVal > 0) { acc[fmt] = aiVal; }
+      else if (knownEntry?.formats.includes(fmt)) { acc[fmt] = Math.round(cl750 * RATIO[fmt]); }
+      return acc;
+    }, {} as Record<string, number>),
   };
 
   const mid = cl750;
