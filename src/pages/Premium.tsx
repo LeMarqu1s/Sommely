@@ -85,7 +85,7 @@ export function Premium() {
   return (
     <div className="min-h-screen bg-cream font-body">
       {/* Header */}
-      <div className="bg-white border-b border-gray-light/30 px-5 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+      <div className="bg-white border-b border-gray-light/30 px-5 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm" style={{ paddingLeft: '72px' }}>
         <button
           onClick={() => (window.history.length > 2 ? navigate(-1) : navigate('/home'))}
           className="bg-transparent border-none cursor-pointer p-1"
