@@ -21,7 +21,7 @@ import {
   Copy,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme, CURRENCIES } from '../context/ThemeContext';
 import { getUserScans, getScansCountTotal } from '../lib/supabase';
 
 const BADGES = [
@@ -43,7 +43,7 @@ const SUBSCRIPTION_LABELS: Record<string, { label: string; color: string; bg: st
 export function Profile() {
   const navigate = useNavigate();
   const { user, profile, subscription, subscriptionState, signOut, isAuthenticated, refreshSubscription } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, currency, setCurrency } = useTheme();
   const [recentScans, setRecentScans] = useState<any[]>([]);
   const [scanCountTotal, setScanCountTotal] = useState(0);
   const [favorites, setFavorites] = useState<any[]>([]);
@@ -652,7 +652,22 @@ export function Profile() {
             <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="bg-white rounded-3xl p-6 w-full max-w-lg space-y-4" onClick={e => e.stopPropagation()}>
               <h3 className="font-display text-xl font-bold text-black-wine">⚙️ Paramètres</h3>
               <div className="bg-cream rounded-2xl p-4 space-y-3">
-                <div className="flex items-center justify-between"><span className="text-sm text-gray-dark">Langue</span><span className="text-sm font-semibold text-black-wine">Français</span></div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-dark">Devise</span>
+                  <div className="flex gap-1">
+                    {CURRENCIES.map(c => (
+                      <button key={c.code} onClick={() => setCurrency(c)}
+                        style={{
+                          padding: '4px 8px', borderRadius: '8px', fontSize: '12px',
+                          fontWeight: 600, border: 'none', cursor: 'pointer',
+                          background: currency.code === c.code ? '#722F37' : '#F5F0E8',
+                          color: currency.code === c.code ? 'white' : '#1a0508',
+                        }}>
+                        {c.symbol}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-dark">Apparence</span>
                   <button

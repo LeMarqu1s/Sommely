@@ -2,16 +2,39 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 
 type Theme = 'light' | 'dark';
 
+export type Currency = { code: string; symbol: string; rate: number };
+
+export const CURRENCIES: Currency[] = [
+  { code: 'EUR', symbol: '€', rate: 1 },
+  { code: 'USD', symbol: '$', rate: 1.08 },
+  { code: 'GBP', symbol: '£', rate: 0.85 },
+  { code: 'CHF', symbol: 'CHF', rate: 0.95 },
+];
+
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
+  currency: Currency;
+  setCurrency: (c: Currency) => void;
+  formatPrice: (amount: number) => string;
 }
 
-const ThemeContext = createContext<ThemeContextType>({ theme: 'light', toggleTheme: () => {} });
+const ThemeContext = createContext<ThemeContextType>({
+  theme: 'light',
+  toggleTheme: () => {},
+  currency: CURRENCIES[0],
+  setCurrency: () => {},
+  formatPrice: (n) => `${Math.round(n)} €`,
+});
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     return (localStorage.getItem('sommely_theme') as Theme) || 'light';
+  });
+
+  const [currency, setCurrencyState] = useState<Currency>(() => {
+    const saved = localStorage.getItem('sommely_currency');
+    return CURRENCIES.find(c => c.code === saved) || CURRENCIES[0];
   });
 
   useEffect(() => {
@@ -26,8 +49,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const toggleTheme = () => setTheme(t => t === 'light' ? 'dark' : 'light');
 
+  const setCurrency = (c: Currency) => {
+    setCurrencyState(c);
+    localStorage.setItem('sommely_currency', c.code);
+  };
+
+  const formatPrice = (amount: number): string => {
+    if (!amount) return '';
+    return `${Math.round(amount * currency.rate)} ${currency.symbol}`;
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, currency, setCurrency, formatPrice }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -44,37 +44,3 @@ input[type='range']::-moz-range-thumb {
   box-shadow: 0 2px 8px rgba(114, 47, 55, 0.4);
 }
 
-[data-theme="dark"] {
-  --bg-primary: #0d0608;
-  --bg-secondary: #1a0508;
-  --bg-card: #1f0a0d;
-  --text-primary: #FAF9F6;
-  --text-secondary: rgba(250,249,246,0.6);
-  --border-color: rgba(255,255,255,0.08);
-}
-
-[data-theme="dark"] body {
-  background: #0d0608;
-  color: #FAF9F6;
-}
-
-[data-theme="dark"] .bg-white {
-  background: #1f0a0d !important;
-}
-
-[data-theme="dark"] .text-black-wine {
-  color: #FAF9F6 !important;
-}
-
-[data-theme="dark"] .text-gray-dark {
-  color: rgba(250,249,246,0.55) !important;
-}
-
-[data-theme="dark"] .border-gray-light {
-  border-color: rgba(255,255,255,0.08) !important;
-}
-
-[data-theme="dark"] .bg-cream {
-  background: #2a0e12 !important;
-}
-

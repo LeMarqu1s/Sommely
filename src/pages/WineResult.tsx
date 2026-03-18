@@ -1,5 +1,4 @@
 import React from 'react';
-import { detectCurrency, formatPrice } from '../utils/currency';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Logo } from '../components/Logo';
@@ -19,6 +18,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useTheme } from '../context/ThemeContext';
 
 const FOOD_PAIRINGS: Record<string, { emoji: string; label: string }[]> = {
   Rouge: [
@@ -119,9 +119,10 @@ function extractNumber(p: number | string | null | undefined): number {
   return match ? parseFloat(match[0]) : 0;
 }
 
-/** Formate un prix (number ou string range) en "~X {sym}" en prenant toujours le premier nombre. */
-function sanitizePrice(p: number | string, sym: string = '€'): string {
-  return `~ ${formatPrice(extractNumber(p), sym)}`;
+/** Formate un prix (number ou string range) en "~X {devise}" en prenant toujours le premier nombre. */
+function sanitizePrice(p: number | string, fmt: (n: number) => string): string {
+  const n = extractNumber(p);
+  return n > 0 ? `~ ${fmt(n)}` : '';
 }
 
 export function WineResult() {
@@ -154,7 +155,7 @@ export function WineResult() {
   const firstName = userProfile?.firstName || '';
 
   const isChampagne = ['Champagne', 'Pétillant', 'Mousseux'].includes(wine.type || '');
-  const { symbol } = detectCurrency();
+  const { formatPrice } = useTheme();
 
   type DetailItem = { icon: LucideIcon; label: string; value: string };
 
@@ -184,17 +185,17 @@ export function WineResult() {
   // Fourchette pour la 75cl uniquement
   const format75cl = (price: number) =>
     priceRange && priceRange.min > 0 && priceRange.max > 0
-      ? `${formatPrice(priceRange.min, symbol)} – ${formatPrice(priceRange.max, symbol)}`
-      : `~ ${formatPrice(price, symbol)}`;
+      ? `${formatPrice(priceRange.min)} – ${formatPrice(priceRange.max)}`
+      : `~ ${formatPrice(price)}`;
 
   // Afficher uniquement les formats confirmés par l'IA — jamais de calcul inventé
   const priceRows: DetailItem[] = [
-    ...(extractNumber(bp['cl1875']) > 0 ? [{ icon: Star, label: isChampagne ? 'Piccolo / Quart (18,75cl)' : 'Piccolo (18,75cl)', value: sanitizePrice(bp['cl1875']!, symbol) }] : []),
-    ...(extractNumber(bp['cl375'])  > 0 ? [{ icon: Star, label: isChampagne ? 'Demi (37,5cl)' : 'Demi-bouteille (37,5cl)', value: sanitizePrice(bp['cl375']!, symbol) }] : []),
+    ...(extractNumber(bp['cl1875']) > 0 ? [{ icon: Star, label: isChampagne ? 'Piccolo / Quart (18,75cl)' : 'Piccolo (18,75cl)', value: sanitizePrice(bp['cl1875']!, formatPrice) }] : []),
+    ...(extractNumber(bp['cl375'])  > 0 ? [{ icon: Star, label: isChampagne ? 'Demi (37,5cl)' : 'Demi-bouteille (37,5cl)', value: sanitizePrice(bp['cl375']!, formatPrice) }] : []),
     { icon: Star, label: 'Bouteille (75cl)', value: format75cl(ref750) },
-    ...(extractNumber(bp['cl1500']) > 0 ? [{ icon: Star, label: 'Magnum (1,5L)', value: sanitizePrice(bp['cl1500']!, symbol) }] : []),
-    ...(extractNumber(bp['cl3000']) > 0 ? [{ icon: Star, label: isChampagne ? 'Jéroboam (3L)' : 'Double Magnum (3L)', value: sanitizePrice(bp['cl3000']!, symbol) }] : []),
-    ...(extractNumber(bp['cl6000']) > 0 ? [{ icon: Star, label: isChampagne ? 'Mathusalem (6L)' : 'Impériale (6L)', value: sanitizePrice(bp['cl6000']!, symbol) }] : []),
+    ...(extractNumber(bp['cl1500']) > 0 ? [{ icon: Star, label: 'Magnum (1,5L)', value: sanitizePrice(bp['cl1500']!, formatPrice) }] : []),
+    ...(extractNumber(bp['cl3000']) > 0 ? [{ icon: Star, label: isChampagne ? 'Jéroboam (3L)' : 'Double Magnum (3L)', value: sanitizePrice(bp['cl3000']!, formatPrice) }] : []),
+    ...(extractNumber(bp['cl6000']) > 0 ? [{ icon: Star, label: isChampagne ? 'Mathusalem (6L)' : 'Impériale (6L)', value: sanitizePrice(bp['cl6000']!, formatPrice) }] : []),
   ].filter(() => ref750 > 0);
 
   const handleFavorite = () => {
@@ -699,7 +700,7 @@ export function WineResult() {
                 {wine.avgPrice != null && (
                   <div className="bg-cream rounded-2xl p-4 text-center">
                     <p className="text-xs text-gray-dark mb-1">Prix de référence estimé</p>
-                    <p className="font-display text-xl font-bold text-burgundy-dark">~ {formatPrice(wine.avgPrice, symbol)}</p>
+                    <p className="font-display text-xl font-bold text-burgundy-dark">~ {formatPrice(wine.avgPrice)}</p>
                     <p className="text-xs text-gray-dark mt-1">pour une bouteille de 75 cl</p>
                   </div>
                 )}
