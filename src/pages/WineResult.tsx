@@ -591,7 +591,7 @@ export function WineResult() {
             className="w-full py-4 bg-gold text-black-wine rounded-2xl font-semibold text-base flex items-center justify-center gap-3 hover:bg-gold-light active:scale-95 transition-all duration-200 shadow-md border-none cursor-pointer"
           >
             <ShoppingBag size={20} />
-            Trouver moins cher 🔍
+            Acheter ce vin 🛒
           </button>
 
           <button
@@ -656,7 +656,7 @@ export function WineResult() {
             >
               <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-light/20">
                 <div>
-                  <h3 className="font-display text-lg font-bold text-black-wine">Trouver moins cher</h3>
+                  <h3 className="font-display text-lg font-bold text-black-wine">Acheter ce vin</h3>
                   <p className="text-xs text-gray-dark mt-0.5 truncate max-w-[240px]">
                     {wine.name}{wine.year ? ` · ${wine.year}` : ''}
                   </p>
@@ -670,25 +670,8 @@ export function WineResult() {
               </div>
 
               <div className="overflow-y-auto px-6 py-5 space-y-3">
-                {/* Badge partenaire */}
-                <div className="bg-burgundy-dark/5 border border-burgundy-dark/15 rounded-2xl px-4 py-3 flex items-center gap-3">
-                  <span className="text-xl flex-shrink-0">🤝</span>
-                  <div>
-                    <p className="text-xs font-bold text-burgundy-dark">Partenaire Sommely</p>
-                    <p className="text-xs text-gray-dark">Commandez via nos liens et soutenez Sommely sans surcoût pour vous.</p>
-                  </div>
-                </div>
-
                 {/* Revendeurs */}
                 {[
-                  {
-                    name: 'Wine-Searcher',
-                    desc: 'Comparateur mondial · Prix en temps réel',
-                    emoji: '🌍',
-                    url: `https://www.wine-searcher.com/find/${encodeURIComponent(`${wine.name}${wine.year ? ' ' + wine.year : ''}`)}`,
-                    tag: 'Mondial',
-                    tagColor: 'bg-blue-100 text-blue-700',
-                  },
                   {
                     name: 'Millésima',
                     desc: 'Cave en ligne · Bordeaux & Grands crus',
@@ -699,20 +682,12 @@ export function WineResult() {
                     isAffiliate: true,
                   },
                   {
-                    name: 'iDealwine',
-                    desc: 'Ventes aux enchères & occasions',
-                    emoji: '🔨',
-                    url: `https://www.idealwine.com/fr/recherche-vins/?q=${encodeURIComponent(wine.name)}`,
-                    tag: 'Enchères',
-                    tagColor: 'bg-orange-100 text-orange-700',
-                  },
-                  {
-                    name: 'La Cave à Vin',
-                    desc: 'Grands crus & vins en primeur',
-                    emoji: '🍾',
-                    url: `https://www.lacaveduvin.com/recherche?q=${encodeURIComponent(wine.name)}`,
-                    tag: 'Primeurs',
-                    tagColor: 'bg-purple-100 text-purple-700',
+                    name: 'Wine-Searcher',
+                    desc: 'Comparateur mondial · Prix en temps réel',
+                    emoji: '🌍',
+                    url: `https://www.wine-searcher.com/find/${encodeURIComponent(`${wine.name}${wine.year ? ' ' + wine.year : ''}`)}`,
+                    tag: 'Mondial',
+                    tagColor: 'bg-blue-100 text-blue-700',
                   },
                 ].map((shop) => (
                   <a
