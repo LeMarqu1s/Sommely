@@ -14,24 +14,26 @@ export default async function handler(req, res) {
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 55000);
+    const timeoutId = setTimeout(() => controller.abort(), 55000);
 
-    let response;
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(req.body),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    let data;
     try {
-      response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(req.body),
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeout);
+      data = await response.json();
+    } catch {
+      return res.status(502).json({ error: { message: 'Réponse OpenAI invalide.' } });
     }
-
-    const data = await response.json();
 
     if (!response.ok) {
       return res.status(response.status).json(data);
@@ -41,7 +43,7 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error('OpenAI proxy error:', err);
     if (err.name === 'AbortError') {
-      return res.status(504).json({ error: { message: 'OpenAI timeout — analyse trop longue, réessayez.' } });
+      return res.status(504).json({ error: { message: "Délai dépassé. L'IA prend trop de temps, réessayez." } });
     }
     return res.status(500).json({ error: { message: err.message || 'Erreur serveur' } });
   }

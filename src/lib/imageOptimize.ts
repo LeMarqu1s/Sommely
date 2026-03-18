@@ -9,12 +9,13 @@ export async function optimizeImageForAI(
   quality = 0.75
 ): Promise<string> {
   return new Promise((resolve) => {
-    // Sécurité : si img.onload ne se déclenche jamais (bug mobile), on fallback après 10s
-    const safetyTimer = setTimeout(() => resolve(base64), 10000);
+    // Fallback de sécurité : si img.onload ne se déclenche jamais (HEIC, WebP non supporté, etc.)
+    // on résout avec l'image originale après 5 secondes pour ne jamais bloquer indéfiniment.
+    const safetyTimeout = setTimeout(() => resolve(base64), 5000);
 
     const img = new Image();
     img.onload = () => {
-      clearTimeout(safetyTimer);
+      clearTimeout(safetyTimeout);
       let { width, height } = img;
       if (width > maxSize || height > maxSize) {
         if (width > height) {
@@ -38,10 +39,12 @@ export async function optimizeImageForAI(
       resolve(optimized ?? base64);
     };
     img.onerror = () => {
-      clearTimeout(safetyTimer);
+      clearTimeout(safetyTimeout);
       resolve(base64);
     };
-    const mime = base64.startsWith('/9j/') ? 'image/jpeg' : 'image/png';
+    // Détection MIME plus robuste : JPEG (/9j/), PNG (iVBOR), fallback jpeg
+    let mime = 'image/jpeg';
+    if (base64.startsWith('iVBOR')) mime = 'image/png';
     img.src = `data:${mime};base64,${base64}`;
   });
 }

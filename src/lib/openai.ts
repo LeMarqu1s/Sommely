@@ -75,12 +75,26 @@ export async function fetchOpenAI(body: Record<string, unknown>): Promise<Respon
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (!isProd) headers['Authorization'] = `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`;
 
+  // Timeout de 50s : si le réseau ou Vercel ne répond pas, on avorte proprement
+  // plutôt que de laisser le fetch pendre indéfiniment → catch déclenché → état erreur affiché
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 58000); // 58s max côté client
+  const timeoutId = setTimeout(() => controller.abort(), 50000);
+
   try {
-    return await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if ((err as Error).name === 'AbortError') {
+      throw new Error("L'analyse a pris trop de temps. Vérifiez votre connexion et réessayez.");
+    }
+    throw err;
   }
 }
 
@@ -177,7 +191,12 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
     response_format: { type: 'json_object' }
   });
 
-  const data = await response.json();
+  let data: Record<string, any>;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(`Réponse invalide du serveur (HTTP ${response.status}). Réessayez.`);
+  }
 
   if (!response.ok) {
     throw new Error(data.error?.message || `Erreur ${response.status}`);
