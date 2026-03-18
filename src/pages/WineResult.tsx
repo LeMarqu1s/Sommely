@@ -1,4 +1,5 @@
 import React from 'react';
+import { detectCurrency, formatPrice } from '../utils/currency';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Logo } from '../components/Logo';
@@ -118,9 +119,9 @@ function extractNumber(p: number | string | null | undefined): number {
   return match ? parseFloat(match[0]) : 0;
 }
 
-/** Formate un prix (number ou string range) en "~X€" en prenant toujours le premier nombre. */
-function sanitizePrice(p: number | string): string {
-  return `~ ${extractNumber(p)}€`;
+/** Formate un prix (number ou string range) en "~X {sym}" en prenant toujours le premier nombre. */
+function sanitizePrice(p: number | string, sym: string = '€'): string {
+  return `~ ${formatPrice(extractNumber(p), sym)}`;
 }
 
 export function WineResult() {
@@ -153,6 +154,7 @@ export function WineResult() {
   const firstName = userProfile?.firstName || '';
 
   const isChampagne = ['Champagne', 'Pétillant', 'Mousseux'].includes(wine.type || '');
+  const { symbol } = detectCurrency();
 
   type DetailItem = { icon: LucideIcon; label: string; value: string };
 
@@ -182,17 +184,17 @@ export function WineResult() {
   // Fourchette pour la 75cl uniquement
   const format75cl = (price: number) =>
     priceRange && priceRange.min > 0 && priceRange.max > 0
-      ? `${priceRange.min}€ – ${priceRange.max}€`
-      : `~ ${price}€`;
+      ? `${formatPrice(priceRange.min, symbol)} – ${formatPrice(priceRange.max, symbol)}`
+      : `~ ${formatPrice(price, symbol)}`;
 
   // Afficher uniquement les formats confirmés par l'IA — jamais de calcul inventé
   const priceRows: DetailItem[] = [
-    ...(extractNumber(bp['cl1875']) > 0 ? [{ icon: Star, label: isChampagne ? 'Piccolo / Quart (18,75cl)' : 'Piccolo (18,75cl)', value: sanitizePrice(bp['cl1875']!) }] : []),
-    ...(extractNumber(bp['cl375'])  > 0 ? [{ icon: Star, label: isChampagne ? 'Demi (37,5cl)' : 'Demi-bouteille (37,5cl)', value: sanitizePrice(bp['cl375']!) }] : []),
+    ...(extractNumber(bp['cl1875']) > 0 ? [{ icon: Star, label: isChampagne ? 'Piccolo / Quart (18,75cl)' : 'Piccolo (18,75cl)', value: sanitizePrice(bp['cl1875']!, symbol) }] : []),
+    ...(extractNumber(bp['cl375'])  > 0 ? [{ icon: Star, label: isChampagne ? 'Demi (37,5cl)' : 'Demi-bouteille (37,5cl)', value: sanitizePrice(bp['cl375']!, symbol) }] : []),
     { icon: Star, label: 'Bouteille (75cl)', value: format75cl(ref750) },
-    ...(extractNumber(bp['cl1500']) > 0 ? [{ icon: Star, label: 'Magnum (1,5L)', value: sanitizePrice(bp['cl1500']!) }] : []),
-    ...(extractNumber(bp['cl3000']) > 0 ? [{ icon: Star, label: isChampagne ? 'Jéroboam (3L)' : 'Double Magnum (3L)', value: sanitizePrice(bp['cl3000']!) }] : []),
-    ...(extractNumber(bp['cl6000']) > 0 ? [{ icon: Star, label: isChampagne ? 'Mathusalem (6L)' : 'Impériale (6L)', value: sanitizePrice(bp['cl6000']!) }] : []),
+    ...(extractNumber(bp['cl1500']) > 0 ? [{ icon: Star, label: 'Magnum (1,5L)', value: sanitizePrice(bp['cl1500']!, symbol) }] : []),
+    ...(extractNumber(bp['cl3000']) > 0 ? [{ icon: Star, label: isChampagne ? 'Jéroboam (3L)' : 'Double Magnum (3L)', value: sanitizePrice(bp['cl3000']!, symbol) }] : []),
+    ...(extractNumber(bp['cl6000']) > 0 ? [{ icon: Star, label: isChampagne ? 'Mathusalem (6L)' : 'Impériale (6L)', value: sanitizePrice(bp['cl6000']!, symbol) }] : []),
   ].filter(() => ref750 > 0);
 
   const handleFavorite = () => {
@@ -697,7 +699,7 @@ export function WineResult() {
                 {wine.avgPrice != null && (
                   <div className="bg-cream rounded-2xl p-4 text-center">
                     <p className="text-xs text-gray-dark mb-1">Prix de référence estimé</p>
-                    <p className="font-display text-xl font-bold text-burgundy-dark">~ {wine.avgPrice} €</p>
+                    <p className="font-display text-xl font-bold text-burgundy-dark">~ {formatPrice(wine.avgPrice, symbol)}</p>
                     <p className="text-xs text-gray-dark mt-1">pour une bouteille de 75 cl</p>
                   </div>
                 )}

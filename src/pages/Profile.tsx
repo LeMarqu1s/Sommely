@@ -21,6 +21,7 @@ import {
   Copy,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { getUserScans, getScansCountTotal } from '../lib/supabase';
 
 const BADGES = [
@@ -42,6 +43,7 @@ const SUBSCRIPTION_LABELS: Record<string, { label: string; color: string; bg: st
 export function Profile() {
   const navigate = useNavigate();
   const { user, profile, subscription, subscriptionState, signOut, isAuthenticated, refreshSubscription } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [recentScans, setRecentScans] = useState<any[]>([]);
   const [scanCountTotal, setScanCountTotal] = useState(0);
   const [favorites, setFavorites] = useState<any[]>([]);
@@ -651,6 +653,24 @@ export function Profile() {
               <h3 className="font-display text-xl font-bold text-black-wine">⚙️ Paramètres</h3>
               <div className="bg-cream rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between"><span className="text-sm text-gray-dark">Langue</span><span className="text-sm font-semibold text-black-wine">Français</span></div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-dark">Apparence</span>
+                  <button
+                    onClick={toggleTheme}
+                    style={{
+                      background: theme === 'dark' ? '#722F37' : '#F5F0E8',
+                      border: '1px solid rgba(0,0,0,0.1)',
+                      borderRadius: '999px',
+                      padding: '4px 12px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: theme === 'dark' ? 'white' : '#1a0508',
+                    }}
+                  >
+                    {theme === 'dark' ? '☀️ Clair' : '🌙 Sombre'}
+                  </button>
+                </div>
                 <div className="flex items-center justify-between"><span className="text-sm text-gray-dark">Version</span><span className="text-sm font-semibold text-black-wine">Sommely 1.0</span></div>
               </div>
               <button onClick={() => { handleSignOut(); setShowSettings(false); }} className="w-full py-3.5 border-2 border-red-200 text-red-600 rounded-2xl font-semibold text-sm bg-transparent cursor-pointer">Supprimer mon compte</button>
