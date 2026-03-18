@@ -110,6 +110,19 @@ function generateExplanation(wine: any, score: number, profile: any): string {
   return explanations.join(' ');
 }
 
+/** Extrait le premier nombre d'un prix potentiellement sous forme de range ("30-50", "30€-50€") ou number. */
+function extractNumber(p: number | string | null | undefined): number {
+  if (p == null) return 0;
+  if (typeof p === 'number') return p;
+  const match = String(p).replace(/€/g, '').match(/\d+(\.\d+)?/);
+  return match ? parseFloat(match[0]) : 0;
+}
+
+/** Formate un prix (number ou string range) en "~X€" en prenant toujours le premier nombre. */
+function sanitizePrice(p: number | string): string {
+  return `~ ${extractNumber(p)}€`;
+}
+
 export function WineResult() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -157,11 +170,14 @@ export function WineResult() {
       : []),
   ];
 
-  const bp = (wine.bottlePrices || {}) as Record<string, number | null | undefined>;
+  const bp = (wine.bottlePrices || {}) as Record<string, number | string | null | undefined>;
   const priceRange: { min: number; max: number } | undefined = wine.priceRange;
 
-  // Prix de référence 75cl : AI > avgPrice > 0
-  const ref750 = (bp['cl750'] && bp['cl750'] > 0 ? bp['cl750'] : null) ?? wine.avgPrice ?? 0;
+  // Prix de référence 75cl : AI > avgPrice > 0 (robuste aux strings "30-50")
+  const ref750 = (() => {
+    const n = extractNumber(bp['cl750']);
+    return n > 0 ? n : (wine.avgPrice ?? 0);
+  })();
 
   // Fourchette pour la 75cl uniquement
   const format75cl = (price: number) =>
@@ -171,12 +187,12 @@ export function WineResult() {
 
   // Afficher uniquement les formats confirmés par l'IA — jamais de calcul inventé
   const priceRows: DetailItem[] = [
-    ...(bp['cl1875'] && bp['cl1875'] > 0 ? [{ icon: Star, label: isChampagne ? 'Piccolo / Quart (18,75cl)' : 'Piccolo (18,75cl)', value: `~ ${bp['cl1875']}€` }] : []),
-    ...(bp['cl375']  && bp['cl375']  > 0 ? [{ icon: Star, label: isChampagne ? 'Demi (37,5cl)' : 'Demi-bouteille (37,5cl)', value: `~ ${bp['cl375']}€` }] : []),
+    ...(extractNumber(bp['cl1875']) > 0 ? [{ icon: Star, label: isChampagne ? 'Piccolo / Quart (18,75cl)' : 'Piccolo (18,75cl)', value: sanitizePrice(bp['cl1875']!) }] : []),
+    ...(extractNumber(bp['cl375'])  > 0 ? [{ icon: Star, label: isChampagne ? 'Demi (37,5cl)' : 'Demi-bouteille (37,5cl)', value: sanitizePrice(bp['cl375']!) }] : []),
     { icon: Star, label: 'Bouteille (75cl)', value: format75cl(ref750) },
-    ...(bp['cl1500'] && bp['cl1500'] > 0 ? [{ icon: Star, label: 'Magnum (1,5L)', value: `~ ${bp['cl1500']}€` }] : []),
-    ...(bp['cl3000'] && bp['cl3000'] > 0 ? [{ icon: Star, label: isChampagne ? 'Jéroboam (3L)' : 'Double Magnum (3L)', value: `~ ${bp['cl3000']}€` }] : []),
-    ...(bp['cl6000'] && bp['cl6000'] > 0 ? [{ icon: Star, label: isChampagne ? 'Mathusalem (6L)' : 'Impériale (6L)', value: `~ ${bp['cl6000']}€` }] : []),
+    ...(extractNumber(bp['cl1500']) > 0 ? [{ icon: Star, label: 'Magnum (1,5L)', value: sanitizePrice(bp['cl1500']!) }] : []),
+    ...(extractNumber(bp['cl3000']) > 0 ? [{ icon: Star, label: isChampagne ? 'Jéroboam (3L)' : 'Double Magnum (3L)', value: sanitizePrice(bp['cl3000']!) }] : []),
+    ...(extractNumber(bp['cl6000']) > 0 ? [{ icon: Star, label: isChampagne ? 'Mathusalem (6L)' : 'Impériale (6L)', value: sanitizePrice(bp['cl6000']!) }] : []),
   ].filter(() => ref750 > 0);
 
   const handleFavorite = () => {
