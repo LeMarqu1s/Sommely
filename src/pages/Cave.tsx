@@ -163,7 +163,7 @@ function MiniChart({ history }: { history: CaveValuePoint[] }) {
 
 export function Cave() {
   const { user, subscriptionState } = useAuth();
-  const { formatPrice } = useTheme();
+  const { theme, formatPrice } = useTheme();
   type View = 'overview' | 'list' | 'add' | 'detail' | 'sell';
   const [view, setView] = useState<View>('overview');
   const [bottles, setBottles] = useState<CaveBottle[]>([]);
@@ -355,7 +355,7 @@ export function Cave() {
 
       {/* HEADER */}
       <div className="px-5 flex items-center justify-between sticky top-0 z-20"
-        style={{ background: 'var(--bg-app)', borderBottom: '1px solid var(--border)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)', paddingBottom: '8px' }}>
+        style={{ background: theme === 'dark' ? 'rgba(13,6,8,0.98)' : 'rgba(245,240,232,0.98)', borderBottom: '1px solid var(--border)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)', paddingBottom: '8px' }}>
         <div className="w-8" />
         <div className="flex items-center gap-2">
           <span className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Ma cave</span>
@@ -382,10 +382,10 @@ export function Cave() {
       <AnimatePresence>
         {showAlerts && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center p-4" onClick={() => setShowAlerts(false)}>
-            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="bg-white rounded-3xl w-full max-w-lg p-6 space-y-3" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="rounded-3xl w-full max-w-lg p-6 space-y-3" style={{ background: 'var(--bg-card)' }} onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-display text-lg font-bold text-black-wine flex items-center gap-2"><Bell size={18} color="#D4AF37" /> Alertes prix</h3>
-                <button onClick={() => setShowAlerts(false)} className="bg-transparent border-none cursor-pointer"><X size={20} color="#6B5D56" /></button>
+                <button onClick={() => setShowAlerts(false)} className="bg-transparent border-none cursor-pointer"><X size={20} color="var(--text-secondary)" /></button>
               </div>
               {alerts.map(b => {
                 const gp = Math.round(((b.estimatedCurrentValue - b.purchasePrice) / b.purchasePrice) * 100);
@@ -412,7 +412,7 @@ export function Cave() {
 
       <div className="max-w-lg mx-auto px-5 py-5">
         {!user && (
-          <div className="bg-white rounded-2xl border border-dashed border-gray-light p-8 text-center mb-6">
+          <div className="rounded-2xl border border-dashed border-gray-light p-8 text-center mb-6" style={{ background: 'var(--bg-card)' }}>
             <span className="text-5xl block mb-3">🔐</span>
             <p className="font-display text-lg font-bold text-black-wine mb-2">Connectez-vous</p>
             <p className="text-gray-dark text-sm mb-4">Connectez-vous pour gérer votre cave et suivre la valeur de vos vins</p>
@@ -459,7 +459,7 @@ export function Cave() {
               </div>
 
               {bottles.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-5">
+                <div className="rounded-2xl border border-gray-light/30 shadow-sm p-5" style={{ background: 'var(--bg-card)' }}>
                   <p className="font-display text-sm font-bold text-black-wine mb-3">🏆 Meilleures performances</p>
                   <div className="space-y-2">
                     {[...bottles].sort((a, b) => ((b.estimatedCurrentValue - b.purchasePrice) / b.purchasePrice) - ((a.estimatedCurrentValue - a.purchasePrice) / a.purchasePrice)).slice(0, 3).map(b => {
@@ -482,7 +482,7 @@ export function Cave() {
               )}
 
               {bottles.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-5">
+                <div className="rounded-2xl border border-gray-light/30 shadow-sm p-5" style={{ background: 'var(--bg-card)' }}>
                   <p className="font-display text-sm font-bold text-black-wine mb-3">Composition</p>
                   {['Rouge', 'Blanc', 'Rosé', 'Champagne', 'Blanc liquoreux'].map(type => {
                     const count = bottles.filter(b => b.type === type).reduce((s, b) => s + b.quantity, 0);
@@ -510,7 +510,7 @@ export function Cave() {
               </div>
 
               {bottles.length === 0 && (
-                <div className="bg-white rounded-2xl border border-dashed border-gray-light p-8 text-center">
+                <div className="rounded-2xl border border-dashed border-gray-light p-8 text-center" style={{ background: 'var(--bg-card)' }}>
                   <span className="text-5xl block mb-3">🍾</span>
                   <p className="font-display text-lg font-bold text-black-wine mb-2">Cave vide</p>
                   <p className="text-gray-dark text-sm mb-4">Ajoutez vos premières bouteilles pour suivre leur valeur</p>
@@ -525,7 +525,7 @@ export function Cave() {
           {view === 'list' && user && (
             <motion.div key="list" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white rounded-2xl border border-gray-light/30 p-4 text-center shadow-sm"><p className="font-display text-2xl font-bold text-black-wine">{formatPrice(totalValue)}</p><p className="text-xs text-gray-dark">Valeur totale</p></div>
+                <div className="rounded-2xl border border-gray-light/30 p-4 text-center shadow-sm" style={{ background: 'var(--bg-card)' }}><p className="font-display text-2xl font-bold text-black-wine">{formatPrice(totalValue)}</p><p className="text-xs text-gray-dark">Valeur totale</p></div>
                 <div className={`rounded-2xl border p-4 text-center shadow-sm ${gainPct >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}><p className={`font-display text-2xl font-bold ${gainPct >= 0 ? 'text-green-700' : 'text-red-700'}`}>{gainPct >= 0 ? '+' : ''}{gainPct}%</p><p className="text-xs text-gray-dark">Gain total</p></div>
               </div>
 
@@ -536,7 +536,7 @@ export function Cave() {
               </div>
 
               <div className="flex items-center gap-2 text-xs">
-                <Filter size={12} color="#6B5D56" />
+                <Filter size={12} color="var(--text-secondary)" />
                 <span className="text-gray-dark">Tri :</span>
                 {(['gain', 'status', 'year', 'name'] as const).map(s => (
                   <button key={s} onClick={() => setSortBy(s)} className={`px-2 py-1 rounded-lg font-medium border-none cursor-pointer ${sortBy === s ? 'bg-burgundy-dark text-white' : 'bg-white text-gray-dark border border-gray-light/40'}`}>
@@ -546,7 +546,7 @@ export function Cave() {
               </div>
 
               {filtered.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-gray-light/30 p-8 text-center">
+                <div className="rounded-2xl border border-gray-light/30 p-8 text-center" style={{ background: 'var(--bg-card)' }}>
                   <span className="text-4xl block mb-3">🍾</span>
                   <p className="font-semibold text-black-wine mb-3">Aucune bouteille</p>
                   <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="bg-burgundy-dark text-white px-5 py-2.5 rounded-full text-sm font-semibold border-none cursor-pointer">Ajouter</button>
@@ -558,7 +558,7 @@ export function Cave() {
                     const conf = sc(b.status);
                     const up = b.priceVariation24h >= 0;
                     return (
-                      <motion.div key={b.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} onClick={() => { setSelected(b); setView('detail'); }} className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all">
+                      <motion.div key={b.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} onClick={() => { setSelected(b); setView('detail'); }} className="rounded-2xl border border-gray-light/30 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all" style={{ background: 'var(--bg-card)' }}>
                         <div className="flex items-start gap-3">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border ${conf.bg}`}><span className="text-lg">{conf.emoji}</span></div>
                           <div className="flex-1 min-w-0">
@@ -598,7 +598,7 @@ export function Cave() {
             const up = selected.priceVariation24h >= 0;
             return (
               <motion.div key="detail" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
-                <div className="bg-white rounded-3xl border border-gray-light/30 shadow-md overflow-hidden">
+                <div className="rounded-3xl border border-gray-light/30 shadow-md overflow-hidden" style={{ background: 'var(--bg-card)' }}>
                   <div className={`px-5 py-3 border-b border-gray-light/20 flex items-center justify-between border ${conf.bg}`}>
                     <div className="flex items-center gap-2"><span className="text-lg">{conf.emoji}</span><span className="font-semibold text-sm" style={{ color: conf.color }}>{conf.label}</span></div>
                     {selected.alert && <span className={`text-xs font-bold px-2 py-1 rounded-full ${selected.alert === 'hausse' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{selected.alert === 'hausse' ? '🔥 En hausse' : '⚠️ En baisse'}</span>}
@@ -713,7 +713,7 @@ export function Cave() {
                 <p className={`text-lg font-bold ${sellData.net >= 0 ? 'text-green-700' : 'text-red-700'}`}>{sellData.netPct >= 0 ? '+' : ''}{sellData.netPct}% de rendement net</p>
               </div>
 
-              <div className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-5 space-y-3">
+              <div className="rounded-2xl border border-gray-light/30 shadow-sm p-5 space-y-3" style={{ background: 'var(--bg-card)' }}>
                 <p className="font-semibold text-black-wine text-sm">Détail du calcul</p>
                 {[
                   { l: `Prix de vente (${sellData.b.quantity} × ${sellData.b.estimatedCurrentValue}€)`, v: formatPrice(sellData.value), pos: true },
@@ -733,7 +733,7 @@ export function Cave() {
               </div>
 
               {sellData.ytp > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-4">
+                <div className="rounded-2xl border border-gray-light/30 shadow-sm p-4" style={{ background: 'var(--bg-card)' }}>
                   <p className="text-xs font-bold text-gray-dark uppercase tracking-wide mb-2">📈 Si vous attendez l'apogée ({sellData.b.peakYear})</p>
                   <div className="flex items-center justify-between">
                     <div><p className="font-display text-xl font-bold text-burgundy-dark">{formatPrice(sellData.future)}/bt</p><p className="text-xs text-gray-dark">Valeur estimée</p></div>
@@ -762,7 +762,7 @@ export function Cave() {
                 <h2 className="font-display text-xl font-bold text-black-wine mb-1">Ajouter une bouteille</h2>
                 <p className="text-gray-dark text-sm">L'IA évalue automatiquement la valeur actuelle et les conseils de garde.</p>
               </div>
-              <div className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-5 space-y-4">
+              <div className="rounded-2xl border border-gray-light/30 shadow-sm p-5 space-y-4" style={{ background: 'var(--bg-card)' }}>
                 {[
                   { label: 'Nom du vin *', key: 'name', type: 'text', placeholder: 'Ex : Château Margaux, Gevrey-Chambertin...' },
                   { label: 'Millésime *', key: 'year', type: 'number', placeholder: '2019' },

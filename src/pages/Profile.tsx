@@ -189,7 +189,8 @@ export function Profile() {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="bg-white rounded-2xl p-4 text-center border border-gray-light/30 shadow-sm"
+              className="rounded-2xl p-4 text-center border border-gray-light/30 shadow-sm"
+              style={{ background: 'var(--bg-card)' }}
             >
               <stat.icon size={20} color={stat.color} className="mx-auto mb-2" />
               <p className="font-display text-2xl font-bold text-black-wine">{stat.value}</p>
@@ -337,7 +338,7 @@ export function Profile() {
         >
           <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
             <h2 className="font-display text-base font-bold text-black-wine">Mes scans récents</h2>
-            <Clock size={16} color="#6B5D56" />
+            <Clock size={16} color="var(--text-secondary)" />
           </div>
           <div>
             {isLoadingScans ? (
@@ -549,9 +550,9 @@ export function Profile() {
           className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           {[
-            { icon: Bell, label: 'Notifications', action: () => setShowNotifications(true), color: '#6B5D56' },
-            { icon: Shield, label: 'Confidentialité', action: () => navigate('/privacy'), color: '#6B5D56' },
-            { icon: Settings, label: 'Paramètres', action: () => setShowSettings(true), color: '#6B5D56' },
+            { icon: Bell, label: 'Notifications', action: () => setShowNotifications(true), color: 'var(--text-secondary)' },
+            { icon: Shield, label: 'Confidentialité', action: () => navigate('/privacy'), color: 'var(--text-secondary)' },
+            { icon: Settings, label: 'Paramètres', action: () => setShowSettings(true), color: 'var(--text-secondary)' },
           ].map((item) => (
             <button
               key={item.label}
@@ -573,7 +574,8 @@ export function Profile() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.25 }}
             onClick={handleSignOut}
-            className="w-full py-4 bg-white border-2 border-danger/30 text-danger rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer hover:bg-danger/5 transition-colors"
+            className="w-full py-4 border-2 border-danger/30 text-danger rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer hover:bg-danger/5 transition-colors"
+            style={{ background: 'var(--bg-card)' }}
           >
             <LogOut size={18} />
             Se déconnecter
@@ -601,7 +603,8 @@ export function Profile() {
             <motion.div
               initial={{ y: 100 }}
               animate={{ y: 0 }}
-              className="bg-white rounded-3xl p-6 w-full max-w-lg"
+              className="rounded-3xl p-6 w-full max-w-lg"
+              style={{ background: 'var(--bg-card)' }}
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className="font-display text-xl font-bold text-black-wine mb-2">Avant d'annuler…</h3>
@@ -639,7 +642,7 @@ export function Profile() {
 
         {showNotifications && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/60 flex items-end justify-center z-[60] px-6 pb-24" onClick={() => setShowNotifications(false)}>
-            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="bg-white rounded-3xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="rounded-3xl p-6 w-full max-w-lg" style={{ background: 'var(--bg-card)' }} onClick={e => e.stopPropagation()}>
               <h3 className="font-display text-xl font-bold text-black-wine mb-3">🔔 Notifications</h3>
               <p className="text-gray-dark text-sm mb-5">Les notifications push arrivent dans la prochaine version. Vous serez alerté quand vos vins atteignent leur apogée et quand les prix bougent.</p>
               <button onClick={() => setShowNotifications(false)} className="w-full py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm border-none cursor-pointer">Fermer</button>
@@ -649,7 +652,7 @@ export function Profile() {
 
         {showSettings && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/60 flex items-end justify-center z-[60] px-6 pb-24" onClick={() => setShowSettings(false)}>
-            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="bg-white rounded-3xl p-6 w-full max-w-lg space-y-4" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="rounded-3xl p-6 w-full max-w-lg space-y-4" style={{ background: 'var(--bg-card)' }} onClick={e => e.stopPropagation()}>
               <h3 className="font-display text-xl font-bold text-black-wine">⚙️ Paramètres</h3>
               <div className="bg-cream rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -660,8 +663,8 @@ export function Profile() {
                         style={{
                           padding: '4px 8px', borderRadius: '8px', fontSize: '12px',
                           fontWeight: 600, border: 'none', cursor: 'pointer',
-                          background: currency.code === c.code ? '#722F37' : '#F5F0E8',
-                          color: currency.code === c.code ? 'white' : '#1a0508',
+                          background: currency.code === c.code ? '#722F37' : 'var(--bg-input)',
+                          color: currency.code === c.code ? 'white' : 'var(--text-primary)',
                         }}>
                         {c.symbol}
                       </button>
