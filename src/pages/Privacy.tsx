@@ -6,11 +6,11 @@ export function Privacy() {
 
   return (
     <div className="min-h-screen bg-cream font-body">
-      <div className="bg-white border-b border-gray-light/30 px-5 py-4 flex items-center gap-3 sticky top-0 z-20 shadow-sm">
-        <button onClick={() => navigate(-1)} className="bg-transparent border-none cursor-pointer p-1">
+      <div className="bg-white border-b border-gray-light/30 px-5 py-4 flex items-center gap-3 sticky top-0 z-20 shadow-sm" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingLeft: '100px' }}>
+        <span className="font-display text-base font-bold text-burgundy-dark flex-1">Politique de confidentialité</span>
+        <button onClick={() => navigate(-1)} className="bg-transparent border-none cursor-pointer p-1 ml-auto">
           <ArrowLeft size={20} color="#722F37" />
         </button>
-        <span className="font-display text-base font-bold text-burgundy-dark">Politique de confidentialité</span>
       </div>
 
       <div className="max-w-2xl mx-auto px-5 py-8 space-y-6">

@@ -47,6 +47,8 @@ export function Profile() {
   const [favorites, setFavorites] = useState<any[]>([]);
   const [isLoadingScans, setIsLoadingScans] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const tasteProfile = (profile?.taste_profile as Record<string, unknown>) || {};
   const localProfile = { ...tasteProfile };
@@ -545,9 +547,9 @@ export function Profile() {
           className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
         >
           {[
-            { icon: Bell, label: 'Notifications', action: () => alert('Notifications — bientôt disponible'), color: '#6B5D56' },
+            { icon: Bell, label: 'Notifications', action: () => setShowNotifications(true), color: '#6B5D56' },
             { icon: Shield, label: 'Confidentialité', action: () => navigate('/privacy'), color: '#6B5D56' },
-            { icon: Settings, label: 'Paramètres', action: () => navigate('/onboarding'), color: '#6B5D56' },
+            { icon: Settings, label: 'Paramètres', action: () => setShowSettings(true), color: '#6B5D56' },
           ].map((item) => (
             <button
               key={item.label}
@@ -632,6 +634,30 @@ export function Profile() {
         )}
 
         <div className="h-32" />
+
+        {showNotifications && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/60 flex items-end justify-center z-50 px-6 pb-6" onClick={() => setShowNotifications(false)}>
+            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="bg-white rounded-3xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+              <h3 className="font-display text-xl font-bold text-black-wine mb-3">🔔 Notifications</h3>
+              <p className="text-gray-dark text-sm mb-5">Les notifications push arrivent dans la prochaine version. Vous serez alerté quand vos vins atteignent leur apogée et quand les prix bougent.</p>
+              <button onClick={() => setShowNotifications(false)} className="w-full py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm border-none cursor-pointer">Fermer</button>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {showSettings && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/60 flex items-end justify-center z-50 px-6 pb-6" onClick={() => setShowSettings(false)}>
+            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="bg-white rounded-3xl p-6 w-full max-w-lg space-y-4" onClick={e => e.stopPropagation()}>
+              <h3 className="font-display text-xl font-bold text-black-wine">⚙️ Paramètres</h3>
+              <div className="bg-cream rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between"><span className="text-sm text-gray-dark">Langue</span><span className="text-sm font-semibold text-black-wine">Français</span></div>
+                <div className="flex items-center justify-between"><span className="text-sm text-gray-dark">Version</span><span className="text-sm font-semibold text-black-wine">Sommely 1.0</span></div>
+              </div>
+              <button onClick={() => { handleSignOut(); setShowSettings(false); }} className="w-full py-3.5 border-2 border-red-200 text-red-600 rounded-2xl font-semibold text-sm bg-transparent cursor-pointer">Supprimer mon compte</button>
+              <button onClick={() => setShowSettings(false)} className="w-full py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm border-none cursor-pointer">Fermer</button>
+            </motion.div>
+          </motion.div>
+        )}
       </div>
     </div>
   );
