@@ -176,6 +176,22 @@ export function Onboarding() {
   const questionCount = STEPS.length - 2;
   const progress = step > 0 && step < STEPS.length - 1 ? (step / questionCount) * 100 : 0;
 
+  // Détermine si l'utilisateur peut avancer à l'étape actuelle
+  const canContinue =
+    step === 1 ? !!data.name.trim() :
+    step === 2 ? !!data.experience :
+    step === 3 ? !!data.budget :
+    step === 4 ? data.favoriteTypes.length > 0 :
+    true;
+
+  // Texte dynamique du bouton selon l'étape
+  const continueLabel = (() => {
+    if (step === 4) return `Continuer (${data.favoriteTypes.length} sélectionné${data.favoriteTypes.length > 1 ? 's' : ''})`;
+    if (step === 5 && data.occasions.length > 0) return `Continuer (${data.occasions.length})`;
+    if (step === 7 && data.regions.length > 0) return `Continuer (${data.regions.length})`;
+    return 'Continuer';
+  })();
+
   return (
     <div className="min-h-screen bg-black-wine flex flex-col font-body">
 
@@ -318,16 +334,6 @@ export function Onboarding() {
                   />
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    disabled={!data.name.trim()}
-                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
-                  >
-                    Continuer <ChevronRight size={20} />
-                  </button>
-                </div>
               </div>
             )}
 
@@ -359,16 +365,6 @@ export function Onboarding() {
                   ))}
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    disabled={!data.experience}
-                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
-                  >
-                    Continuer <ChevronRight size={20} />
-                  </button>
-                </div>
               </div>
             )}
 
@@ -400,16 +396,6 @@ export function Onboarding() {
                   ))}
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    disabled={!data.budget}
-                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
-                  >
-                    Continuer <ChevronRight size={20} />
-                  </button>
-                </div>
               </div>
             )}
 
@@ -444,16 +430,6 @@ export function Onboarding() {
                   })}
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    disabled={data.favoriteTypes.length === 0}
-                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
-                  >
-                    Continuer ({data.favoriteTypes.length} sélectionné{data.favoriteTypes.length > 1 ? 's' : ''}) <ChevronRight size={20} />
-                  </button>
-                </div>
               </div>
             )}
 
@@ -485,15 +461,6 @@ export function Onboarding() {
                   })}
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
-                  >
-                    Continuer {data.occasions.length > 0 && `(${data.occasions.length})`} <ChevronRight size={20} />
-                  </button>
-                </div>
               </div>
             )}
 
@@ -525,15 +492,6 @@ export function Onboarding() {
                   ))}
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
-                  >
-                    Continuer <ChevronRight size={20} />
-                  </button>
-                </div>
               </div>
             )}
 
@@ -565,15 +523,6 @@ export function Onboarding() {
                   })}
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
-                  >
-                    Continuer {data.regions.length > 0 && `(${data.regions.length})`} <ChevronRight size={20} />
-                  </button>
-                </div>
               </div>
             )}
 
@@ -650,6 +599,20 @@ export function Onboarding() {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* BOUTON CONTINUER — hors du scroll, toujours visible en bas */}
+      {step > 0 && step < STEPS.length - 1 && (
+        <div className="px-6" style={{ paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)', background: '#1a0508' }}>
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={!canContinue}
+            className="w-full py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer disabled:opacity-30 active:scale-95 transition-all flex items-center justify-center gap-2"
+          >
+            {continueLabel} <ChevronRight size={20} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
