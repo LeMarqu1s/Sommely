@@ -396,7 +396,7 @@ export function Scanner() {
         </motion.div>
       )}
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-24 relative">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 relative" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 100px)' }}>
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-burgundy-dark/20 blur-[80px]" />
         </div>
