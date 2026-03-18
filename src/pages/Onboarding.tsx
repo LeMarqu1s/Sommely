@@ -318,7 +318,7 @@ export function Onboarding() {
                   />
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
                   <button
                     type="button"
                     onClick={goNext}
@@ -359,7 +359,7 @@ export function Onboarding() {
                   ))}
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
                   <button
                     type="button"
                     onClick={goNext}
@@ -400,7 +400,7 @@ export function Onboarding() {
                   ))}
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
                   <button
                     type="button"
                     onClick={goNext}
@@ -444,7 +444,7 @@ export function Onboarding() {
                   })}
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
                   <button
                     type="button"
                     onClick={goNext}
@@ -485,7 +485,7 @@ export function Onboarding() {
                   })}
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
                   <button
                     type="button"
                     onClick={goNext}
@@ -525,7 +525,7 @@ export function Onboarding() {
                   ))}
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
                   <button
                     type="button"
                     onClick={goNext}
@@ -565,7 +565,7 @@ export function Onboarding() {
                   })}
                 </div>
 
-                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: '#0c0408' }}>
+                <div style={{ position: 'sticky', bottom: 0, zIndex: 10, paddingTop: '12px', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', background: 'transparent' }}>
                   <button
                     type="button"
                     onClick={goNext}
