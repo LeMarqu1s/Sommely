@@ -677,17 +677,12 @@ export function WineResult() {
                     desc: 'Cave en ligne · Bordeaux & Grands crus',
                     emoji: '🏰',
                     url: `https://www.millesima.fr/recherche.html?q=${encodeURIComponent(wine.name)}`,
-                    tag: 'Partenaire',
-                    tagColor: 'bg-gold/20 text-yellow-800',
-                    isAffiliate: true,
                   },
                   {
                     name: 'Wine-Searcher',
                     desc: 'Comparateur mondial · Prix en temps réel',
                     emoji: '🌍',
                     url: `https://www.wine-searcher.com/find/${encodeURIComponent(`${wine.name}${wine.year ? ' ' + wine.year : ''}`)}`,
-                    tag: 'Mondial',
-                    tagColor: 'bg-blue-100 text-blue-700',
                   },
                 ].map((shop) => (
                   <a
@@ -702,13 +697,7 @@ export function WineResult() {
                       {shop.emoji}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                        <span className="font-semibold text-sm text-black-wine">{shop.name}</span>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${shop.tagColor}`}>{shop.tag}</span>
-                        {shop.isAffiliate && (
-                          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-burgundy-dark/10 text-burgundy-dark">♥ Sommely</span>
-                        )}
-                      </div>
+                      <span className="font-semibold text-sm text-black-wine block">{shop.name}</span>
                       <span className="text-xs text-gray-dark">{shop.desc}</span>
                     </div>
                     <ExternalLink size={15} color="#D1CBC4" className="flex-shrink-0" />
