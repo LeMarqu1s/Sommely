@@ -20,7 +20,7 @@ export interface WineAnalysis {
   // Caractéristiques
   type?: 'Rouge' | 'Blanc' | 'Rosé' | 'Champagne' | 'Pétillant' | 'Blanc liquoreux' | 'Orange' | 'Mousseux' | string;
   grapes?: string[] | string;
-  alcohol?: string;
+  alcohol?: string | number;
   classification?: string;
 
   // Dégustation
@@ -143,7 +143,7 @@ Schéma JSON (remplace toutes les valeurs 0 et les chaînes descriptives) :
   "country": "Pays",
   "type": "Rouge|Blanc|Rosé|Champagne|Pétillant|Blanc liquoreux|Orange|Mousseux",
   "grapes": ["Cépage"],
-  "alcohol": "0%",
+  "alcohol": "ex: 13.5% ou 13,5° — toujours inclure si visible sur l'étiquette ou connu",
   "classification": null,
   "tastingNotes": {
     "color": "Robe",
@@ -189,6 +189,9 @@ RÈGLES FORMATS DE BOUTEILLES :
 - Vins tranquilles : cl375 si la gamme existe en demi (cherche si ce domaine le fait), cl1500 si magnum disponible, cl3000/cl6000 uniquement grands crus de prestige.
 - Champagne/Pétillant : cl1875 pour grandes maisons (Moët, Veuve Clicquot, Bollinger, Ruinart, Perrier-Jouët...), cl375 (très courant), cl1500 (très courant), cl3000 jéroboam (grandes maisons), cl6000 mathusalem (maisons de luxe uniquement).
 - Mettre null si le format n'est pas commercialisé par ce producteur.
+
+RÈGLE ALCOOL :
+- "alcohol" : toujours inclure si visible sur l'étiquette ou connu (ex: "13.5%", "13,5°", "12% vol"). Ne pas omettre ce champ.
 
 Si pas une étiquette de vin : {"error": "not_wine", "confidence": 0}`;
 

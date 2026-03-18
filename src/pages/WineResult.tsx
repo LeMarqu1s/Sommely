@@ -11,6 +11,7 @@ import {
   MapPin,
   Calendar,
   Grape,
+  Percent,
   Star,
   ChevronRight,
   X,
@@ -164,6 +165,7 @@ export function WineResult() {
     { icon: Wine, label: 'Type', value: wine.type || 'Non spécifié' },
     { icon: MapPin, label: 'Région', value: wine.region || 'Non spécifié' },
     { icon: Calendar, label: 'Millésime', value: wine.year != null ? String(wine.year) : 'Non millésimé' },
+    { icon: Percent, label: 'ALCOOL', value: wine.alcohol ? `${wine.alcohol}` : 'Non spécifié' },
     {
       icon: Grape,
       label: isChampagne ? 'Assemblage' : 'Cépages',
