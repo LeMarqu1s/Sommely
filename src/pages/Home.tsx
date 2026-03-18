@@ -81,7 +81,7 @@ export function Home() {
   const isPremium = subscriptionState.isPro || subscriptionState.isTrial;
   const scansRemaining = isPremium ? 999 : Math.max(0, 3 - subscriptionState.scansThisMonth);
 
-  const { theme } = useTheme();
+  const { theme, formatPrice } = useTheme();
   const isDark   = theme === 'dark';
   const cardBg   = isDark ? '#1f0a0d'               : 'white';
   const textPri  = isDark ? '#FAF9F6'               : '#1a0508';
@@ -346,7 +346,7 @@ export function Home() {
             {[
               { label: 'Scans', value: scanCount, onClick: undefined },
               { label: 'Bouteilles', value: caveBottles, onClick: () => navigate('/cave') },
-              { label: 'Cave', value: caveValue > 0 ? `${caveValue > 999 ? `${Math.round(caveValue/1000*10)/10}k` : caveValue}€` : '—', onClick: () => navigate('/cave') },
+              { label: 'Cave', value: caveValue > 0 ? formatPrice(caveValue) : '—', onClick: () => navigate('/cave') },
             ].map((s, i) => (
               <motion.div key={i} whileTap={{ scale: 0.97 }}
                 onClick={s.onClick}
@@ -375,7 +375,7 @@ export function Home() {
               <p className="font-semibold text-sm mb-0.5" style={{ color: textPri }}>Ma cave virtuelle</p>
               <p className="text-xs" style={{ color: textSec }}>
                 {caveBottles > 0
-                  ? `${caveBottles} bouteille${caveBottles > 1 ? 's' : ''} · ${caveValue.toLocaleString('fr-FR')} €`
+                  ? `${caveBottles} bouteille${caveBottles > 1 ? 's' : ''} · ${formatPrice(caveValue)}`
                   : 'Gérez vos bouteilles · Prix en temps réel'}
               </p>
             </div>

@@ -44,3 +44,9 @@ input[type='range']::-moz-range-thumb {
   box-shadow: 0 2px 8px rgba(114, 47, 55, 0.4);
 }
 
+[data-theme="dark"] img,
+[data-theme="dark"] video,
+[data-theme="dark"] .no-invert {
+  filter: invert(1) hue-rotate(180deg);
+}
+

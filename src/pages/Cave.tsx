@@ -5,6 +5,7 @@ import { canAddToCave } from '../utils/subscription';
 import { fetchOpenAI } from '../lib/openai';
 import { PaywallModal } from '../components/PaywallModal';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import {
   getCaveBottles,
   insertCaveBottle,
@@ -33,7 +34,6 @@ interface CaveValuePoint { month: string; totalValue: number; totalCost: number;
 // ─── HELPERS ──────────────────────────────────────────────
 
 const todayStr = () => new Date().toISOString().split('T')[0];
-const eur = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + '\u00A0€';
 
 function getStatus(b: Partial<CaveBottle>): CaveBottle['status'] {
   const y = new Date().getFullYear();
@@ -163,6 +163,7 @@ function MiniChart({ history }: { history: CaveValuePoint[] }) {
 
 export function Cave() {
   const { user, subscriptionState } = useAuth();
+  const { formatPrice } = useTheme();
   type View = 'overview' | 'list' | 'add' | 'detail' | 'sell';
   const [view, setView] = useState<View>('overview');
   const [bottles, setBottles] = useState<CaveBottle[]>([]);
@@ -394,7 +395,7 @@ export function Cave() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-semibold text-sm text-black-wine">{b.name} {b.year}</p>
-                        <p className="text-xs text-gray-dark mt-0.5">{up ? '📈' : '📉'} {b.priceVariation24h > 0 ? '+' : ''}{b.priceVariation24h.toFixed(1)}% · Stock : {eur(b.estimatedCurrentValue * b.quantity)}</p>
+                        <p className="text-xs text-gray-dark mt-0.5">{up ? '📈' : '📉'} {b.priceVariation24h > 0 ? '+' : ''}{b.priceVariation24h.toFixed(1)}% · Stock : {formatPrice(b.estimatedCurrentValue * b.quantity)}</p>
                         <p className="text-xs font-bold mt-1" style={{ color: up ? '#2E7D32' : '#C62828' }}>{gp >= 0 ? '+' : ''}{gp}% depuis l'achat</p>
                       </div>
                       <button onClick={() => { setShowAlerts(false); simulateSell(b); }} className="flex-shrink-0 bg-burgundy-dark text-white text-xs px-3 py-1.5 rounded-full border-none cursor-pointer font-semibold">
@@ -432,12 +433,12 @@ export function Cave() {
                     <RefreshCw size={10} color="rgba(255,255,255,0.7)" /><span className="text-white/60 text-xs">Actualiser</span>
                   </button>
                 </div>
-                <p className="font-display text-4xl font-bold mt-1 mb-1">{eur(totalValue)}</p>
+                <p className="font-display text-4xl font-bold mt-1 mb-1">{formatPrice(totalValue)}</p>
                 <div className="flex items-center gap-2 mb-5">
                   <span className={`text-sm font-bold px-2.5 py-1 rounded-full ${gainPct >= 0 ? 'bg-green-900/40 text-green-300' : 'bg-red-900/40 text-red-300'}`}>
-                    {gainPct >= 0 ? '▲ +' : '▼ '}{gainPct}% ({gainPct >= 0 ? '+' : ''}{eur(Math.abs(totalGain))})
+                    {gainPct >= 0 ? '▲ +' : '▼ '}{gainPct}% ({gainPct >= 0 ? '+' : ''}{formatPrice(Math.abs(totalGain))})
                   </span>
-                  <span className="text-white/30 text-xs">coût : {eur(totalCost)}</span>
+                  <span className="text-white/30 text-xs">coût : {formatPrice(totalCost)}</span>
                 </div>
                 <div className="bg-white/5 rounded-2xl p-3 mb-4">
                   <div className="flex items-center justify-between mb-2">
@@ -467,11 +468,11 @@ export function Cave() {
                         <div key={b.id} className="flex items-center justify-between py-2 border-b border-gray-light/20 last:border-0 cursor-pointer" onClick={() => { setSelected(b); setView('detail'); }}>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-black-wine truncate">{b.name} {b.year}</p>
-                            <p className="text-xs text-gray-dark">{b.quantity} bt · {eur(b.estimatedCurrentValue)}/bt</p>
+                            <p className="text-xs text-gray-dark">{b.quantity} bt · {formatPrice(b.estimatedCurrentValue)}/bt</p>
                           </div>
                           <div className="text-right ml-3">
                             <p className={`text-sm font-bold ${pct >= 0 ? 'text-green-700' : 'text-red-700'}`}>{pct >= 0 ? '+' : ''}{pct}%</p>
-                            <p className="text-xs text-gray-dark">{eur((b.estimatedCurrentValue - b.purchasePrice) * b.quantity)} gain</p>
+                            <p className="text-xs text-gray-dark">{formatPrice((b.estimatedCurrentValue - b.purchasePrice) * b.quantity)} gain</p>
                           </div>
                         </div>
                       );
@@ -524,7 +525,7 @@ export function Cave() {
           {view === 'list' && user && (
             <motion.div key="list" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white rounded-2xl border border-gray-light/30 p-4 text-center shadow-sm"><p className="font-display text-2xl font-bold text-black-wine">{eur(totalValue)}</p><p className="text-xs text-gray-dark">Valeur totale</p></div>
+                <div className="bg-white rounded-2xl border border-gray-light/30 p-4 text-center shadow-sm"><p className="font-display text-2xl font-bold text-black-wine">{formatPrice(totalValue)}</p><p className="text-xs text-gray-dark">Valeur totale</p></div>
                 <div className={`rounded-2xl border p-4 text-center shadow-sm ${gainPct >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}><p className={`font-display text-2xl font-bold ${gainPct >= 0 ? 'text-green-700' : 'text-red-700'}`}>{gainPct >= 0 ? '+' : ''}{gainPct}%</p><p className="text-xs text-gray-dark">Gain total</p></div>
               </div>
 
@@ -618,12 +619,12 @@ export function Cave() {
                         <p className="text-gray-dark text-sm">/ bouteille</p>
                         <p className={`text-sm font-bold ml-auto ${gp >= 0 ? 'text-green-700' : 'text-red-700'}`}>{gp >= 0 ? '+' : ''}{gp}%</p>
                       </div>
-                      <p className="text-xs text-gray-dark mt-1">Acheté {selected.purchasePrice}€ · {gain >= 0 ? '+' : ''}{eur(gain)} gain total stock</p>
+                      <p className="text-xs text-gray-dark mt-1">Acheté {selected.purchasePrice}€ · {gain >= 0 ? '+' : ''}{formatPrice(gain)} gain total stock</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-cream rounded-xl p-3"><p className="text-xs text-gray-dark mb-1">Valeur stock</p><p className="font-display text-lg font-bold text-black-wine">{eur(totalVal)}</p><p className="text-xs text-gray-dark">{selected.quantity} bouteille{selected.quantity > 1 ? 's' : ''}</p></div>
-                      <div className="bg-cream rounded-xl p-3"><p className="text-xs text-gray-dark mb-1">Coût achat</p><p className="font-display text-lg font-bold text-black-wine">{eur(totalCostB)}</p><p className={`text-xs font-semibold ${gain >= 0 ? 'text-green-700' : 'text-red-700'}`}>{gain >= 0 ? '+' : ''}{eur(gain)}</p></div>
+                      <div className="bg-cream rounded-xl p-3"><p className="text-xs text-gray-dark mb-1">Valeur stock</p><p className="font-display text-lg font-bold text-black-wine">{formatPrice(totalVal)}</p><p className="text-xs text-gray-dark">{selected.quantity} bouteille{selected.quantity > 1 ? 's' : ''}</p></div>
+                      <div className="bg-cream rounded-xl p-3"><p className="text-xs text-gray-dark mb-1">Coût achat</p><p className="font-display text-lg font-bold text-black-wine">{formatPrice(totalCostB)}</p><p className={`text-xs font-semibold ${gain >= 0 ? 'text-green-700' : 'text-red-700'}`}>{gain >= 0 ? '+' : ''}{formatPrice(gain)}</p></div>
                     </div>
 
                     {/* Fenêtre dégustation */}
@@ -708,17 +709,17 @@ export function Cave() {
 
               <div className={`rounded-3xl p-6 border-2 text-center ${sellData.net >= 0 ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
                 <p className="text-sm text-gray-dark mb-1">Gain net si vous vendez aujourd'hui</p>
-                <p className={`font-display text-5xl font-bold mb-1 ${sellData.net >= 0 ? 'text-green-700' : 'text-red-700'}`}>{sellData.net >= 0 ? '+' : ''}{eur(sellData.net)}</p>
+                <p className={`font-display text-5xl font-bold mb-1 ${sellData.net >= 0 ? 'text-green-700' : 'text-red-700'}`}>{sellData.net >= 0 ? '+' : ''}{formatPrice(sellData.net)}</p>
                 <p className={`text-lg font-bold ${sellData.net >= 0 ? 'text-green-700' : 'text-red-700'}`}>{sellData.netPct >= 0 ? '+' : ''}{sellData.netPct}% de rendement net</p>
               </div>
 
               <div className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-5 space-y-3">
                 <p className="font-semibold text-black-wine text-sm">Détail du calcul</p>
                 {[
-                  { l: `Prix de vente (${sellData.b.quantity} × ${sellData.b.estimatedCurrentValue}€)`, v: eur(sellData.value), pos: true },
-                  { l: `Prix d'achat (${sellData.b.quantity} × ${sellData.b.purchasePrice}€)`, v: `−${eur(sellData.cost)}`, pos: false },
-                  { l: 'Frais de vente estimés (10%)', v: `−${eur(sellData.fees)}`, pos: false },
-                  { l: 'Gain net', v: `${sellData.net >= 0 ? '+' : ''}${eur(sellData.net)}`, pos: sellData.net >= 0, bold: true },
+                  { l: `Prix de vente (${sellData.b.quantity} × ${sellData.b.estimatedCurrentValue}€)`, v: formatPrice(sellData.value), pos: true },
+                  { l: `Prix d'achat (${sellData.b.quantity} × ${sellData.b.purchasePrice}€)`, v: `−${formatPrice(sellData.cost)}`, pos: false },
+                  { l: 'Frais de vente estimés (10%)', v: `−${formatPrice(sellData.fees)}`, pos: false },
+                  { l: 'Gain net', v: `${sellData.net >= 0 ? '+' : ''}${formatPrice(sellData.net)}`, pos: sellData.net >= 0, bold: true },
                 ].map((row, i) => (
                   <div key={i} className={`flex items-center justify-between py-2 ${i < 3 ? 'border-b border-gray-light/20' : ''}`}>
                     <p className={`text-sm ${row.bold ? 'font-bold text-black-wine' : 'text-gray-dark'}`}>{row.l}</p>
@@ -728,15 +729,15 @@ export function Cave() {
               </div>
 
               <div className={`rounded-2xl p-4 border text-sm font-semibold text-black-wine leading-relaxed ${sellData.net >= 0 && sellData.ytp > 2 ? 'bg-yellow-50 border-yellow-200' : sellData.net >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                {sellData.net >= 0 && sellData.ytp > 2 ? `⏳ Attendez encore ${sellData.ytp} ans jusqu'à l'apogée (${sellData.b.peakYear}), valeur estimée ${sellData.future}€/bt` : sellData.net >= 0 ? `✅ Bon moment pour vendre, vous êtes en plus-value de ${eur(sellData.net)} net` : `⚠️ Attendez, vous seriez en moins-value de ${eur(Math.abs(sellData.net))}`}
+                {sellData.net >= 0 && sellData.ytp > 2 ? `⏳ Attendez encore ${sellData.ytp} ans jusqu'à l'apogée (${sellData.b.peakYear}), valeur estimée ${sellData.future}€/bt` : sellData.net >= 0 ? `✅ Bon moment pour vendre, vous êtes en plus-value de ${formatPrice(sellData.net)} net` : `⚠️ Attendez, vous seriez en moins-value de ${formatPrice(Math.abs(sellData.net))}`}
               </div>
 
               {sellData.ytp > 0 && (
                 <div className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-4">
                   <p className="text-xs font-bold text-gray-dark uppercase tracking-wide mb-2">📈 Si vous attendez l'apogée ({sellData.b.peakYear})</p>
                   <div className="flex items-center justify-between">
-                    <div><p className="font-display text-xl font-bold text-burgundy-dark">{eur(sellData.future)}/bt</p><p className="text-xs text-gray-dark">Valeur estimée</p></div>
-                    <div className="text-right"><p className="font-display text-xl font-bold text-green-700">+{eur((sellData.future - sellData.b.purchasePrice) * sellData.b.quantity)}</p><p className="text-xs text-gray-dark">Gain potentiel total</p></div>
+                    <div><p className="font-display text-xl font-bold text-burgundy-dark">{formatPrice(sellData.future)}/bt</p><p className="text-xs text-gray-dark">Valeur estimée</p></div>
+                    <div className="text-right"><p className="font-display text-xl font-bold text-green-700">+{formatPrice((sellData.future - sellData.b.purchasePrice) * sellData.b.quantity)}</p><p className="text-xs text-gray-dark">Gain potentiel total</p></div>
                   </div>
                 </div>
               )}
