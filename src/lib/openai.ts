@@ -121,65 +121,75 @@ function hashImage(base64: string): string {
 
 // ─── PROMPT EXPERT VIN ────────────────────────────────────
 
-const WINE_EXPERT_PROMPT = `Expert sommelier. Analyse l'étiquette de vin. Réponds UNIQUEMENT en JSON valide, pas de markdown.
-RÈGLE: "name" = nom EXACT sur l'étiquette. Ne jamais inventer. Lis tout le texte visible.
-Déduis les infos manquantes si possible (ex: Pauillac 2018 → Cabernet). Type = texte étiquette ou couleur du liquide.
+const WINE_EXPERT_PROMPT = `Tu es un expert sommelier et analyste de prix de vins. Analyse l'étiquette visible et réponds UNIQUEMENT en JSON valide, sans markdown.
 
-Format JSON attendu :
+ÉTAPE 1 — LIS L'ÉTIQUETTE : identifie le nom exact, millésime, appellation, producteur.
+ÉTAPE 2 — RECHERCHE LE PRIX RÉEL : en te basant sur ta connaissance du marché français pour CE vin précis (pas une estimation générique), détermine le prix au détail en 75cl et la fourchette min/max (grande surface vs caviste).
+ÉTAPE 3 — DÉTERMINE LES FORMATS DISPONIBLES : quels formats de bouteille ce producteur commercialise-t-il réellement ?
+
+⚠️ CRITIQUE : Les chiffres dans le schéma JSON ci-dessous sont des VALEURS DE REMPLACEMENT (placeholders = 0). Tu DOIS les remplacer par les vraies données du vin analysé. Ne jamais retourner 0 dans ta réponse finale.
+
+Schéma JSON (remplace toutes les valeurs 0 et les chaînes descriptives) :
 {
-  "name": "Nom complet du vin tel qu'écrit sur l'étiquette",
-  "chateau": "Nom du château si applicable",
-  "domaine": "Nom du domaine si applicable",
-  "producer": "Nom du producteur ou négociant",
-  "year": 2019,
-  "region": "Grande région viticole (ex: Bordeaux, Bourgogne, Champagne, Rhône, Loire, Alsace, Languedoc, Provence, Toscane, Rioja, Napa Valley...)",
-  "subRegion": "Sous-région si applicable (ex: Médoc, Côte de Nuits, Côte des Blancs...)",
-  "appellation": "Appellation précise avec son statut (ex: AOC Pauillac, AOC Meursault, DOC Barolo, AVA Napa Valley...)",
-  "village": "Commune si mentionnée",
-  "country": "Pays d'origine",
+  "name": "Nom EXACT sur l'étiquette",
+  "chateau": null,
+  "domaine": null,
+  "producer": "Producteur",
+  "year": 0,
+  "region": "Région viticole",
+  "subRegion": null,
+  "appellation": "AOC/AOP/DOC précise",
+  "village": null,
+  "country": "Pays",
   "type": "Rouge|Blanc|Rosé|Champagne|Pétillant|Blanc liquoreux|Orange|Mousseux",
-  "grapes": ["Cépage 1", "Cépage 2"],
-  "alcohol": "13.5%",
-  "classification": "Classement si applicable (ex: 1er Grand Cru Classé, Premier Cru, Grand Cru, Cru Bourgeois, DOCG...)",
+  "grapes": ["Cépage"],
+  "alcohol": "0%",
+  "classification": null,
   "tastingNotes": {
-    "color": "Description de la couleur et de la robe",
-    "nose": ["Arôme 1", "Arôme 2", "Arôme 3"],
-    "palate": ["Sensation 1", "Sensation 2", "Sensation 3"],
-    "finish": "Description de la finale",
-    "structure": "Description de la structure"
+    "color": "Robe",
+    "nose": ["Arôme 1", "Arôme 2"],
+    "palate": ["Sensation 1", "Sensation 2"],
+    "finish": "Finale",
+    "structure": "Structure"
   },
-  "servingTemp": "Température de service idéale",
-  "decanting": "Conseils de carafage",
-  "agingPotential": "Potentiel de garde",
-  "glassType": "Type de verre recommandé",
+  "servingTemp": "Température",
+  "decanting": "Carafage",
+  "agingPotential": "Garde",
+  "glassType": "Verre",
   "foodPairings": {
-    "perfect": ["Accord parfait 1", "Accord parfait 2", "Accord parfait 3"],
-    "good": ["Bon accord 1", "Bon accord 2", "Bon accord 3"],
-    "avoid": ["À éviter 1", "À éviter 2"]
+    "perfect": ["Accord 1", "Accord 2"],
+    "good": ["Accord 3"],
+    "avoid": ["À éviter"]
   },
-  "dosage": "Pour Champagne/Mousseux/Pétillant UNIQUEMENT : Brut Nature | Extra Brut | Brut | Extra Dry | Sec | Demi-sec | Doux. Mettre null pour tout vin tranquille.",
+  "dosage": null,
   "bottlePrices": {
     "cl1875": null,
     "cl375": null,
-    "cl750": 14,
+    "cl750": 0,
     "cl1500": null,
     "cl3000": null,
     "cl6000": null
   },
   "priceRange": {
-    "min": 11,
-    "max": 18
+    "min": 0,
+    "max": 0
   },
-  "tips": ["Conseil 1", "Conseil 2", "Conseil 3"],
-  "story": "Anecdote ou histoire courte sur ce vin ou sa région (2-3 phrases)",
-  "confidence": 90,
+  "tips": ["Conseil 1", "Conseil 2"],
+  "story": "Histoire du vin",
+  "confidence": 0,
   "labelReadability": "excellent|good|poor"
 }
-RÈGLE bottlePrices : cl750 = TOUJOURS rempli avec le prix marché réel de ce vin spécifique.
-Formats VINS TRANQUILLES : cl375 si demi-bouteille disponible pour ce domaine, cl1500 si magnum commercialisé, cl3000 et cl6000 uniquement pour les grands crus/cuvées de prestige qui existent en grand format. cl1875 = null sauf exception rarissime.
-Formats CHAMPAGNE/MOUSSEUX/PÉTILLANT : cl1875 si la maison commercialise des piccolo/quart (ex: Moët, Veuve Clicquot, Laurent-Perrier...), cl375 (demi très courant en champagne), cl1500 (magnum très courant), cl3000 (jéroboam, grandes maisons), cl6000 (mathusalem, maisons de prestige uniquement).
-Mettre null pour tout format non commercialisé par ce producteur spécifique.
-RÈGLE priceRange : fourchette réelle constatée sur le marché pour ce vin en 75cl. min = prix le plus bas (grande surface / achat direct), max = prix boutique spécialisée / caviste. Écart typique 20-40%. Si incertain sur le prix exact, élargir la fourchette PLUTÔT QUE d'inventer un chiffre précis (ex: min:10, max:20 vaut mieux que cl750:15 inventé). Ne jamais mettre min==max sauf si le prix est vérifié avec certitude absolue.
+
+RÈGLES PRIX (obligatoires) :
+- bottlePrices.cl750 : prix de VENTE RÉEL de CE vin spécifique en France (ex: Coteaux Bourguignons IGP basique → 8-15€, Bourgogne village → 15-30€, 1er Cru Bourgogne → 30-80€, Grand Cru Bourgogne → 80-300€+). Base-toi sur le nom, l'appellation et le producteur visible sur l'étiquette.
+- priceRange : min = prix le plus bas en grande surface / achat direct. max = prix en caviste / boutique spécialisée. Écart typique 25-45%. Exemples RÉELS : Côtes du Rhône basique → min:6 max:12, Côtes de Bourg → min:8 max:16, Saint-Émilion GC → min:20 max:45, Pauillac 2e cru → min:80 max:180.
+- NE JAMAIS retourner priceRange.min=0 ou priceRange.max=0 dans la réponse finale.
+
+RÈGLES FORMATS DE BOUTEILLES :
+- Vins tranquilles : cl375 si la gamme existe en demi (cherche si ce domaine le fait), cl1500 si magnum disponible, cl3000/cl6000 uniquement grands crus de prestige.
+- Champagne/Pétillant : cl1875 pour grandes maisons (Moët, Veuve Clicquot, Bollinger, Ruinart, Perrier-Jouët...), cl375 (très courant), cl1500 (très courant), cl3000 jéroboam (grandes maisons), cl6000 mathusalem (maisons de luxe uniquement).
+- Mettre null si le format n'est pas commercialisé par ce producteur.
+
 Si pas une étiquette de vin : {"error": "not_wine", "confidence": 0}`;
 
 // ─── ANALYSE PRINCIPALE ───────────────────────────────────
@@ -203,8 +213,8 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
         ]
       }
     ],
-    max_tokens: 1300,
-    temperature: 0.1,
+    max_tokens: 1600,
+    temperature: 0.2,
     response_format: { type: 'json_object' }
   });
 
@@ -384,19 +394,21 @@ export async function enrichWineData(wine: WineAnalysis): Promise<Record<string,
   const pairings = wine.foodPairings?.perfect || getDefaultFoodPairings(wine.type)?.perfect || [];
   const estimatedPrice = calculateEstimatedPrice(wine);
 
-  // Bottle prices : use AI data if present, fallback to cl750 only
+  // Bottle prices : use AI data if present and non-zero (not a placeholder), fallback to estimated
+  const aiBP = wine.bottlePrices;
   const bottlePrices: { cl1875?: number; cl375?: number; cl750?: number; cl1500?: number; cl3000?: number; cl6000?: number } =
-    wine.bottlePrices && wine.bottlePrices.cl750
-      ? wine.bottlePrices
+    aiBP && aiBP.cl750 && aiBP.cl750 > 0
+      ? aiBP
       : { cl750: estimatedPrice };
 
   const mid = bottlePrices.cl750 ?? estimatedPrice;
 
-  // Price range : use AI-provided range if valid, otherwise compute ±25-30% around mid
+  // Price range : use AI-provided range if valid (non-zero placeholders), otherwise compute ±30% around mid
+  const aiRange = wine.priceRange;
   const priceRange: { min: number; max: number } =
-    wine.priceRange && wine.priceRange.min > 0 && wine.priceRange.max > wine.priceRange.min
-      ? wine.priceRange
-      : { min: Math.max(1, Math.round(mid * 0.72)), max: Math.round(mid * 1.32) };
+    aiRange && aiRange.min > 0 && aiRange.max > 0 && aiRange.max > aiRange.min
+      ? { min: aiRange.min, max: aiRange.max }
+      : { min: Math.max(1, Math.round(mid * 0.70)), max: Math.round(mid * 1.38) };
 
   return {
     avgPrice: bottlePrices.cl750 ?? estimatedPrice,
