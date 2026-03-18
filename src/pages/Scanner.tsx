@@ -432,7 +432,26 @@ export function Scanner() {
         {/* UI caméra active */}
         {scanState === 'camera_active' && (
           <>
-            {/* Barre supérieure */}
+            {/* Bouton fermer — fixed top-right pour ne pas confliter avec le logo Sommely (top-left) */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={handleReset}
+              style={{
+                position: 'fixed',
+                top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+                right: 16,
+                zIndex: 200,
+                width: 40, height: 40, borderRadius: '50%',
+                background: 'rgba(0,0,0,0.5)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={20} color="white" />
+            </motion.button>
+
+            {/* Barre supérieure — compteur + galerie */}
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
               paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
@@ -440,11 +459,8 @@ export function Scanner() {
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               background: 'linear-gradient(to bottom, rgba(0,0,0,0.65), transparent)',
             }}>
-              {/* Retour */}
-              <motion.button whileTap={{ scale: 0.9 }} onClick={handleReset}
-                style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <X size={20} color="white" />
-              </motion.button>
+              {/* Spacer gauche pour équilibrer la mise en page */}
+              <div style={{ width: 40 }} />
 
               {/* Compteur scans */}
               <div style={{ background: isPremium ? 'rgba(212,175,55,0.2)' : 'rgba(0,0,0,0.45)', borderRadius: 999, padding: '4px 12px', border: '1px solid rgba(255,255,255,0.12)' }}>
@@ -460,9 +476,9 @@ export function Scanner() {
               </motion.button>
             </div>
 
-            {/* Viseur doré */}
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-              <div style={{ position: 'relative', width: '70%', maxWidth: 280, aspectRatio: '1 / 1' }}>
+            {/* Viseur doré — centré légèrement au-dessus du milieu pour laisser place au bouton */}
+            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -60%)', width: '75%', aspectRatio: '3 / 4' }}>
                 {([
                   { top: 0, left: 0, borderTop: '3px solid rgba(212,175,55,0.9)', borderLeft: '3px solid rgba(212,175,55,0.9)', borderRadius: '4px 0 0 0' },
                   { top: 0, right: 0, borderTop: '3px solid rgba(212,175,55,0.9)', borderRight: '3px solid rgba(212,175,55,0.9)', borderRadius: '0 4px 0 0' },
@@ -489,7 +505,7 @@ export function Scanner() {
             {/* Bouton capture rond 72px — fixed pour passer au-dessus de la BottomNav */}
             <div style={{
               position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20,
-              paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 90px)',
+              paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 110px)',
               paddingTop: 60,
               display: 'flex', justifyContent: 'center',
               background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%)',
