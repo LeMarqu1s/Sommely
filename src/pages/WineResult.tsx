@@ -169,41 +169,15 @@ export function WineResult() {
       ? `${priceRange.min}€ – ${priceRange.max}€`
       : `~ ${price}€`;
 
-  // Toujours calculer les 3 formats de base + optionnels si IA les fournit
+  // Afficher uniquement les formats confirmés par l'IA — jamais de calcul inventé
   const priceRows: DetailItem[] = [
-    // Piccolo 18,75cl : champagne = toujours calculé ; vin tranquille = seulement si AI le précise
-    ...(isChampagne || (bp['cl1875'] && bp['cl1875'] > 0) ? [{
-      icon: Star,
-      label: isChampagne ? 'Piccolo / Quart (18,75cl)' : 'Piccolo (18,75cl)',
-      value: `~ ${bp['cl1875'] && bp['cl1875'] > 0 ? bp['cl1875'] : Math.round(ref750 * 0.55)}€`,
-    }] : []),
-    // Demi-bouteille 37,5cl : toujours affiché
-    {
-      icon: Star,
-      label: isChampagne ? 'Demi (37,5cl)' : 'Demi-bouteille (37,5cl)',
-      value: `~ ${bp['cl375'] && bp['cl375'] > 0 ? bp['cl375'] : Math.round(ref750 * 0.60)}€`,
-    },
-    // Bouteille standard 75cl : toujours affiché avec fourchette
+    ...(bp['cl1875'] && bp['cl1875'] > 0 ? [{ icon: Star, label: isChampagne ? 'Piccolo / Quart (18,75cl)' : 'Piccolo (18,75cl)', value: `~ ${bp['cl1875']}€` }] : []),
+    ...(bp['cl375']  && bp['cl375']  > 0 ? [{ icon: Star, label: isChampagne ? 'Demi (37,5cl)' : 'Demi-bouteille (37,5cl)', value: `~ ${bp['cl375']}€` }] : []),
     { icon: Star, label: 'Bouteille (75cl)', value: format75cl(ref750) },
-    // Magnum 1,5L : toujours affiché
-    {
-      icon: Star,
-      label: 'Magnum (1,5L)',
-      value: `~ ${bp['cl1500'] && bp['cl1500'] > 0 ? bp['cl1500'] : Math.round(ref750 * 1.85)}€`,
-    },
-    // Jéroboam/Double Magnum 3L : seulement si AI le précise
-    ...(bp['cl3000'] && bp['cl3000'] > 0 ? [{
-      icon: Star,
-      label: isChampagne ? 'Jéroboam (3L)' : 'Double Magnum (3L)',
-      value: `~ ${bp['cl3000']}€`,
-    }] : []),
-    // Mathusalem/Impériale 6L : seulement si AI le précise
-    ...(bp['cl6000'] && bp['cl6000'] > 0 ? [{
-      icon: Star,
-      label: isChampagne ? 'Mathusalem (6L)' : 'Impériale (6L)',
-      value: `~ ${bp['cl6000']}€`,
-    }] : []),
-  ].filter(r => ref750 > 0);
+    ...(bp['cl1500'] && bp['cl1500'] > 0 ? [{ icon: Star, label: 'Magnum (1,5L)', value: `~ ${bp['cl1500']}€` }] : []),
+    ...(bp['cl3000'] && bp['cl3000'] > 0 ? [{ icon: Star, label: isChampagne ? 'Jéroboam (3L)' : 'Double Magnum (3L)', value: `~ ${bp['cl3000']}€` }] : []),
+    ...(bp['cl6000'] && bp['cl6000'] > 0 ? [{ icon: Star, label: isChampagne ? 'Mathusalem (6L)' : 'Impériale (6L)', value: `~ ${bp['cl6000']}€` }] : []),
+  ].filter(() => ref750 > 0);
 
   const handleFavorite = () => {
     setIsFavorite(!isFavorite);

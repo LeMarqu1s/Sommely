@@ -394,25 +394,16 @@ export async function enrichWineData(wine: WineAnalysis): Promise<Record<string,
   const pairings = wine.foodPairings?.perfect || getDefaultFoodPairings(wine.type)?.perfect || [];
   const estimatedPrice = calculateEstimatedPrice(wine);
 
-  // Bottle prices : base on AI data if valid, otherwise fallback to estimated
+  // Bottle prices : uniquement les formats confirmés par l'IA (non-null, non-zero)
   const aiBP = wine.bottlePrices;
   const cl750 = (aiBP?.cl750 && aiBP.cl750 > 0) ? aiBP.cl750 : estimatedPrice;
 
-  // Toujours calculer les 3 formats courants. Si l'IA a fourni un prix → l'utiliser.
-  // Sinon → estimer à partir du cl750 (ratios de marché réels)
-  const isChampagneWine = ['Champagne', 'Pétillant', 'Mousseux'].includes(wine.type || '');
   const bottlePrices: { cl1875?: number; cl375?: number; cl750?: number; cl1500?: number; cl3000?: number; cl6000?: number } = {
-    // Piccolo (18,75cl) : champagne uniquement si IA le précise
-    ...(aiBP?.cl1875 && aiBP.cl1875 > 0 ? { cl1875: aiBP.cl1875 } : isChampagneWine ? { cl1875: Math.round(cl750 * 0.55) } : {}),
-    // Demi-bouteille (37,5cl) : toujours calculé
-    cl375: (aiBP?.cl375 && aiBP.cl375 > 0) ? aiBP.cl375 : Math.round(cl750 * 0.60),
-    // Bouteille standard (75cl) : toujours présent
+    ...(aiBP?.cl1875 && aiBP.cl1875 > 0 ? { cl1875: aiBP.cl1875 } : {}),
+    ...(aiBP?.cl375  && aiBP.cl375  > 0 ? { cl375:  aiBP.cl375  } : {}),
     cl750,
-    // Magnum (1,5L) : toujours calculé
-    cl1500: (aiBP?.cl1500 && aiBP.cl1500 > 0) ? aiBP.cl1500 : Math.round(cl750 * 1.85),
-    // Jéroboam/Double Magnum (3L) : uniquement si IA le précise
+    ...(aiBP?.cl1500 && aiBP.cl1500 > 0 ? { cl1500: aiBP.cl1500 } : {}),
     ...(aiBP?.cl3000 && aiBP.cl3000 > 0 ? { cl3000: aiBP.cl3000 } : {}),
-    // Mathusalem/Impériale (6L) : uniquement si IA le précise
     ...(aiBP?.cl6000 && aiBP.cl6000 > 0 ? { cl6000: aiBP.cl6000 } : {}),
   };
 
