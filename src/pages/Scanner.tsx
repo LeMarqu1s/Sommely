@@ -45,8 +45,6 @@ export function Scanner() {
     'Évitez les reflets sur la bouteille',
     'Rapprochez-vous si le texte est petit',
   ];
-
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   const scanCheck = canScan(subscriptionState);
   const isPremium = subscriptionState.isPro || subscriptionState.isTrial;
   const scansRemaining = scanCheck.allowed ? (scanCheck.remaining ?? 999) : 0;
@@ -69,6 +67,11 @@ export function Scanner() {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // Ouvre la caméra automatiquement au montage si getUserMedia est disponible
+  useEffect(() => {
+    if (navigator.mediaDevices) startCamera();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── CAMÉRA ──────────────────────────────────────────────
 
@@ -374,7 +377,140 @@ export function Scanner() {
     stopCamera();
   };
 
-  // ─── RENDU ────────────────────────────────────────────────
+  // ─── RENDU CAMÉRA PLEIN ÉCRAN ─────────────────────────────
+  // Couvre camera_active ET capturing pour garder videoRef/canvasRef montés
+  // pendant toute la durée de captureFromCamera (qui accède aux refs après setScanState + 150ms)
+
+  if (scanState === 'camera_active' || scanState === 'capturing') {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 50, overflow: 'hidden', fontFamily: 'DM Sans, sans-serif' }}>
+
+        {/* Vidéo plein écran — toujours montée pour que captureFromCamera puisse lire les frames */}
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+        <canvas ref={canvasRef} className="hidden" />
+
+        {/* Flash blanc + indicateur au moment de la capture */}
+        {scanState === 'capturing' && (
+          <>
+            <motion.div
+              initial={{ opacity: 0.95 }}
+              animate={{ opacity: 0 }}
+              transition={{ duration: 0.35, ease: 'easeOut' }}
+              style={{ position: 'absolute', inset: 0, background: 'white', zIndex: 40, pointerEvents: 'none' }}
+            />
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+              <motion.div
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ duration: 0.5, repeat: Infinity }}
+                style={{ width: 112, height: 112, borderRadius: '50%', background: 'rgba(114,47,55,0.3)', border: '2px solid #722F37', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}
+              >
+                <Camera size={48} color="#D4AF37" />
+              </motion.div>
+              <h2 style={{ fontFamily: 'DM Serif Display, serif', fontSize: '1.5rem', fontWeight: 700, color: 'white', marginBottom: 8 }}>Capture en cours...</h2>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>Envoi à l&apos;IA GPT-4o</p>
+            </div>
+          </>
+        )}
+
+        {/* UI caméra active */}
+        {scanState === 'camera_active' && (
+          <>
+            {/* Barre supérieure */}
+            <div style={{
+              position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
+              paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+              paddingLeft: 20, paddingRight: 20, paddingBottom: 16,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0.65), transparent)',
+            }}>
+              {/* Retour */}
+              <motion.button whileTap={{ scale: 0.9 }} onClick={handleReset}
+                style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <X size={20} color="white" />
+              </motion.button>
+
+              {/* Compteur scans */}
+              <div style={{ background: isPremium ? 'rgba(212,175,55,0.2)' : 'rgba(0,0,0,0.45)', borderRadius: 999, padding: '4px 12px', border: '1px solid rgba(255,255,255,0.12)' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: isPremium ? '#D4AF37' : scansRemaining > 1 ? 'rgba(255,255,255,0.7)' : scansRemaining === 1 ? '#fb923c' : '#f87171' }}>
+                  {isPremium ? '∞ Illimité' : `${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''}`}
+                </span>
+              </div>
+
+              {/* Galerie */}
+              <motion.button whileTap={{ scale: 0.9 }} onClick={() => fileInputRef.current?.click()}
+                style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <Upload size={18} color="white" />
+              </motion.button>
+            </div>
+
+            {/* Viseur doré */}
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+              <div style={{ position: 'relative', width: '70%', maxWidth: 280, aspectRatio: '1 / 1' }}>
+                {([
+                  { top: 0, left: 0, borderTop: '3px solid rgba(212,175,55,0.9)', borderLeft: '3px solid rgba(212,175,55,0.9)', borderRadius: '4px 0 0 0' },
+                  { top: 0, right: 0, borderTop: '3px solid rgba(212,175,55,0.9)', borderRight: '3px solid rgba(212,175,55,0.9)', borderRadius: '0 4px 0 0' },
+                  { bottom: 0, left: 0, borderBottom: '3px solid rgba(212,175,55,0.9)', borderLeft: '3px solid rgba(212,175,55,0.9)', borderRadius: '0 0 0 4px' },
+                  { bottom: 0, right: 0, borderBottom: '3px solid rgba(212,175,55,0.9)', borderRight: '3px solid rgba(212,175,55,0.9)', borderRadius: '0 0 4px 0' },
+                ] as const).map((s, i) => (
+                  <motion.div key={i} style={{ position: 'absolute', width: 32, height: 32, ...s }}
+                    animate={{ opacity: [0.6, 1, 0.6] }}
+                    transition={{ duration: 2, repeat: Infinity, delay: i * 0.15 }} />
+                ))}
+              </div>
+            </div>
+
+            {/* Conseil */}
+            <div style={{ position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 148px)', left: 32, right: 32, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
+              <AnimatePresence mode="wait">
+                <motion.p key={currentTip} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, textAlign: 'center' }}>
+                  💡 {tips[currentTip]}
+                </motion.p>
+              </AnimatePresence>
+            </div>
+
+            {/* Bouton capture rond 72px */}
+            <div style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10,
+              paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 48px)',
+              paddingTop: 60,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%)',
+            }}>
+              <motion.button
+                whileTap={{ scale: 0.88 }}
+                onClick={captureFromCamera}
+                style={{
+                  width: 72, height: 72, borderRadius: '50%',
+                  background: 'white',
+                  border: 'none',
+                  boxShadow: '0 0 0 5px rgba(255,255,255,0.25), 0 8px 32px rgba(0,0,0,0.5)',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+              />
+            </div>
+          </>
+        )}
+
+        <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/heic,image/webp" onChange={handleFileChange} className="hidden" />
+        <PaywallModal
+          isOpen={showPaywall}
+          onClose={() => setShowPaywall(false)}
+          feature="Scans illimités"
+          description="Vous avez atteint la limite de 3 scans gratuits. Passez à Sommely Pro pour scanner autant de vins que vous voulez."
+        />
+      </div>
+    );
+  }
+
+  // ─── RENDU PRINCIPAL (idle / error / analyzing / manual) ──
 
   return (
     <div className="min-h-screen flex flex-col font-body overflow-y-auto" style={{ background: '#0a0a0a' }}>
@@ -456,43 +592,22 @@ export function Scanner() {
                 GPT-4o identifie l&apos;étiquette et calcule<br/>votre score personnalisé en 3 secondes.
               </p>
 
-              {isMobile ? (
-                <>
-                  <button
-                    onClick={!isPremium && scansRemaining === 0 ? () => navigate('/premium') : () => fileInputRef.current?.click()}
-                    className={`w-full py-5 rounded-2xl font-bold text-lg mb-4 flex items-center justify-center gap-3 border-none transition-all duration-200 ${isPremium || scansRemaining > 0 ? 'bg-burgundy-dark text-white shadow-[0_8px_32px_rgba(114,47,55,0.5)] hover:bg-burgundy-medium hover:-translate-y-0.5 active:scale-95 cursor-pointer' : 'bg-white/10 text-white/40 cursor-not-allowed'}`}
-                  >
-                    <Camera size={22} className="flex-shrink-0" />
-                    <span>{!isPremium && scansRemaining === 0 ? 'Passer Premium →' : 'Prendre une photo'}</span>
-                  </button>
-                  <p className="text-white/40 text-xs mb-3">Ouvre l’appareil photo ou la galerie</p>
-                  <div className="flex gap-3 w-full">
-                    <button onClick={() => setShowManualSearch(true)} className="flex-1 py-3.5 rounded-xl border border-white/20 text-white/70 text-sm font-medium flex items-center justify-center gap-2 hover:bg-white/5 transition-colors bg-transparent cursor-pointer">
-                      <Search size={16} className="flex-shrink-0" />
-                      <span>Rechercher</span>
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={!isPremium && scansRemaining === 0 ? () => navigate('/premium') : startCamera}
-                    className={`w-full py-5 rounded-2xl font-bold text-lg mb-4 flex items-center justify-center gap-3 border-none transition-all duration-200 ${isPremium || scansRemaining > 0 ? 'bg-burgundy-dark text-white shadow-[0_8px_32px_rgba(114,47,55,0.5)] hover:bg-burgundy-medium hover:-translate-y-0.5 active:scale-95 cursor-pointer' : 'bg-white/10 text-white/40 cursor-not-allowed'}`}
-                  >
-                    <Camera size={22} className="flex-shrink-0" />
-                    <span>{!isPremium && scansRemaining === 0 ? 'Passer Premium →' : 'Activer la caméra'}</span>
-                  </button>
-                  <div className="flex gap-3 w-full">
-                    <button onClick={() => fileInputRef.current?.click()} className="flex-1 py-3.5 rounded-xl border border-white/20 text-white/70 text-sm font-medium flex items-center justify-center gap-2 hover:bg-white/5 transition-colors bg-transparent cursor-pointer">
-                      <Upload size={16} /> Importer une photo
-                    </button>
-                    <button onClick={() => setShowManualSearch(true)} className="flex-1 py-3.5 rounded-xl border border-white/20 text-white/70 text-sm font-medium flex items-center justify-center gap-2 hover:bg-white/5 transition-colors bg-transparent cursor-pointer">
-                      <Search size={16} /> Rechercher
-                    </button>
-                  </div>
-                </>
-              )}
-              <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/heic,image/webp" capture="environment" onChange={handleFileChange} className="hidden" />
+              <button
+                onClick={!isPremium && scansRemaining === 0 ? () => navigate('/premium') : startCamera}
+                className={`w-full py-5 rounded-2xl font-bold text-lg mb-4 flex items-center justify-center gap-3 border-none transition-all duration-200 ${isPremium || scansRemaining > 0 ? 'bg-burgundy-dark text-white shadow-[0_8px_32px_rgba(114,47,55,0.5)] hover:bg-burgundy-medium hover:-translate-y-0.5 active:scale-95 cursor-pointer' : 'bg-white/10 text-white/40 cursor-not-allowed'}`}
+              >
+                <Camera size={22} className="flex-shrink-0" />
+                <span>{!isPremium && scansRemaining === 0 ? 'Passer Premium →' : 'Activer la caméra'}</span>
+              </button>
+              <div className="flex gap-3 w-full">
+                <button onClick={() => fileInputRef.current?.click()} className="flex-1 py-3.5 rounded-xl border border-white/20 text-white/70 text-sm font-medium flex items-center justify-center gap-2 hover:bg-white/5 transition-colors bg-transparent cursor-pointer">
+                  <Upload size={16} className="flex-shrink-0" /><span>Galerie</span>
+                </button>
+                <button onClick={() => setShowManualSearch(true)} className="flex-1 py-3.5 rounded-xl border border-white/20 text-white/70 text-sm font-medium flex items-center justify-center gap-2 hover:bg-white/5 transition-colors bg-transparent cursor-pointer">
+                  <Search size={16} className="flex-shrink-0" /><span>Rechercher</span>
+                </button>
+              </div>
+              <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/heic,image/webp" onChange={handleFileChange} className="hidden" />
 
               <button
                 onClick={() => navigate('/menu')}
@@ -534,53 +649,6 @@ export function Scanner() {
             </motion.div>
           )}
 
-          {scanState === 'camera_active' && (
-            <motion.div key="camera" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full max-w-sm z-10">
-              {cameraError ? (
-                <div className="bg-danger/20 border border-danger/30 rounded-2xl p-6 text-center">
-                  <AlertCircle size={36} color="#ef4444" className="mx-auto mb-3" />
-                  <p className="text-white text-sm leading-relaxed mb-5">{cameraError}</p>
-                  <button onClick={() => fileInputRef.current?.click()} className="w-full bg-white text-black-wine py-3.5 rounded-xl font-semibold text-sm border-none cursor-pointer">Importer une photo à la place</button>
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                </div>
-              ) : (
-                <div className="rounded-3xl overflow-hidden relative">
-                  <video ref={videoRef} autoPlay playsInline muted className="w-full rounded-3xl" style={{ maxHeight: '55vh', objectFit: 'cover' }} />
-                  <canvas ref={canvasRef} className="hidden" />
-                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                    <div className="relative w-52 h-52">
-                      <div className="absolute top-0 left-0 w-8 h-8" style={{ borderTop: '3px solid #D4AF37', borderLeft: '3px solid #D4AF37' }} />
-                      <div className="absolute top-0 right-0 w-8 h-8" style={{ borderTop: '3px solid #D4AF37', borderRight: '3px solid #D4AF37' }} />
-                      <div className="absolute bottom-0 left-0 w-8 h-8" style={{ borderBottom: '3px solid #D4AF37', borderLeft: '3px solid #D4AF37' }} />
-                      <div className="absolute bottom-0 right-0 w-8 h-8" style={{ borderBottom: '3px solid #D4AF37', borderRight: '3px solid #D4AF37' }} />
-                    </div>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-5">
-                    <AnimatePresence mode="wait">
-                      <motion.p key={currentTip} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-white/60 text-xs text-center mb-4">
-                        💡 {tips[currentTip]}
-                      </motion.p>
-                    </AnimatePresence>
-                    <button onClick={captureFromCamera} className="w-full py-4 bg-gold text-black-wine rounded-2xl font-bold text-base border-none cursor-pointer hover:bg-gold-light active:scale-95 transition-all flex items-center justify-center gap-2">
-                      <Camera size={20} /> Prendre la photo
-                    </button>
-                  </div>
-                </div>
-              )}
-              <button onClick={handleReset} className="w-full mt-3 py-3 text-white/40 text-sm bg-transparent border-none cursor-pointer hover:text-white/70 transition-colors">Annuler</button>
-            </motion.div>
-          )}
-
-          {(scanState === 'capturing') && (
-            <motion.div key="capturing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center text-center z-10">
-              <motion.div animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 0.5, repeat: Infinity }} className="w-28 h-28 rounded-full bg-burgundy-dark/30 border-2 border-burgundy-dark flex items-center justify-center mb-6">
-                <Camera size={48} color="#D4AF37" />
-              </motion.div>
-              <h2 className="font-display text-2xl font-bold text-white mb-2">Capture en cours...</h2>
-              <p className="text-white/50 text-sm">Envoi à l'IA GPT-4o</p>
-            </motion.div>
-          )}
-
           {scanState === 'analyzing' && (
             <motion.div key="analyzing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center text-center z-10 w-full max-w-sm">
               <div className="relative mb-8">
@@ -609,17 +677,37 @@ export function Scanner() {
 
           {scanState === 'error' && (
             <motion.div key="error" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center text-center z-10 w-full max-w-sm">
-              <div className="w-20 h-20 rounded-full bg-danger/20 flex items-center justify-center mb-5">
-                <AlertCircle size={40} color="#ef4444" />
-              </div>
-              <h2 className="font-display text-xl font-bold text-white mb-2">Oups&#x202F;!</h2>
-              <p className="text-white/60 text-sm mb-8 leading-relaxed max-w-xs">{errorMessage || cameraError || 'Une erreur est survenue. Réessayez.'}</p>
-              <button onClick={handleReset} className="w-full py-4 bg-white text-black-wine rounded-2xl font-bold text-base border-none cursor-pointer hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
-                <RotateCcw size={18} /> Réessayer
-              </button>
-              <button onClick={() => { handleReset(); fileInputRef.current?.click(); }} className="w-full mt-3 py-3.5 border border-white/20 text-white/60 text-sm rounded-xl bg-transparent cursor-pointer hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
-                <Upload size={16} /> Importer une photo à la place
-              </button>
+              {cameraError ? (
+                /* Erreur d'accès caméra (permissions refusées, caméra absente…) */
+                <>
+                  <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mb-5">
+                    <Camera size={36} color="rgba(212,175,55,0.9)" />
+                  </div>
+                  <h2 className="font-display text-xl font-bold text-white mb-2">Accès à la caméra</h2>
+                  <p className="text-white/60 text-sm mb-8 leading-relaxed max-w-xs">{cameraError}</p>
+                  <button onClick={startCamera} className="w-full py-4 bg-white text-black-wine rounded-2xl font-bold text-base border-none cursor-pointer hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <RotateCcw size={18} /> Réessayer
+                  </button>
+                  <button onClick={() => { setCameraError(''); setScanState('idle'); setTimeout(() => fileInputRef.current?.click(), 50); }} className="w-full mt-3 py-3.5 border border-white/20 text-white/60 text-sm rounded-xl bg-transparent cursor-pointer hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
+                    <Upload size={16} /> Choisir depuis la galerie
+                  </button>
+                </>
+              ) : (
+                /* Erreur analyse IA */
+                <>
+                  <div className="w-20 h-20 rounded-full bg-danger/20 flex items-center justify-center mb-5">
+                    <AlertCircle size={40} color="#ef4444" />
+                  </div>
+                  <h2 className="font-display text-xl font-bold text-white mb-2">Oups&#x202F;!</h2>
+                  <p className="text-white/60 text-sm mb-8 leading-relaxed max-w-xs">{errorMessage || 'Une erreur est survenue. Réessayez.'}</p>
+                  <button onClick={() => { handleReset(); setTimeout(() => startCamera(), 50); }} className="w-full py-4 bg-white text-black-wine rounded-2xl font-bold text-base border-none cursor-pointer hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <RotateCcw size={18} /> Réessayer
+                  </button>
+                  <button onClick={() => { handleReset(); fileInputRef.current?.click(); }} className="w-full mt-3 py-3.5 border border-white/20 text-white/60 text-sm rounded-xl bg-transparent cursor-pointer hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
+                    <Upload size={16} /> Importer une photo à la place
+                  </button>
+                </>
+              )}
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
             </motion.div>
           )}
