@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus, Bell, Trash2, RefreshCw, DollarSign, BarChart2, Package, X, Filter } from 'lucide-react';
+import { ArrowLeft, Plus, Bell, Trash2, RefreshCw, DollarSign, BarChart2, Package, X, Filter, Camera } from 'lucide-react';
 import { canAddToCave } from '../utils/subscription';
 import { fetchOpenAI } from '../lib/openai';
 import { PaywallModal } from '../components/PaywallModal';
@@ -162,6 +163,8 @@ function MiniChart({ history }: { history: CaveValuePoint[] }) {
 // ─── COMPOSANT PRINCIPAL ──────────────────────────────────
 
 export function Cave() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user, subscriptionState } = useAuth();
   const { theme, formatPrice } = useTheme();
   type View = 'overview' | 'list' | 'add' | 'detail' | 'sell';
@@ -201,6 +204,14 @@ export function Cave() {
       if (stale && ws.length > 0) updatePrices(ws);
     });
   }, [user?.id]);
+
+  useEffect(() => {
+    const prefill = (location.state as { prefill?: Partial<typeof EMPTY> })?.prefill;
+    if (prefill && Object.keys(prefill).length > 0) {
+      setForm(prev => ({ ...EMPTY, ...prev, ...prefill }));
+      setView('add');
+    }
+  }, [location.state]);
 
   const persistQuantity = async (b: CaveBottle, qty: number) => {
     if (!user?.id) return;
@@ -284,15 +295,21 @@ export function Cave() {
       return;
     }
     setIsAdding(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
     try {
-      const res = await fetchOpenAI({
-        model: 'gpt-4o',
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout 15s')), 15000);
+      });
+      const fetchPromise = fetchOpenAI({
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: 'Expert vins fins. JSON uniquement.' },
           { role: 'user', content: `Vin: "${form.name}" ${form.year} ${form.region} | Achat: ${form.purchasePrice}€\nJSON:\n{"estimatedCurrentValue":0,"drinkFrom":0,"drinkUntil":0,"peakYear":0,"grapes":"","appellation":"","agingNote":""}` },
         ],
-        max_tokens: 250, temperature: 0.1, response_format: { type: 'json_object' },
+        max_tokens: 200, temperature: 0.1, response_format: { type: 'json_object' },
       });
+      const res = await Promise.race([fetchPromise, timeoutPromise]);
       const data = await res.json();
       const ai = JSON.parse(data.choices?.[0]?.message?.content || '{}');
       const nb: CaveBottle = { id: '', name: form.name, year: Number(form.year), region: form.region, type: form.type, appellation: form.appellation || ai.appellation || '', grapes: form.grapes || ai.grapes || '', quantity: Number(form.quantity), purchasePrice: Number(form.purchasePrice), estimatedCurrentValue: ai.estimatedCurrentValue || Math.round(Number(form.purchasePrice) * 1.05), priceHistory: [{ date: todayStr(), price: Number(form.purchasePrice), event: "Prix d'achat" }], lastPriceUpdate: todayStr(), priceVariation24h: 0, drinkFrom: ai.drinkFrom || new Date().getFullYear() + 2, drinkUntil: ai.drinkUntil || new Date().getFullYear() + 8, peakYear: ai.peakYear || new Date().getFullYear() + 4, status: 'trop_tot', alert: null, notes: form.notes || ai.agingNote || '', addedDate: todayStr(), location: form.location };
@@ -315,6 +332,7 @@ export function Cave() {
         setHistory(genHistory([...bottles, newBottle]));
       }
     } finally {
+      clearTimeout(timeout);
       setIsAdding(false);
       setForm(EMPTY);
       setView('list');
@@ -369,11 +387,16 @@ export function Cave() {
             </button>
           )}
           {(view === 'overview' || view === 'list') && (
-            <motion.button whileTap={{ scale: 0.95 }} onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }}
-              className="w-8 h-8 rounded-full flex items-center justify-center border-none cursor-pointer"
-              style={{ background: 'linear-gradient(135deg, #722F37, #8B4049)', boxShadow: '0 4px 12px rgba(114,47,55,0.3)' }}>
-              <Plus size={15} color="white" />
-            </motion.button>
+            <>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => navigate('/scan', { state: { fromCave: true } })} className="w-8 h-8 rounded-full flex items-center justify-center border border-burgundy-dark/40 bg-cream cursor-pointer" title="Scanner">
+                <Camera size={15} color="#722F37" />
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }}
+                className="w-8 h-8 rounded-full flex items-center justify-center border-none cursor-pointer"
+                style={{ background: 'linear-gradient(135deg, #722F37, #8B4049)', boxShadow: '0 4px 12px rgba(114,47,55,0.3)' }}>
+                <Plus size={15} color="white" />
+              </motion.button>
+            </>
           )}
         </div>
       </div>
@@ -500,9 +523,12 @@ export function Cave() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <button onClick={() => setView('list')} className="py-4 bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer hover:bg-burgundy-dark/5 transition-colors">
                   <Package size={16} /> Mes bouteilles
+                </button>
+                <button onClick={() => navigate('/scan', { state: { fromCave: true } })} className="py-4 bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer hover:bg-burgundy-dark/5 transition-colors">
+                  <Camera size={16} /> Scanner
                 </button>
                 <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="py-4 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer shadow-md hover:bg-burgundy-medium transition-colors">
                   <Plus size={16} /> Ajouter
@@ -514,7 +540,10 @@ export function Cave() {
                   <span className="text-5xl block mb-3">🍾</span>
                   <p className="font-display text-lg font-bold text-black-wine mb-2">Cave vide</p>
                   <p className="text-gray-dark text-sm mb-4">Ajoutez vos premières bouteilles pour suivre leur valeur</p>
-                  <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="bg-burgundy-dark text-white px-6 py-3 rounded-full font-semibold text-sm border-none cursor-pointer">Ajouter une bouteille</button>
+                  <div className="flex gap-2 justify-center">
+                    <button onClick={() => navigate('/scan', { state: { fromCave: true } })} className="bg-white border-2 border-burgundy-dark/30 text-burgundy-dark px-6 py-3 rounded-full font-semibold text-sm cursor-pointer">📷 Scanner</button>
+                    <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="bg-burgundy-dark text-white px-6 py-3 rounded-full font-semibold text-sm border-none cursor-pointer">Ajouter une bouteille</button>
+                  </div>
                 </div>
               )}
               <div className="h-28" />

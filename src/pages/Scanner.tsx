@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, Search, Zap, AlertCircle, X, RotateCcw, ChevronRight } from 'lucide-react';
 import { analyzeWineLabel, enrichWineData } from '../lib/openai';
@@ -21,6 +21,7 @@ const ANALYSIS_STEPS = [
 
 export function Scanner() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, profile, subscriptionState, refreshSubscription } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -323,15 +324,30 @@ export function Scanner() {
         refreshSubscription();
       }
 
-      // Navigation vers le résultat avec les VRAIES données
-      navigate('/result', {
-        state: {
-          wine: wineObject,
-          score: scoreBreakdown.total,
-          explanation,
-          scoreBreakdown,
-        },
-      });
+      // Si on vient de la cave : aller sur /cave avec prefill pour ajouter la bouteille
+      const fromCave = (location.state as { fromCave?: boolean })?.fromCave;
+      if (fromCave) {
+        navigate('/cave', {
+          state: {
+            prefill: {
+              name: wineObject.name,
+              year: wineObject.year,
+              region: wineObject.region,
+              type: wineObject.type,
+              grapes: wineObject.grapes,
+            },
+          },
+        });
+      } else {
+        navigate('/result', {
+          state: {
+            wine: wineObject,
+            score: scoreBreakdown.total,
+            explanation,
+            scoreBreakdown,
+          },
+        });
+      }
 
     } catch (error: any) {
       console.error('❌ Erreur analyse IA:', error);
