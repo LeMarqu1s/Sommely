@@ -138,8 +138,9 @@ export function Sommelier() {
         : '';
 
       const tasteProfile = (authProfile?.taste_profile as Record<string, unknown>) || profile || {};
+      const safeJoin = (x: unknown) => (Array.isArray(x) ? (x as string[]).join(', ') : 'non spécifié');
       const userContext = (tasteProfile && (tasteProfile.budget || tasteProfile.experience || tasteProfile.expertise)) ?
-        `\n\nPROFIL DE L'UTILISATEUR :\n- Budget habituel : ${tasteProfile.budget ?? 'non spécifié'}\n- Niveau : ${tasteProfile.experience ?? tasteProfile.expertise ?? 'non spécifié'}\n- Types préférés : ${Array.isArray(tasteProfile.favoriteTypes) ? tasteProfile.favoriteTypes.join(', ') : (tasteProfile.types?.join(', ') ?? 'non spécifié')}\n- Régions favorites : ${Array.isArray(tasteProfile.regions) ? tasteProfile.regions.join(', ') : 'non spécifié'}` : '';
+        `\n\nPROFIL DE L'UTILISATEUR :\n- Budget habituel : ${tasteProfile.budget ?? 'non spécifié'}\n- Niveau : ${tasteProfile.experience ?? tasteProfile.expertise ?? 'non spécifié'}\n- Types préférés : ${safeJoin(tasteProfile.favoriteTypes ?? tasteProfile.types)}\n- Régions favorites : ${safeJoin(tasteProfile.regions)}` : '';
 
       const systemPrompt = `Tu es Antoine, sommelier expert de Sommely. Tu as 20 ans d'expérience dans les plus grands restaurants étoilés d'Europe. Tu parles comme un ami passionné — jamais condescendant, toujours précis et enthousiaste.
 
