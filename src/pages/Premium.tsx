@@ -5,9 +5,8 @@ import { ArrowLeft, Check, Zap, Star, TrendingUp, Wine, Shield } from 'lucide-re
 import { useAuth } from '../context/AuthContext';
 import { redirectToCheckout } from '../utils/stripe';
 import { useTheme } from '../context/ThemeContext';
-import { PRICE_PLANS } from '../context/ThemeContext';
 
-type Plan = 'monthly' | 'quarterly' | 'annual';
+type Plan = 'monthly' | 'annual';
 
 export function Premium() {
   const navigate = useNavigate();
@@ -15,7 +14,7 @@ export function Premium() {
   const [isLoading, setIsLoading] = useState(false);
   const { subscriptionState } = useAuth();
   const { isPro, isTrial, daysLeftInTrial } = subscriptionState;
-  const { formatPrice, currency } = useTheme();
+  const { formatPrice } = useTheme();
 
   const handleSubscribe = async (plan: Plan) => {
     setIsLoading(true);
@@ -30,29 +29,22 @@ export function Premium() {
     {
       id: 'annual' as Plan,
       label: 'Annuel',
-      price: formatPrice(PRICE_PLANS.annual),
+      badge: '⭐ Meilleure valeur',
+      price: formatPrice(47.99),
       period: '/an',
-      sub: `Soit ${formatPrice(PRICE_PLANS.annual / 12)}/mois · Économisez 52% vs mensuel`,
-      badge: 'Meilleure valeur ⭐ -52%',
+      subline: `Soit ${formatPrice(4)} /mois · Économisez ${formatPrice(60)}`,
       highlight: true,
-    },
-    {
-      id: 'quarterly' as Plan,
-      label: 'Trimestriel',
-      price: formatPrice(PRICE_PLANS.quarterly),
-      period: '/3 mois',
-      sub: `Soit ${formatPrice(4.99)}/mois`,
-      badge: null,
-      highlight: false,
+      cta: 'Commencer maintenant →',
     },
     {
       id: 'monthly' as Plan,
       label: 'Mensuel',
-      price: formatPrice(PRICE_PLANS.monthly),
-      period: '/mois',
-      sub: 'Sans engagement',
       badge: null,
+      price: formatPrice(8.99),
+      period: '/mois',
+      subline: 'Sans engagement · Résiliable à tout moment',
       highlight: false,
+      cta: 'Essayer un mois',
     },
   ];
 
@@ -120,10 +112,32 @@ export function Premium() {
           <div className="w-20 h-20 rounded-full bg-gold flex items-center justify-center mx-auto mb-4 shadow-lg">
             <Star size={40} color="#2C1810" fill="#2C1810" />
           </div>
-          <h1 className="font-display text-3xl font-bold text-black-wine mb-2">Choisissez votre plan</h1>
+          <h1 className="font-display text-3xl font-bold text-black-wine mb-2">Devenez un expert du vin</h1>
           <p className="text-gray-dark text-sm leading-relaxed">
-            Votre sommelier expert illimité · Sans engagement pour le mensuel
+            Le seul outil qui combine IA, cave personnelle et sommelier 24h/24. Ce que Vivino ne fera jamais.
           </p>
+        </motion.div>
+
+        {/* Pourquoi passer Pro ? — 3 cards horizontales */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+          <h3 className="font-display text-base font-bold text-black-wine">Pourquoi passer Pro ?</h3>
+          <div className="flex gap-3 overflow-x-auto pb-1 -mx-1">
+            <div className="flex-shrink-0 w-[min(260px,75vw)] bg-white rounded-2xl border border-gray-light/30 p-4 shadow-sm">
+              <p className="text-lg mb-1">🎯</p>
+              <p className="font-semibold text-black-wine text-sm mb-0.5">Score GPT-4o personnalisé</p>
+              <p className="text-xs text-gray-dark">Pas une note générique. Un score calculé selon VOS goûts exacts.</p>
+            </div>
+            <div className="flex-shrink-0 w-[min(260px,75vw)] bg-white rounded-2xl border border-gray-light/30 p-4 shadow-sm">
+              <p className="text-lg mb-1">📋</p>
+              <p className="font-semibold text-black-wine text-sm mb-0.5">Scan de carte restaurant</p>
+              <p className="text-xs text-gray-dark">Trouvez le meilleur rapport qualité-prix sur n&apos;importe quelle carte. Économisez 30-100€ par repas.</p>
+            </div>
+            <div className="flex-shrink-0 w-[min(260px,75vw)] bg-white rounded-2xl border border-gray-light/30 p-4 shadow-sm">
+              <p className="text-lg mb-1">🏰</p>
+              <p className="font-semibold text-black-wine text-sm mb-0.5">Cave virtuelle avec prix temps réel</p>
+              <p className="text-xs text-gray-dark">Suivez la valeur de vos bouteilles. Sachant quand vendre, quand ouvrir.</p>
+            </div>
+          </div>
         </motion.div>
 
         {/* Social proof Trustpilot-style */}
@@ -144,9 +158,9 @@ export function Premium() {
             </div>
           </div>
           {[
-            { img: '10', name: 'Marie L.', text: "Antoine m\'a sauvé au resto, enfin une app qui comprend le vin !" },
-            { img: '11', name: 'Thomas R.', text: "Scanner une étiquette et avoir un score perso en 3 sec, bluffant." },
-            { img: '15', name: 'Sophie M.', text: "Ma cave virtuelle est devenue indispensable." },
+            { img: '10', name: 'Lucas M.', text: "J'ai scanné un Gevrey-Chambertin au resto, score 91/100. J'ai commandé sans hésiter. Le serveur était impressionné." },
+            { img: '11', name: 'Camille R.', text: "La cave virtuelle m'a dit que mon Pomerol 2018 valait 40% de plus que ce que j'ai payé. J'aurais jamais su sans Sommely." },
+            { img: '15', name: 'Alexandre D.', text: "Antoine m'a conseillé un accord parfait pour mon dîner. Mes invités ont cru que j'étais sommelier. Vaut largement les 4€/mois." },
           ].map((r, i) => (
             <div key={i} className="flex items-start gap-2 py-2 border-t border-gray-light/20">
               <img src={`https://i.pravatar.cc/32?img=${r.img}`} alt={r.name} className="w-6 h-6 rounded-full flex-shrink-0 mt-0.5" />
@@ -161,17 +175,21 @@ export function Premium() {
           ))}
         </div>
 
-        {/* Plans — 3 niveaux avec ancre */}
+        {/* Plans — 2 plans : Annuel mis en avant, Mensuel neutre */}
         <div className="space-y-3 pt-1">
           {plans.map((plan) => (
             <motion.button
               key={plan.id}
               onClick={() => setSelectedPlan(plan.id)}
               whileTap={{ scale: 0.98 }}
-              className={`w-full text-left rounded-2xl border-2 p-4 transition-all relative bg-white ${
+              className={`w-full text-left rounded-2xl border-2 transition-all relative bg-white ${
+                plan.highlight
+                  ? 'p-5 shadow-md cursor-pointer'
+                  : 'p-4 cursor-pointer'
+              } ${
                 selectedPlan === plan.id
-                  ? 'border-burgundy-dark shadow-md cursor-pointer'
-                  : 'border-gray-light/40 cursor-pointer hover:border-gray-dark/30'
+                  ? plan.highlight ? 'border-burgundy-dark shadow-lg' : 'border-burgundy-dark shadow-md'
+                  : plan.highlight ? 'border-burgundy-dark/60 hover:border-burgundy-dark' : 'border-gray-light/40 hover:border-gray-dark/30'
               }`}
             >
               {plan.badge && (
@@ -179,23 +197,30 @@ export function Premium() {
                   {plan.badge}
                 </span>
               )}
-              <div className="flex items-center justify-between pr-6">
+              <div className={`flex items-center justify-between ${plan.highlight ? 'pr-8' : 'pr-6'}`}>
                 <div>
-                  <p className="font-semibold text-sm text-black-wine">{plan.label}</p>
-                  <p className={`text-xs mt-0.5 ${plan.highlight ? 'text-green-700 font-medium' : 'text-gray-dark'}`}>{plan.sub}</p>
+                  <p className={`font-semibold text-black-wine ${plan.highlight ? 'text-base' : 'text-sm'}`}>{plan.label}</p>
+                  <p className={`text-xs mt-0.5 ${plan.highlight ? 'text-green-700 font-medium' : 'text-gray-dark'}`}>{plan.subline}</p>
                 </div>
                 <div className="text-right">
-                  <span className="font-display text-2xl font-bold text-burgundy-dark">{plan.price}</span>
+                  <span className={`font-display font-bold text-burgundy-dark ${plan.highlight ? 'text-2xl' : 'text-xl'}`}>{plan.price}</span>
                   <span className="text-xs text-gray-dark ml-0.5">{plan.period}</span>
                 </div>
               </div>
               {selectedPlan === plan.id && (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-burgundy-dark flex items-center justify-center">
+                <div className={`absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-burgundy-dark flex items-center justify-center`}>
                   <Check size={12} color="white" />
                 </div>
               )}
             </motion.button>
           ))}
+        </div>
+
+        {/* Trust points */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs text-gray-dark">
+          <span>✓ Trial 7 jours inclus</span>
+          <span>✓ Annulable à tout moment</span>
+          <span>✓ Paiement sécurisé Stripe</span>
         </div>
 
         {/* CTA */}
@@ -205,11 +230,8 @@ export function Premium() {
           disabled={isLoading}
           className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-bold text-base border-none cursor-pointer shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-60"
         >
-          {isLoading ? 'Redirection...' : 'Commencer maintenant →'}
+          {isLoading ? 'Redirection...' : (plans.find(p => p.id === selectedPlan)?.cta ?? 'Commencer maintenant →')}
         </motion.button>
-        <p className="text-gray-dark/60 text-xs text-center -mt-2">
-          Annulable à tout moment · Paiement sécurisé Stripe
-        </p>
 
         {/* Features */}
         <div className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-5">

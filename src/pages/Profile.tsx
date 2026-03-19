@@ -483,9 +483,10 @@ export function Profile() {
                   className="w-full py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer hover:bg-burgundy-medium transition-colors shadow-md"
                 >
                   <Crown size={16} />
-                  {`Passer à Pro · ${formatPrice(6.99)}/mois`}
+                  {`Passer à Pro · ${formatPrice(8.99)}/mois`}
                   <ChevronRight size={16} />
                 </button>
+                <p className="text-xs text-gray-dark mt-2 text-center">Économisez 60€ avec l&apos;annuel</p>
               </div>
             ) : subscriptionTier === 'free' ? (
               <div>
@@ -505,9 +506,10 @@ export function Profile() {
                   className="w-full py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer hover:bg-burgundy-medium transition-colors shadow-md"
                 >
                   <Crown size={16} />
-                  {`Passer à Pro · ${formatPrice(6.99)}/mois`}
+                  {`Passer à Pro · ${formatPrice(8.99)}/mois`}
                   <ChevronRight size={16} />
                 </button>
+                <p className="text-xs text-gray-dark mt-2 text-center">Économisez 60€ avec l&apos;annuel</p>
               </div>
             ) : (
               <div>

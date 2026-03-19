@@ -12,7 +12,7 @@ export const CURRENCIES: Currency[] = [
 ];
 
 /** Montants EUR de base pour les plans Pro */
-export const PRICE_PLANS = { monthly: 6.99, quarterly: 14.99, annual: 39.99 } as const;
+export const PRICE_PLANS = { monthly: 8.99, annual: 47.99 } as const;
 
 interface ThemeContextType {
   theme: Theme;
