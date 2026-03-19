@@ -9,15 +9,6 @@
 /* iOS : désactiver overscroll natif pour éviter reload SPA au pull-to-refresh */
 html, body { overscroll-behavior: none; }
 
-/* Empêche le bounce effect iOS sur body, scroll géré dans #root */
-#root {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
 .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
 

@@ -184,30 +184,38 @@ export function Cave() {
   const [lastUpdate, setLastUpdate] = useState('');
   const [showPaywall, setShowPaywall] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [pullY, setPullY] = useState(0);
-  const touchStartY = useRef(0);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const totalBottleCount = bottles.reduce((s, b) => s + b.quantity, 0);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-  };
-  const pullYRef = useRef(0);
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const root = document.getElementById('root');
-    if ((root?.scrollTop ?? 0) > 0) return;
-    const delta = e.touches[0].clientY - touchStartY.current;
-    if (delta > 0) {
-      const val = Math.min(delta, 100);
-      pullYRef.current = val;
-      setPullY(val);
-      if (delta > 5) e.preventDefault();
-    }
-  };
-  const handleTouchEnd = () => {
-    if (pullYRef.current > 60) setRefreshKey(k => k + 1);
-    setPullY(0);
-  };
+  /* Bloquer le refresh natif iOS quand on tire vers le bas en haut de page */
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    let startY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+      const deltaY = e.touches[0].clientY - startY;
+      if (scrollTop === 0 && deltaY > 0) {
+        e.preventDefault();
+      }
+    };
+
+    el.addEventListener('touchstart', handleTouchStart, { passive: true });
+    el.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart);
+      el.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
   const canAdd = !!user && canAddToCave(subscriptionState, totalBottleCount);
 
   const fetchCaveData = useCallback(async () => {
@@ -418,38 +426,7 @@ export function Cave() {
   };
 
   return (
-    <div
-      className="min-h-screen font-body"
-      style={{ background: 'var(--bg-app)', overscrollBehavior: 'none', WebkitOverflowScrolling: 'auto' } as React.CSSProperties}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
-    >
-      {/* Pull-to-refresh indicator */}
-      {pullY > 0 && (
-        <div
-          className="flex items-center justify-center"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: Math.min(pullY, 80),
-            zIndex: 30,
-            background: 'var(--bg-app)',
-          }}
-        >
-          {pullY >= 60 ? (
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
-              <RefreshCw size={24} color="#722F37" />
-            </motion.div>
-          ) : (
-            <span className="text-xs text-gray-dark">Tirez pour actualiser</span>
-          )}
-        </div>
-      )}
-
+    <div ref={wrapperRef} className="min-h-screen font-body" style={{ background: 'var(--bg-app)' }}>
       {/* HEADER */}
       <div className="px-5 flex items-center justify-between sticky top-0 z-20"
         style={{ background: theme === 'dark' ? 'rgba(13,6,8,0.98)' : 'rgba(245,240,232,0.98)', borderBottom: '1px solid var(--border)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)', paddingBottom: '8px' }}>
