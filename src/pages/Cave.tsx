@@ -129,7 +129,7 @@ function bottleToInsert(b: CaveBottle): Omit<CaveBottleRow, 'id' | 'user_id' | '
   };
 }
 
-const EMPTY = { name: '', year: new Date().getFullYear() - 2, region: '', type: 'Rouge', appellation: '', grapes: '', quantity: 1, purchasePrice: 0, notes: '', location: '' };
+const EMPTY = { name: '', year: new Date().getFullYear() - 2, region: '', type: 'Rouge', appellation: '', grapes: '', quantity: '1', purchasePrice: '', notes: '', location: '' };
 
 // ─── GRAPHIQUE ────────────────────────────────────────────
 
@@ -289,7 +289,9 @@ export function Cave() {
   };
 
   const addBottle = async () => {
-    if (!user?.id || !form.name || !form.purchasePrice) return;
+    const purchasePriceNum = Number(String(form.purchasePrice).replace(',', '.')) || 0;
+    const quantityNum = Math.max(1, parseInt(String(form.quantity), 10) || 1);
+    if (!user?.id || !form.name || !form.purchasePrice || purchasePriceNum <= 0) return;
     if (!canAdd) {
       setShowPaywall(true);
       return;
@@ -305,14 +307,14 @@ export function Cave() {
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: 'Expert vins fins. JSON uniquement.' },
-          { role: 'user', content: `Vin: "${form.name}" ${form.year} ${form.region} | Achat: ${form.purchasePrice}€\nJSON:\n{"estimatedCurrentValue":0,"drinkFrom":0,"drinkUntil":0,"peakYear":0,"grapes":"","appellation":"","agingNote":""}` },
+          { role: 'user', content: `Vin: "${form.name}" ${form.year} ${form.region} | Achat: ${purchasePriceNum}€\nJSON:\n{"estimatedCurrentValue":0,"drinkFrom":0,"drinkUntil":0,"peakYear":0,"grapes":"","appellation":"","agingNote":""}` },
         ],
         max_tokens: 200, temperature: 0.1, response_format: { type: 'json_object' },
       });
       const res = await Promise.race([fetchPromise, timeoutPromise]);
       const data = await res.json();
       const ai = JSON.parse(data.choices?.[0]?.message?.content || '{}');
-      const nb: CaveBottle = { id: '', name: form.name, year: Number(form.year), region: form.region, type: form.type, appellation: form.appellation || ai.appellation || '', grapes: form.grapes || ai.grapes || '', quantity: Number(form.quantity), purchasePrice: Number(form.purchasePrice), estimatedCurrentValue: ai.estimatedCurrentValue || Math.round(Number(form.purchasePrice) * 1.05), priceHistory: [{ date: todayStr(), price: Number(form.purchasePrice), event: "Prix d'achat" }], lastPriceUpdate: todayStr(), priceVariation24h: 0, drinkFrom: ai.drinkFrom || new Date().getFullYear() + 2, drinkUntil: ai.drinkUntil || new Date().getFullYear() + 8, peakYear: ai.peakYear || new Date().getFullYear() + 4, status: 'trop_tot', alert: null, notes: form.notes || ai.agingNote || '', addedDate: todayStr(), location: form.location };
+      const nb: CaveBottle = { id: '', name: form.name, year: Number(form.year), region: form.region, type: form.type, appellation: form.appellation || ai.appellation || '', grapes: form.grapes || ai.grapes || '', quantity: quantityNum, purchasePrice: purchasePriceNum, estimatedCurrentValue: ai.estimatedCurrentValue || Math.round(purchasePriceNum * 1.05), priceHistory: [{ date: todayStr(), price: purchasePriceNum, event: "Prix d'achat" }], lastPriceUpdate: todayStr(), priceVariation24h: 0, drinkFrom: ai.drinkFrom || new Date().getFullYear() + 2, drinkUntil: ai.drinkUntil || new Date().getFullYear() + 8, peakYear: ai.peakYear || new Date().getFullYear() + 4, status: 'trop_tot', alert: null, notes: form.notes || ai.agingNote || '', addedDate: todayStr(), location: form.location };
       nb.status = getStatus(nb);
       const { data: inserted } = await insertCaveBottle(user.id, bottleToInsert(nb));
       if (inserted) {
@@ -323,7 +325,7 @@ export function Cave() {
         setAlerts(prev => [...prev, newBottle].filter(b => b.alert || Math.abs(b.priceVariation24h) >= 5));
       }
     } catch {
-      const nb: CaveBottle = { id: '', name: form.name, year: Number(form.year), region: form.region, type: form.type, appellation: form.appellation, grapes: form.grapes, quantity: Number(form.quantity), purchasePrice: Number(form.purchasePrice), estimatedCurrentValue: Math.round(Number(form.purchasePrice) * 1.05), priceHistory: [{ date: todayStr(), price: Number(form.purchasePrice), event: "Prix d'achat" }], lastPriceUpdate: todayStr(), priceVariation24h: 0, drinkFrom: new Date().getFullYear() + 2, drinkUntil: new Date().getFullYear() + 8, peakYear: new Date().getFullYear() + 4, status: 'trop_tot', alert: null, notes: form.notes, addedDate: todayStr(), location: form.location };
+      const nb: CaveBottle = { id: '', name: form.name, year: Number(form.year), region: form.region, type: form.type, appellation: form.appellation, grapes: form.grapes, quantity: quantityNum, purchasePrice: purchasePriceNum, estimatedCurrentValue: Math.round(purchasePriceNum * 1.05), priceHistory: [{ date: todayStr(), price: purchasePriceNum, event: "Prix d'achat" }], lastPriceUpdate: todayStr(), priceVariation24h: 0, drinkFrom: new Date().getFullYear() + 2, drinkUntil: new Date().getFullYear() + 8, peakYear: new Date().getFullYear() + 4, status: 'trop_tot', alert: null, notes: form.notes, addedDate: todayStr(), location: form.location };
       const { data: inserted } = await insertCaveBottle(user.id, bottleToInsert(nb));
       if (inserted) {
         const newBottle = rowToBottle(inserted);
@@ -798,15 +800,27 @@ export function Cave() {
                   { label: 'Région', key: 'region', type: 'text', placeholder: 'Ex : Bordeaux, Bourgogne...' },
                   { label: 'Appellation', key: 'appellation', type: 'text', placeholder: 'Ex : AOC Pauillac...' },
                   { label: 'Cépages', key: 'grapes', type: 'text', placeholder: 'Ex : Cabernet Sauvignon, Merlot...' },
-                  { label: "Prix d'achat (€) *", key: 'purchasePrice', type: 'number', placeholder: '25' },
-                  { label: 'Quantité', key: 'quantity', type: 'number', placeholder: '1' },
+                  { label: "Prix d'achat (€) *", key: 'purchasePrice', type: 'text', inputMode: 'decimal' as const, placeholder: '25' },
+                  { label: 'Quantité', key: 'quantity', type: 'text', inputMode: 'numeric' as const, placeholder: '1' },
                   { label: 'Emplacement', key: 'location', type: 'text', placeholder: 'Ex : Étagère A, rangée 2' },
                 ].map(f => (
                   <div key={f.key}>
                     <label className="text-xs font-bold text-gray-dark uppercase tracking-wide mb-1.5 block">{f.label}</label>
-                    <input type={f.type} placeholder={f.placeholder}
+                    <input
+                      type={f.key === 'purchasePrice' || f.key === 'quantity' ? 'text' : f.type}
+                      inputMode={f.key === 'purchasePrice' ? 'decimal' : f.key === 'quantity' ? 'numeric' : undefined}
+                      placeholder={f.placeholder}
                       value={String(form[f.key as keyof typeof form] ?? '')}
-                      onChange={e => setForm(p => ({ ...p, [f.key]: f.type === 'number' ? Number(e.target.value) : e.target.value }))}
+                      onChange={e => {
+                        if (f.key === 'purchasePrice') {
+                          const val = e.target.value.replace(',', '.');
+                          setForm(p => ({ ...p, purchasePrice: val }));
+                        } else if (f.key === 'quantity') {
+                          setForm(p => ({ ...p, quantity: e.target.value }));
+                        } else {
+                          setForm(p => ({ ...p, [f.key]: f.type === 'number' ? Number(e.target.value) : e.target.value }));
+                        }
+                      }}
                       className="w-full px-4 py-3 bg-cream border border-gray-light rounded-xl text-sm text-black-wine placeholder-gray-light focus:border-burgundy-dark focus:outline-none" />
                   </div>
                 ))}
