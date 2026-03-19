@@ -15,12 +15,12 @@ interface Message {
 }
 
 const QUICK_SUGGESTIONS = [
-  { emoji: '🍽️', label: 'Accord pour ce soir', prompt: 'Je cuisine un bœuf bourguignon ce soir, quel vin de ma cave devrais-je ouvrir ?' },
-  { emoji: '🍾', label: 'Ma cave', prompt: 'Quelle bouteille de ma cave devrais-je ouvrir maintenant selon leur maturité ?' },
-  { emoji: '🎁', label: 'Cadeau 40€', prompt: 'Je cherche un vin à offrir autour de 40€, que me conseilles-tu ?' },
-  { emoji: '📋', label: 'Au resto', prompt: 'Comment choisir un bon vin au restaurant sans me faire avoir ?' },
-  { emoji: '📈', label: 'Investissement', prompt: 'Quels sont les vins avec le meilleur potentiel d\'investissement actuellement ?' },
-  { emoji: '🌍', label: 'Découverte', prompt: 'Je veux découvrir une nouvelle région viticole, que me recommandes-tu ?' },
+  { emoji: '🍽️', label: 'Accord pour ce soir', prompt: 'Je cuisine ce soir, quel accord mets-vins me conseilles-tu ?' },
+  { emoji: '🍾', label: 'Ma cave — quoi ouvrir ?', prompt: 'Quelle bouteille de ma cave devrais-je ouvrir maintenant selon leur maturité ?' },
+  { emoji: '🎁', label: 'Cadeau — quel budget ?', prompt: 'Je cherche un vin à offrir en cadeau. Quel budget me recommandes-tu ?' },
+  { emoji: '📋', label: 'Au resto — que commander ?', prompt: 'Comment choisir un bon vin au restaurant sans me faire avoir ?' },
+  { emoji: '📈', label: 'Investissement vin', prompt: 'Quels sont les vins avec le meilleur potentiel d\'investissement actuellement ?' },
+  { emoji: '🌍', label: 'Découverte — surprends-moi', prompt: 'Surprends-moi ! Recommande-moi un vin que je ne connais pas encore.' },
 ];
 
 function renderMessage(text: string) {
@@ -44,7 +44,7 @@ function renderMessage(text: string) {
 
 export function Sommelier() {
   const navigate = useNavigate();
-  const { subscriptionState } = useAuth();
+  const { subscriptionState, profile: authProfile } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -72,12 +72,11 @@ export function Sommelier() {
       }
     }
 
-    const firstName = p ? (JSON.parse(p) as { name?: string }).name?.split(' ')[0] || '' : '';
     setMessages([
       {
         id: '0',
         role: 'assistant',
-        content: `Bonjour${firstName ? ` ${firstName}` : ''} ! 🍷 Je suis Antoine, votre sommelier personnel. Posez-moi n'importe quelle question sur le vin, les accords mets-vins, votre cave, ou demandez-moi conseil pour un achat. Je suis là pour vous guider !`,
+        content: "Bonjour ! 🍷 Je suis Antoine, votre sommelier personnel. Que vous cherchiez l'accord parfait pour ce soir, un conseil sur votre cave, ou simplement à découvrir un vin exceptionnel — je suis là. Par où commençons-nous ?",
         timestamp: new Date(),
       },
     ]);
@@ -115,26 +114,38 @@ export function Sommelier() {
               .toFixed(0)}€`
           : '';
 
-      const systemPrompt = `Tu es Antoine, sommelier expert chaleureux et passionné. Tu es précis, accessible et concret.
+      const tasteProfile = (authProfile?.taste_profile as Record<string, unknown>) || profile || {};
+      const userContext = (tasteProfile && (tasteProfile.budget || tasteProfile.experience || tasteProfile.expertise)) ?
+        `\n\nPROFIL DE L'UTILISATEUR :\n- Budget habituel : ${tasteProfile.budget ?? 'non spécifié'}\n- Niveau : ${tasteProfile.experience ?? tasteProfile.expertise ?? 'non spécifié'}\n- Types préférés : ${Array.isArray(tasteProfile.favoriteTypes) ? tasteProfile.favoriteTypes.join(', ') : (tasteProfile.types?.join(', ') ?? 'non spécifié')}\n- Régions favorites : ${Array.isArray(tasteProfile.regions) ? tasteProfile.regions.join(', ') : 'non spécifié'}` : '';
 
-PROFIL UTILISATEUR :
-- Prénom : ${profile?.name || 'Utilisateur'}
-- Niveau : ${profile?.experience || 'non spécifié'}
-- Types préférés : ${profile?.favoriteTypes?.join(', ') || 'non spécifié'}
-- Membre depuis : ${profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('fr-FR') : 'récent'}
-${caveContext}
+      const systemPrompt = `Tu es Antoine, sommelier expert de Sommely. Tu as 20 ans d'expérience dans les plus grands restaurants étoilés d'Europe. Tu parles comme un ami passionné — jamais condescendant, toujours précis et enthousiaste.
 
-RÈGLES :
-1. Adapte ton langage au niveau de l'utilisateur (débutant = simple, expert = technique)
-2. Si l'utilisateur mentionne un plat, propose 2-3 accords précis avec producteurs réels et prix indicatifs
-3. Si l'utilisateur parle de sa cave, utilise les données ci-dessus pour personnaliser tes conseils
-4. Cite des producteurs réels, des appellations précises, des prix de marché réalistes
-5. Maximum 3-4 paragraphes par réponse, sois concis
-6. Utilise les emojis avec parcimonie (1-2 max par message)
-7. Termine parfois par une question pour approfondir si pertinent
-8. N'utilise JAMAIS de markdown (**gras**, *italique*, ##titres, listes avec tirets). Écris en texte naturel comme un vrai sommelier qui parle.
+PERSONNALITÉ :
+- Chaleureux, direct, passionné. Tu vouvoies l'utilisateur naturellement.
+- Tu donnes des recommandations concrètes avec des exemples de vins réels et des prix réels
+- Tu expliques POURQUOI un vin est bon, pas juste qu'il l'est
+- Tu utilises des analogies sensorielles vivantes (ex: 'notes de cerise noire comme un matin de marché en Provence')
 
-Tu es un vrai sommelier qui connaît son métier et donne des conseils pratiques et actionnables.`;
+CONTEXTE UTILISATEUR :
+- Tu connais le profil de goût de l'utilisateur (budget, style préféré, expérience)
+- Tu connais sa cave virtuelle si elle existe
+- Tu adaptes TOUJOURS tes conseils à son profil et son budget
+
+RÈGLES STRICTES :
+- Jamais de réponses génériques type 'ça dépend de vos goûts'
+- Toujours donner UNE recommandation principale claire avec un prix réel
+- Maximum 3-4 phrases par réponse — pas de pavés de texte
+- Si l'utilisateur parle anglais, réponds en anglais. Français → français. Italien → italien.
+- Termine parfois par une question engageante sur leur prochaine dégustation
+
+EXPERTISE TECHNIQUE :
+- Accords mets-vins : précis et originaux (ex: Sauternes avec Roquefort, Barolo avec truffe)
+- Cave : conseils de garde, fenêtres de dégustation, apogée
+- Restaurant : identifier les bonnes affaires sur une carte
+- Investissement : vins qui prennent de la valeur (Bourgogne, Barolo, vins en primeur)
+${caveContext}${userContext}
+
+RÈGLE FORMAT : N'utilise JAMAIS de markdown (**gras**, *italique*, ##titres, listes avec tirets). Écris en texte naturel comme un vrai sommelier qui parle.`;
 
       const conversationHistory = messages
         .filter((m) => !m.isLoading)
@@ -172,12 +183,11 @@ Tu es un vrai sommelier qui connaît son métier et donne des conseils pratiques
   };
 
   const resetConversation = () => {
-    const firstName = profile?.name?.split(' ')[0] || '';
     setMessages([
       {
         id: '0',
         role: 'assistant',
-        content: `Bonjour${firstName ? ` ${firstName}` : ''} ! 🍷 Je suis Antoine, votre sommelier personnel. Posez-moi n'importe quelle question sur le vin, les accords mets-vins, votre cave, ou demandez-moi conseil pour un achat. Je suis là pour vous guider !`,
+        content: "Bonjour ! 🍷 Je suis Antoine, votre sommelier personnel. Que vous cherchiez l'accord parfait pour ce soir, un conseil sur votre cave, ou simplement à découvrir un vin exceptionnel — je suis là. Par où commençons-nous ?",
         timestamp: new Date(),
       },
     ]);
