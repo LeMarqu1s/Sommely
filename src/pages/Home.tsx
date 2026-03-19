@@ -103,21 +103,27 @@ export function Home() {
   }, []);
 
   useEffect(() => {
-    if (user?.id) {
-      getCaveBottles(user.id).then(({ data }) => {
-        if (data?.length) {
-          const val = data.reduce((s, b) => s + Number(b.current_price) * b.quantity, 0);
-          const total = data.reduce((s, b) => s + b.quantity, 0);
-          setCaveValue(Math.round(val));
-          setCaveBottles(total);
-        }
-      });
-      getScansCountTotal(user.id).then(({ count }) => setScanCount(count ?? 0));
-    } else {
+    if (!user?.id) {
       setScanCount(0);
       setCaveValue(0);
       setCaveBottles(0);
+      return;
     }
+    let mounted = true;
+    getCaveBottles(user.id).then(({ data }) => {
+      if (!mounted) return;
+      if (data?.length) {
+        const val = data.reduce((s, b) => s + Number(b.current_price) * b.quantity, 0);
+        const total = data.reduce((s, b) => s + b.quantity, 0);
+        setCaveValue(Math.round(val));
+        setCaveBottles(total);
+      }
+    });
+    getScansCountTotal(user.id).then(({ count }) => {
+      if (!mounted) return;
+      setScanCount(count ?? 0);
+    });
+    return () => { mounted = false; };
   }, [user?.id]);
 
   useEffect(() => {

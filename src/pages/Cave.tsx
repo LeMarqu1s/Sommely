@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Bell, Trash2, RefreshCw, DollarSign, BarChart2, Package, X, Filter, Camera } from 'lucide-react';
@@ -183,9 +183,48 @@ export function Cave() {
   const projectionRef = useRef<HTMLDivElement>(null);
   const [lastUpdate, setLastUpdate] = useState('');
   const [showPaywall, setShowPaywall] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [pullY, setPullY] = useState(0);
+  const touchStartY = useRef(0);
 
   const totalBottleCount = bottles.reduce((s, b) => s + b.quantity, 0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const pullYRef = useRef(0);
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const root = document.getElementById('root');
+    if ((root?.scrollTop ?? 0) > 0) return;
+    const delta = e.touches[0].clientY - touchStartY.current;
+    if (delta > 0) {
+      const val = Math.min(delta, 100);
+      pullYRef.current = val;
+      setPullY(val);
+      if (delta > 5) e.preventDefault();
+    }
+  };
+  const handleTouchEnd = () => {
+    if (pullYRef.current > 60) setRefreshKey(k => k + 1);
+    setPullY(0);
+  };
   const canAdd = !!user && canAddToCave(subscriptionState, totalBottleCount);
+
+  const fetchCaveData = useCallback(async () => {
+    if (!user?.id) return;
+    let mounted = true;
+    const { data } = await getCaveBottles(user.id);
+    if (!mounted) return;
+    const ws = (data || []).map(rowToBottle).map(b => ({ ...b, status: getStatus(b) }));
+    setBottles(ws);
+    setHistory(genHistory(ws));
+    setAlerts(ws.filter(b => b.alert || Math.abs(b.priceVariation24h) >= 5));
+    const lu = localStorage.getItem('sommely_cave_update') || '';
+    setLastUpdate(lu);
+    const stale = !lu || Date.now() - new Date(lu).getTime() > 86400000;
+    if (stale && ws.length > 0) updatePrices(ws);
+    return () => { mounted = false; };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -194,7 +233,9 @@ export function Cave() {
       setAlerts([]);
       return;
     }
+    let mounted = true;
     getCaveBottles(user.id).then(({ data }) => {
+      if (!mounted) return;
       const ws = (data || []).map(rowToBottle).map(b => ({ ...b, status: getStatus(b) }));
       setBottles(ws);
       setHistory(genHistory(ws));
@@ -204,7 +245,8 @@ export function Cave() {
       const stale = !lu || Date.now() - new Date(lu).getTime() > 86400000;
       if (stale && ws.length > 0) updatePrices(ws);
     });
-  }, [user?.id]);
+    return () => { mounted = false; };
+  }, [user?.id, refreshKey]);
 
   useEffect(() => {
     const prefill = (location.state as { prefill?: Partial<typeof EMPTY> })?.prefill;
@@ -371,8 +413,42 @@ export function Cave() {
       return a.name.localeCompare(b.name);
     });
 
+  const scrollIntoViewOnFocus = (e: React.FocusEvent) => {
+    (e.target as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   return (
-    <div className="min-h-screen font-body" style={{ background: 'var(--bg-app)' }}>
+    <div
+      className="min-h-screen font-body"
+      style={{ background: 'var(--bg-app)', overscrollBehavior: 'none', WebkitOverflowScrolling: 'auto' } as React.CSSProperties}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+    >
+      {/* Pull-to-refresh indicator */}
+      {pullY > 0 && (
+        <div
+          className="flex items-center justify-center"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: Math.min(pullY, 80),
+            zIndex: 30,
+            background: 'var(--bg-app)',
+          }}
+        >
+          {pullY >= 60 ? (
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+              <RefreshCw size={24} color="#722F37" />
+            </motion.div>
+          ) : (
+            <span className="text-xs text-gray-dark">Tirez pour actualiser</span>
+          )}
+        </div>
+      )}
 
       {/* HEADER */}
       <div className="px-5 flex items-center justify-between sticky top-0 z-20"
@@ -526,18 +602,18 @@ export function Cave() {
                 </div>
               )}
 
-              <div className="grid grid-cols-3 gap-3">
-                <button onClick={() => setView('list')} className="bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm cursor-pointer hover:bg-burgundy-dark/5 transition-colors" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%' }}>
+              <div className="grid grid-cols-3" style={{ gap: '8px' }}>
+                <button onClick={() => setView('list')} className="bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold cursor-pointer hover:bg-burgundy-dark/5 transition-colors flex flex-1 min-w-0 items-center justify-center" style={{ minHeight: '48px', fontSize: '13px' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     <span>📦</span>
-                    <span style={{ whiteSpace: 'nowrap' }}>Mes bouteilles</span>
+                    <span>Mes bouteilles</span>
                   </span>
                 </button>
-                <button onClick={() => navigate('/scan', { state: { fromCave: true } })} className="py-4 bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm cursor-pointer hover:bg-burgundy-dark/5 transition-colors" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textAlign: 'center' }}>
-                  <Camera size={16} /> Scanner
+                <button onClick={() => navigate('/scan', { state: { fromCave: true } })} className="bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold cursor-pointer hover:bg-burgundy-dark/5 transition-colors flex flex-1 min-w-0 items-center justify-center" style={{ minHeight: '48px', fontSize: '13px', gap: '6px' }}>
+                  <Camera size={14} /><span style={{ whiteSpace: 'nowrap' }}>Scanner</span>
                 </button>
-                <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="py-4 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm border-none cursor-pointer shadow-md hover:bg-burgundy-medium transition-colors" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textAlign: 'center' }}>
-                  <Plus size={16} /> Ajouter
+                <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="bg-burgundy-dark text-white rounded-2xl font-semibold border-none cursor-pointer shadow-md hover:bg-burgundy-medium transition-colors flex flex-1 min-w-0 items-center justify-center" style={{ minHeight: '48px', fontSize: '13px', gap: '6px' }}>
+                  <Plus size={14} /><span style={{ whiteSpace: 'nowrap' }}>Ajouter</span>
                 </button>
               </div>
 
@@ -902,6 +978,7 @@ export function Cave() {
                       inputMode={f.key === 'purchasePrice' ? 'decimal' : f.key === 'quantity' ? 'numeric' : undefined}
                       placeholder={f.placeholder}
                       value={String(form[f.key as keyof typeof form] ?? '')}
+                      onFocus={scrollIntoViewOnFocus}
                       onChange={e => {
                         if (f.key === 'purchasePrice') {
                           const val = e.target.value.replace(',', '.');
@@ -925,7 +1002,7 @@ export function Cave() {
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-dark uppercase tracking-wide mb-1.5 block">Notes personnelles</label>
-                  <textarea placeholder="Vos notes..." value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={2} className="w-full px-4 py-3 bg-cream border border-gray-light rounded-xl text-sm text-black-wine placeholder-gray-light focus:border-burgundy-dark focus:outline-none resize-none" />
+                  <textarea placeholder="Vos notes..." value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} onFocus={scrollIntoViewOnFocus} rows={2} className="w-full px-4 py-3 bg-cream border border-gray-light rounded-xl text-sm text-black-wine placeholder-gray-light focus:border-burgundy-dark focus:outline-none resize-none" />
                 </div>
               </div>
               <button onClick={addBottle} disabled={!form.name || !form.purchasePrice || isAdding} className="w-full py-5 bg-burgundy-dark text-white rounded-2xl font-bold text-base border-none cursor-pointer disabled:opacity-40 hover:bg-burgundy-medium active:scale-95 transition-all flex items-center justify-center gap-3 shadow-lg">

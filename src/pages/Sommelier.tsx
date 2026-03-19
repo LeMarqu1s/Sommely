@@ -59,11 +59,13 @@ export function Sommelier() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (user?.id) {
-      getCaveBottles(user.id).then(({ data }) => {
-        if (data?.length) setCaveBottles(data);
-      });
-    }
+    if (!user?.id) return;
+    let mounted = true;
+    getCaveBottles(user.id).then(({ data }) => {
+      if (!mounted) return;
+      if (data?.length) setCaveBottles(data);
+    });
+    return () => { mounted = false; };
   }, [user?.id]);
 
   useEffect(() => {
@@ -337,6 +339,7 @@ RÈGLE FORMAT : N'utilise JAMAIS de markdown (**gras**, *italique*, ##titres, li
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+              onFocus={(e) => (e.target as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })}
               placeholder={inputPlaceholder}
               disabled={isLoading}
               className="flex-1 bg-transparent border-none outline-none text-sm text-black-wine placeholder-gray-dark disabled:opacity-50"

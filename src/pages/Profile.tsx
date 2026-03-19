@@ -81,20 +81,23 @@ export function Profile() {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      setIsLoadingScans(true);
-      Promise.all([
-        getUserScans(user.id, 5),
-        getScansCountTotal(user.id),
-      ]).then(([{ data }, { count }]) => {
-        if (data) setRecentScans(data);
-        setScanCountTotal(count ?? 0);
-        setIsLoadingScans(false);
-      });
-    } else {
+    if (!user) {
       setRecentScans([]);
       setScanCountTotal(0);
+      return;
     }
+    let mounted = true;
+    setIsLoadingScans(true);
+    Promise.all([
+      getUserScans(user.id, 5),
+      getScansCountTotal(user.id),
+    ]).then(([{ data }, { count }]) => {
+      if (!mounted) return;
+      if (data) setRecentScans(data);
+      setScanCountTotal(count ?? 0);
+      setIsLoadingScans(false);
+    });
+    return () => { mounted = false; };
   }, [user?.id]);
 
   const handleSignOut = async () => {

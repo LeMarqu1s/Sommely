@@ -20,6 +20,7 @@ interface ThemeContextType {
   currency: Currency;
   setCurrency: (c: Currency) => void;
   formatPrice: (amount: number) => string;
+  prefersReducedMotion: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
@@ -31,9 +32,19 @@ const ThemeContext = createContext<ThemeContextType>({
     const c = Math.round(n * 100) / 100;
     return `${c % 1 === 0 ? c.toString() : c.toFixed(2).replace('.', ',')} €`;
   },
+  prefersReducedMotion: false,
 });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mq.matches);
+    const h = () => setPrefersReducedMotion(mq.matches);
+    mq.addEventListener('change', h);
+    return () => mq.removeEventListener('change', h);
+  }, []);
+
   const [theme, setTheme] = useState<Theme>(() => {
     return (localStorage.getItem('sommely_theme') as Theme) || 'light';
   });
@@ -70,7 +81,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, currency, setCurrency, formatPrice }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, currency, setCurrency, formatPrice, prefersReducedMotion }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -215,6 +215,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshSubscription();
   }, [user?.id, refreshSubscription]);
 
+  /* Session expirée silencieuse : vérifier au retour au premier plan */
+  useEffect(() => {
+    const h = () => {
+      if (document.hidden) return;
+      supabase.auth.getSession().then(({ data }) => {
+        if (!data.session) {
+          setUser(null);
+          setSession(null);
+        }
+      });
+    };
+    document.addEventListener('visibilitychange', h);
+    return () => document.removeEventListener('visibilitychange', h);
+  }, []);
+
+  /* Heartbeat : garder session vivante quand app en foreground */
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!document.hidden) supabase.auth.getSession();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
   const signInWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
