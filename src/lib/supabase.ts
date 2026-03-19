@@ -25,6 +25,7 @@ export interface Profile {
   taste_profile: Record<string, unknown>;
   onboarding_completed: boolean;
   referral_code: string | null;
+  discount_used?: boolean;
   created_at: string;
 }
 
@@ -32,7 +33,7 @@ export interface Subscription {
   id: string;
   user_id: string;
   plan: 'free' | 'monthly' | 'annual';
-  status: 'trial' | 'active' | 'cancelled' | 'expired';
+  status: 'trial' | 'active' | 'cancelled' | 'expired' | 'paused';
   trial_ends_at: string | null;
   current_period_end: string | null;
   stripe_customer_id: string | null;
@@ -219,4 +220,23 @@ export async function getProfileByReferralCode(code: string) {
     .eq('referral_code', code.toUpperCase())
     .maybeSingle();
   return { data, error };
+}
+
+// ─── FEEDBACK (SaveFlow exit survey) ─────────────────────────
+
+export interface FeedbackRow {
+  id: string;
+  user_id: string;
+  reason: string;
+  text: string | null;
+  created_at: string;
+}
+
+export async function insertFeedback(userId: string, reason: string, text?: string | null) {
+  const { data, error } = await supabase
+    .from('feedback')
+    .insert({ user_id: userId, reason, text: text ?? null })
+    .select()
+    .single();
+  return { data: data as FeedbackRow | null, error };
 }

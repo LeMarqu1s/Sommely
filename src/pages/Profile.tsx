@@ -23,6 +23,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme, CURRENCIES } from '../context/ThemeContext';
 import { getUserScans, getScansCountTotal } from '../lib/supabase';
+import { SaveFlowModal } from '../components/SaveFlow';
 
 const BADGES = [
   { id: 'first', label: 'Premier scan', icon: '🍷', threshold: 1, description: 'Vous avez scanné votre première bouteille' },
@@ -48,7 +49,7 @@ export function Profile() {
   const [scanCountTotal, setScanCountTotal] = useState(0);
   const [favorites, setFavorites] = useState<any[]>([]);
   const [isLoadingScans, setIsLoadingScans] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showSaveFlow, setShowSaveFlow] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -99,16 +100,6 @@ export function Profile() {
   const handleSignOut = async () => {
     await signOut();
     navigate('/', { replace: true });
-  };
-
-  const handleCancelSubscription = () => {
-    setShowCancelConfirm(true);
-  };
-
-  const confirmCancel = () => {
-    setShowCancelConfirm(false);
-    refreshSubscription();
-    navigate('/home');
   };
 
   return (
@@ -534,7 +525,7 @@ export function Profile() {
                 </div>
                 {subscriptionTier !== 'lifetime' && (
                   <button
-                    onClick={handleCancelSubscription}
+                    onClick={() => setShowSaveFlow(true)}
                     className="text-xs text-gray-dark hover:text-danger transition-colors bg-transparent border-none cursor-pointer underline"
                   >
                     Gérer ou annuler mon abonnement
@@ -595,49 +586,18 @@ export function Profile() {
           </motion.button>
         )}
 
-        {showCancelConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-black/60 flex items-end justify-center z-50 px-6 pb-6"
-            onClick={() => setShowCancelConfirm(false)}
-          >
-            <motion.div
-              initial={{ y: 100 }}
-              animate={{ y: 0 }}
-              className="rounded-3xl p-6 w-full max-w-lg"
-              style={{ background: 'var(--bg-card)' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="font-display text-xl font-bold text-black-wine mb-2">Avant d'annuler…</h3>
-              <p className="text-gray-dark text-sm mb-4">
-                Vous allez perdre l'accès aux scans illimités, au sommelier IA et à la gestion de cave.
-              </p>
-              <div className="bg-gold/10 border border-gold/30 rounded-2xl p-4 mb-5">
-                <p className="text-sm font-semibold text-yellow-800 mb-1">Alternative : Pausez votre abonnement</p>
-                <p className="text-xs text-gray-dark">
-                  Passez au plan gratuit et gardez votre historique. Reprenez quand vous voulez.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <button
-                  onClick={() => {
-                    setShowCancelConfirm(false);
-                    navigate('/premium');
-                  }}
-                  className="w-full py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm border-none cursor-pointer hover:bg-burgundy-medium transition-colors"
-                >
-                  Rester Premium 🏅
-                </button>
-                <button
-                  onClick={confirmCancel}
-                  className="w-full py-3 text-danger text-sm font-medium bg-transparent border-none cursor-pointer hover:underline"
-                >
-                  Confirmer l'annulation
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
+        {user && (
+          <SaveFlowModal
+            isOpen={showSaveFlow}
+            onClose={() => setShowSaveFlow(false)}
+            subscriptionId={subscription?.stripe_subscription_id ?? null}
+            customerId={subscription?.stripe_customer_id ?? null}
+            nextBillingDate={subscription?.current_period_end ?? null}
+            plan={subscriptionState.plan}
+            userId={user.id}
+            refreshSubscription={refreshSubscription}
+            onSuccessCancel={() => refreshSubscription()}
+          />
         )}
 
         <div className="h-32" />

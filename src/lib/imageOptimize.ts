@@ -1,12 +1,12 @@
 /**
  * Optimise une image base64 avant envoi à l'API OpenAI.
  * Réduit la taille = moins de tokens = réponse plus rapide.
- * 1024px + 0.75 : bon compromis vitesse/qualité pour étiquettes.
+ * 600px + 0.6 par défaut : scan rapide <15s. Menu/Food passent leurs propres params.
  */
 export async function optimizeImageForAI(
   base64: string,
-  maxSize = 1024,
-  quality = 0.75
+  maxSize = 600,
+  quality = 0.6
 ): Promise<string> {
   return new Promise((resolve) => {
     // Fallback de sécurité : si img.onload ne se déclenche jamais (HEIC, WebP non supporté, etc.)

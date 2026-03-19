@@ -1,8 +1,8 @@
 {
   "functions": {
-    "api/openai-proxy.js": {
-      "maxDuration": 60
-    }
+    "api/openai-proxy.js": { "maxDuration": 30 },
+    "api/analyze-wine.js": { "maxDuration": 30 },
+    "api/stripe-retention.js": { "maxDuration": 30 }
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
