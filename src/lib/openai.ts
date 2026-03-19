@@ -81,10 +81,9 @@ export async function fetchOpenAI(body: Record<string, unknown>): Promise<Respon
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (!isProd) headers['Authorization'] = `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`;
 
-  // Timeout de 50s : si le réseau ou Vercel ne répond pas, on avorte proprement
-  // plutôt que de laisser le fetch pendre indéfiniment → catch déclenché → état erreur affiché
+  // Timeout 25s pour scan rapide : réseau lent → erreur propre, pas blocage
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 50000);
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
 
   try {
     const response = await fetch(url, {
@@ -180,31 +179,34 @@ Schéma JSON (remplace toutes les valeurs 0 et les chaînes descriptives) :
   "labelReadability": "excellent|good|poor"
 }
 
-RÈGLES PRIX (bottlePrices) :
-Pour les prix, donne TOUJOURS des prix réels du marché actuel (2024-2025) basés sur ta connaissance des vins.
-Règles strictes :
-- cl750 : TOUJOURS rempli, jamais null. Prix bouteille standard au détail en Europe (cave, épicerie fine, pas restaurant).
-- cl375 : rempli UNIQUEMENT si ce format existe réellement pour ce vin spécifique
-- cl1500 : rempli UNIQUEMENT si ce format existe réellement pour ce vin spécifique
-- Exemples de références prix : Château Margaux 2018 = 600-700€, Sancerre = 18-25€, Bourgogne village = 15-30€, Champagne Moët = 35-45€, vin de pays générique = 5-12€
-- Ne JAMAIS donner de fourchette (ex: 30-50) — donner UN seul chiffre précis (ex: 38)
-- Si tu ne connais pas le vin précisément, estimer selon la région/appellation/classification
-- priceRange : min = prix le plus bas, max = prix caviste. NE JAMAIS retourner 0 dans la réponse.
+PRIX - Règles strictes et non négociables :
+- cl750 : TOUJOURS un seul chiffre entier, jamais une fourchette (ex: 38, jamais '30-50')
+- Base de référence obligatoire :
+  * Vins de pays / IGP génériques : 5-12€
+  * AOC régionales (Bordeaux, Bourgogne village, Côtes du Rhône) : 12-25€
+  * AOC communales (Pauillac, Gevrey, Gigondas) : 25-80€
+  * Champagne non-millésimé (Moët, Pommery, Taittinger) : 35-55€
+  * Champagne prestige (Dom Pérignon, Cristal, Krug) : 150-400€
+  * Grands crus classés Bordeaux (Margaux, Latour, Mouton) : 400-800€
+  * Bourgogne grands crus (DRC, Rousseau, Leroy) : 300-3000€
+  * Pétrus, Le Pin : 2000-5000€
+- Si l'étiquette montre le prix : utiliser ce prix comme base
+- cl375 : uniquement si ce format est connu pour ce vin, prix = cl750 × 0.6
+- cl1500 : uniquement si ce format est connu, prix = cl750 × 2.0
 
-RÈGLES FORMATS DE BOUTEILLES :
-- Mettre null si le format n'est pas commercialisé par ce producteur.
-- Champagne/Pétillant : cl1875, cl375, cl1500, cl3000, cl6000 selon les maisons (grandes maisons = plus de formats).
-
-RÈGLE ALCOOL :
-Pour alcohol : donner le degré exact en % (ex: 13.5) si visible sur l'étiquette ou connu pour ce vin/appellation.
-Règles par type :
-- Champagne/Pétillant : 12-12.5%
-- Bourgogne Blanc : 12.5-14%
-- Bordeaux Rouge : 13-14.5%
-- Côtes du Rhône : 14-15%
-- Vin de pays léger : 11.5-12.5%
-- Alsace : 12-14%
-Ne jamais laisser null si le vin est identifiable.
+ALCOOL - Règles strictes :
+- Toujours retourner un nombre décimal (ex: 13.5, pas '13,5%')
+- Références par appellation :
+  * Champagne/Crémant : 12.0-12.5
+  * Alsace blanc : 12.5-14.0
+  * Bourgogne blanc : 12.5-13.5
+  * Bourgogne rouge : 13.0-14.0
+  * Bordeaux rouge : 13.0-14.5
+  * Côtes du Rhône : 13.5-15.0
+  * Loire blanc sec : 12.0-13.0
+  * Sauternes/liquoreux : 13.0-14.0
+  * Vin de pays léger : 11.5-12.5
+- Si visible sur étiquette, utiliser la valeur exacte de l'étiquette
 
 Si pas une étiquette de vin : {"error": "not_wine", "confidence": 0}`;
 
@@ -218,7 +220,7 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
 
   const optimized = await optimizeImageForAI(imageBase64);
   const response = await fetchOpenAI({
-    model: import.meta.env.VITE_OPENAI_VISION_MODEL || 'gpt-4o-mini',
+    model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: 'Expert sommelier. Réponds UNIQUEMENT en JSON valide.' },
       {
@@ -229,7 +231,7 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
         ]
       }
     ],
-    max_tokens: 1600,
+    max_tokens: 600,
     temperature: 0.2,
     response_format: { type: 'json_object' }
   });
