@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Bell, Trash2, RefreshCw, DollarSign, BarChart2, Package, X, Filter, Camera } from 'lucide-react';
@@ -180,6 +180,7 @@ export function Cave() {
   const [alerts, setAlerts] = useState<CaveBottle[]>([]);
   const [showAlerts, setShowAlerts] = useState(false);
   const [sellData, setSellData] = useState<{ b: CaveBottle; cost: number; value: number; gross: number; fees: number; net: number; netPct: number; future: number; ytp: number } | null>(null);
+  const projectionRef = useRef<HTMLDivElement>(null);
   const [lastUpdate, setLastUpdate] = useState('');
   const [showPaywall, setShowPaywall] = useState(false);
 
@@ -734,60 +735,147 @@ export function Cave() {
           })()}
 
           {/* ══ SIMULATION VENTE ══ */}
-          {view === 'sell' && user && sellData && (
-            <motion.div key="sell" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
-              <div className="text-center">
-                <h2 className="font-display text-2xl font-bold text-black-wine">💰 Simulation de vente</h2>
-                <p className="text-gray-dark text-sm">{sellData.b.name} {sellData.b.year} · {sellData.b.quantity} bouteille{sellData.b.quantity > 1 ? 's' : ''}</p>
-              </div>
+          {view === 'sell' && user && sellData && (() => {
+            const yearsHeld = new Date().getFullYear() - (sellData.b.year || new Date().getFullYear());
+            const { ytp, net, cost, future } = sellData;
+            const gainPct = Math.round((net / cost) * 100);
+            const futureValueTotal = future * sellData.b.quantity;
+            const futureFees = Math.round(futureValueTotal * 0.10);
+            const netAtPeak = futureValueTotal - cost - futureFees;
+            const pctAtPeak = Math.round((netAtPeak / cost) * 100);
+            const peakNetPctSingle = Math.round((future - sellData.b.purchasePrice) / sellData.b.purchasePrice * 100);
 
-              <div className={`rounded-3xl p-6 border-2 text-center ${sellData.net >= 0 ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
-                <p className="text-sm text-gray-dark mb-1">Gain net si vous vendez aujourd'hui</p>
-                <p className={`font-display text-5xl font-bold mb-1 ${sellData.net >= 0 ? 'text-green-700' : 'text-red-700'}`}>{sellData.net >= 0 ? '+' : ''}{formatPrice(sellData.net)}</p>
-                <p className={`text-lg font-bold ${sellData.net >= 0 ? 'text-green-700' : 'text-red-700'}`}>{sellData.netPct >= 0 ? '+' : ''}{sellData.netPct}% de rendement net</p>
-              </div>
+            const scenarioA = gainPct < 10 && net >= 0;
+            const scenarioB = gainPct >= 10 && ytp > 2;
+            const scenarioC = gainPct >= 10 && ytp <= 2;
+            const scenarioD = net < 0;
 
-              <div className="rounded-2xl border border-gray-light/30 shadow-sm p-5 space-y-3" style={{ background: 'var(--bg-card)' }}>
-                <p className="font-semibold text-black-wine text-sm">Détail du calcul</p>
-                {[
-                  { l: `Prix de vente (${sellData.b.quantity} × ${sellData.b.estimatedCurrentValue}€)`, v: formatPrice(sellData.value), pos: true },
-                  { l: `Prix d'achat (${sellData.b.quantity} × ${sellData.b.purchasePrice}€)`, v: `−${formatPrice(sellData.cost)}`, pos: false },
-                  { l: 'Frais de vente estimés (10%)', v: `−${formatPrice(sellData.fees)}`, pos: false },
-                  { l: 'Gain net', v: `${sellData.net >= 0 ? '+' : ''}${formatPrice(sellData.net)}`, pos: sellData.net >= 0, bold: true },
-                ].map((row, i) => (
-                  <div key={i} className={`flex items-center justify-between py-2 ${i < 3 ? 'border-b border-gray-light/20' : ''}`}>
-                    <p className={`text-sm ${row.bold ? 'font-bold text-black-wine' : 'text-gray-dark'}`}>{row.l}</p>
-                    <p className={`text-sm font-bold ${row.bold ? (row.pos ? 'text-green-700' : 'text-red-700') : 'text-black-wine'}`}>{row.v}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className={`rounded-2xl p-4 border text-sm font-semibold text-black-wine leading-relaxed ${sellData.net >= 0 && sellData.ytp > 2 ? 'bg-yellow-50 border-yellow-200' : sellData.net >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                {sellData.net >= 0 && sellData.ytp > 2 ? `⏳ Attendez encore ${sellData.ytp} ans jusqu'à l'apogée (${sellData.b.peakYear}), valeur estimée ${sellData.future}€/bt` : sellData.net >= 0 ? `✅ Bon moment pour vendre, vous êtes en plus-value de ${formatPrice(sellData.net)} net` : `⚠️ Attendez, vous seriez en moins-value de ${formatPrice(Math.abs(sellData.net))}`}
-              </div>
-
-              {sellData.ytp > 0 && (
-                <div className="rounded-2xl border border-gray-light/30 shadow-sm p-4" style={{ background: 'var(--bg-card)' }}>
-                  <p className="text-xs font-bold text-gray-dark uppercase tracking-wide mb-2">📈 Si vous attendez l'apogée ({sellData.b.peakYear})</p>
-                  <div className="flex items-center justify-between">
-                    <div><p className="font-display text-xl font-bold text-burgundy-dark">{formatPrice(sellData.future)}/bt</p><p className="text-xs text-gray-dark">Valeur estimée</p></div>
-                    <div className="text-right"><p className="font-display text-xl font-bold text-green-700">+{formatPrice((sellData.future - sellData.b.purchasePrice) * sellData.b.quantity)}</p><p className="text-xs text-gray-dark">Gain potentiel total</p></div>
-                  </div>
+            return (
+              <motion.div key="sell" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
+                <div className="text-center">
+                  <h2 className="font-display text-2xl font-bold text-black-wine">💰 Simulation de vente</h2>
+                  <p className="text-gray-dark text-sm">{sellData.b.name} {sellData.b.year} · {sellData.b.quantity} bouteille{sellData.b.quantity > 1 ? 's' : ''}</p>
                 </div>
-              )}
 
-              <div className="flex gap-3">
-                <button onClick={() => setView('detail')} className="flex-1 py-4 border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 bg-transparent cursor-pointer">
-                  <ArrowLeft size={16} /> Retour
-                </button>
-                <button onClick={() => setView('overview')} className="flex-1 py-4 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer">
-                  <BarChart2 size={16} /> Vue cave
-                </button>
-              </div>
-              <p className="text-xs text-gray-dark text-center leading-relaxed">⚠️ Simulation indicative. Ne constitue pas un conseil financier.</p>
-              <div className="h-28" />
-            </motion.div>
-          )}
+                <div className={`rounded-3xl p-6 border-2 text-center ${sellData.net >= 0 ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
+                  <p className="text-sm text-gray-dark mb-1">Gain net si vous vendez aujourd'hui</p>
+                  <p className={`font-display text-5xl font-bold mb-1 ${sellData.net >= 0 ? 'text-green-700' : 'text-red-700'}`}>{sellData.net >= 0 ? '+' : ''}{formatPrice(sellData.net)}</p>
+                  <p className={`text-lg font-bold ${sellData.net >= 0 ? 'text-green-700' : 'text-red-700'}`}>{gainPct >= 0 ? '+' : ''}{gainPct}% de rendement net</p>
+                </div>
+
+                {!scenarioD && (
+                  <div className="rounded-2xl border border-gray-light/30 shadow-sm p-5 space-y-3" style={{ background: 'var(--bg-card)' }}>
+                    <p className="font-semibold text-black-wine text-sm">Détail du calcul</p>
+                    {[
+                      { l: `Prix de vente (${sellData.b.quantity} × ${sellData.b.estimatedCurrentValue}€)`, v: formatPrice(sellData.value), pos: true },
+                      { l: `Prix d'achat (${sellData.b.quantity} × ${sellData.b.purchasePrice}€)`, v: `−${formatPrice(sellData.cost)}`, pos: false },
+                      { l: 'Frais de vente estimés (10%)', v: `−${formatPrice(sellData.fees)}`, pos: false },
+                      { l: 'Gain net', v: `${sellData.net >= 0 ? '+' : ''}${formatPrice(sellData.net)}`, pos: sellData.net >= 0, bold: true },
+                    ].map((row, i) => (
+                      <div key={i} className={`flex items-center justify-between py-2 ${i < 3 ? 'border-b border-gray-light/20' : ''}`}>
+                        <p className={`text-sm ${row.bold ? 'font-bold text-black-wine' : 'text-gray-dark'}`}>{row.l}</p>
+                        <p className={`text-sm font-bold ${row.bold ? (row.pos ? 'text-green-700' : 'text-red-700') : 'text-black-wine'}`}>{row.v}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* SCÉNARIO A — Gain trop faible */}
+                {scenarioA && (
+                  <div className="rounded-2xl p-4 border bg-amber-50 border-amber-200 space-y-3">
+                    <h3 className="font-display text-lg font-bold text-black-wine">⏳ Trop tôt pour vendre</h3>
+                    <p className="text-sm text-gray-dark leading-relaxed">
+                      Avec seulement +{gainPct}% de plus-value, les frais de vente (10%) effacent votre gain. Ce vin mérite plus de temps en cave.
+                    </p>
+                    <div ref={projectionRef} className="rounded-xl p-3 bg-white/80 border border-amber-200">
+                      <p className="text-sm text-black-wine">À son apogée en {sellData.b.peakYear}, valeur estimée : {sellData.future}€/bt soit +{peakNetPctSingle}% de rendement net.</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <button onClick={() => projectionRef.current?.scrollIntoView({ behavior: 'smooth' })} className="flex-1 py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm border-none cursor-pointer">
+                        Voir le potentiel à l&apos;apogée
+                      </button>
+                      <button onClick={() => setView('detail')} className="flex-1 py-3.5 border-2 border-gray-light text-gray-dark rounded-2xl font-semibold text-sm bg-transparent cursor-pointer">
+                        Vendre quand même
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* SCÉNARIO B — Bonne plus-value mais apogée pas encore atteinte */}
+                {scenarioB && (
+                  <div className="space-y-4">
+                    <div className="rounded-2xl p-4 border bg-blue-50 border-blue-200">
+                      <h3 className="font-display text-lg font-bold text-black-wine">📈 Bonne performance — mais pas encore au sommet</h3>
+                      <p className="text-sm text-gray-dark leading-relaxed mt-2">
+                        Vous êtes en plus-value de +{gainPct}% ({formatPrice(net)} net après frais). Mais ce vin n&apos;a pas encore atteint son apogée ({sellData.b.peakYear}).
+                      </p>
+                      <p className="text-sm text-gray-dark mt-2">
+                        En attendant {ytp} ans de plus, valeur estimée : {sellData.future}€/bt — soit {Math.round((futureValueTotal - cost) / cost * 100)}% de rendement total.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl p-4 border-2 border-gray-light bg-white text-center">
+                        <p className="text-xs font-bold text-gray-dark mb-1">Vendre maintenant</p>
+                        <p className="font-display text-xl font-bold text-burgundy-dark">{formatPrice(net)}</p>
+                        <p className="text-xs text-green-700 font-semibold">+{gainPct}%</p>
+                      </div>
+                      <div className="rounded-2xl p-4 border-2 border-gold bg-gold/10 text-center">
+                        <p className="text-xs font-bold text-gray-dark mb-1">Attendre l&apos;apogée</p>
+                        <p className="font-display text-xl font-bold text-burgundy-dark">{formatPrice(netAtPeak)}</p>
+                        <p className="text-xs text-green-700 font-semibold">+{pctAtPeak}%</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <button onClick={() => setView('detail')} className="flex-1 py-4 border-2 border-burgundy-dark/30 text-burgundy-dark rounded-2xl font-semibold text-sm bg-transparent cursor-pointer">
+                        Vendre maintenant
+                      </button>
+                      <button onClick={() => setView('detail')} className="flex-1 py-4 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm border-none cursor-pointer">
+                        Garder en cave
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* SCÉNARIO C — Apogée atteinte, bonne plus-value */}
+                {scenarioC && (
+                  <div className="space-y-4">
+                    <div className="rounded-2xl p-4 border bg-green-50 border-green-200">
+                      <h3 className="font-display text-lg font-bold text-black-wine">🏆 C&apos;est le moment idéal</h3>
+                      <p className="text-sm text-gray-dark leading-relaxed mt-2">
+                        Ce vin est à son apogée et vous êtes en plus-value de +{gainPct}%. Le timing est parfait pour vendre.
+                      </p>
+                    </div>
+                    <button onClick={() => setView('detail')} className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-bold text-base border-none cursor-pointer">
+                      Vendre maintenant
+                    </button>
+                  </div>
+                )}
+
+                {/* SCÉNARIO D — Moins-value */}
+                {scenarioD && (
+                  <div className="rounded-2xl p-4 border bg-red-50 border-red-200">
+                    <h3 className="font-display text-lg font-bold text-black-wine">⚠️ Vous seriez en perte</h3>
+                    <p className="text-sm text-gray-dark leading-relaxed mt-2">
+                      Vendre maintenant vous ferait perdre {formatPrice(Math.abs(net))}€ après frais. Attendez minimum {ytp > 0 ? ytp + ' ans' : 'que le marché se redresse'}.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button onClick={() => setView('detail')} className="flex-1 py-4 border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 bg-transparent cursor-pointer">
+                    <ArrowLeft size={16} /> {scenarioD ? 'Retour à ma cave' : 'Retour'}
+                  </button>
+                  {!scenarioD && (
+                    <button onClick={() => setView('overview')} className="flex-1 py-4 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer">
+                      <BarChart2 size={16} /> Vue cave
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-gray-dark text-center leading-relaxed">⚠️ Simulation indicative. Ne constitue pas un conseil financier.</p>
+                <div className="h-28" />
+              </motion.div>
+            );
+          })()}
 
           {/* ══ AJOUT ══ */}
           {view === 'add' && user && (
