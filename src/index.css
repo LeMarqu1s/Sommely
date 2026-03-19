@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* iOS : suppression du flash bleu au tap, smooth scroll sur listes */
+* { -webkit-tap-highlight-color: transparent; }
+.overflow-y-auto, .overflow-y-scroll, [data-scroll] { -webkit-overflow-scrolling: touch; }
+
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
 .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
 

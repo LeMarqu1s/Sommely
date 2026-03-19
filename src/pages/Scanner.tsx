@@ -227,11 +227,11 @@ export function Scanner() {
       setAnalysisProgress(Math.round((step / (ANALYSIS_STEPS.length - 1)) * 100));
     }, 1200);
 
-    // Timeout de sécurité : 30s max pour éviter le chargement infini
+    // Timeout de sécurité : 25s max pour éviter le chargement infini
     const analysisTimeout = setTimeout(() => {
       setErrorMessage("L'analyse a pris trop de temps. Vérifiez votre connexion et réessayez.");
       setScanState('error');
-    }, 30000);
+    }, 25000);
 
     try {
       console.log('🔍 Envoi de l\'image à OpenAI GPT-4o Vision...');

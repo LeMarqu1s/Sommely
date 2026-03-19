@@ -3,7 +3,10 @@ import type { SubscriptionState } from '../context/AuthContext';
 const FREE_SCAN_LIMIT = 3;
 const FREE_CAVE_LIMIT = 5;
 
-export function getGatingFromState(state: SubscriptionState) {
+export function getGatingFromState(state: SubscriptionState | null | undefined) {
+  if (!state) {
+    return { isPro: false, isTrial: false, isFree: true, scansThisMonth: 0, scansRemaining: 3, canScanUnlimited: false, caveLimit: 5 };
+  }
   const isPro = state.isPro;
   const isTrial = state.isTrial;
   const isFree = state.isFree;
@@ -20,7 +23,7 @@ export function getGatingFromState(state: SubscriptionState) {
   };
 }
 
-export function canScan(state: SubscriptionState) {
+export function canScan(state: SubscriptionState | null | undefined) {
   const { isPro, isTrial, scansThisMonth } = getGatingFromState(state);
   if (isPro || isTrial) return { allowed: true };
   if (scansThisMonth >= FREE_SCAN_LIMIT) {
@@ -29,13 +32,13 @@ export function canScan(state: SubscriptionState) {
   return { allowed: true, remaining: FREE_SCAN_LIMIT - scansThisMonth };
 }
 
-export function canAddToCave(state: SubscriptionState, currentBottleCount: number) {
+export function canAddToCave(state: SubscriptionState | null | undefined, currentBottleCount: number) {
   const { caveLimit } = getGatingFromState(state);
   return currentBottleCount < caveLimit;
 }
 
 export function canAccessFeature(
-  state: SubscriptionState,
+  state: SubscriptionState | null | undefined,
   feature: 'cave' | 'menu' | 'food' | 'investment' | 'antoine' | 'cavemeal' | 'shop',
   currentBottleCount?: number
 ): boolean {

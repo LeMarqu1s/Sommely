@@ -137,6 +137,7 @@ export function WineResult() {
 
   const wine = location.state?.wine;
   const score = location.state?.score || 75;
+  const { formatPrice } = useTheme();
 
   useEffect(() => {
     const profile = localStorage.getItem('sommely_profile');
@@ -157,8 +158,6 @@ export function WineResult() {
   const firstName = userProfile?.firstName || '';
 
   const isChampagne = ['Champagne', 'Pétillant', 'Mousseux'].includes(wine.type || '');
-  const { formatPrice } = useTheme();
-
   type DetailItem = { icon: LucideIcon; label: string; value: string };
 
   const wineDetails: DetailItem[] = [

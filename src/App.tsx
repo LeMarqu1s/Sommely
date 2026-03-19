@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from './ErrorBoundary';
 import { AuthProvider } from './context/AuthContext';
@@ -14,21 +14,22 @@ import { Onboarding } from './pages/Onboarding';
 import { Scanner } from './pages/Scanner';
 import { MenuScanner } from './pages/MenuScanner';
 import { FoodPairing } from './pages/FoodPairing';
-import { WineResult } from './pages/WineResult';
 import { Premium } from './pages/Premium';
-import { Sommelier } from './pages/Sommelier';
 import { CaveMeal } from './pages/CaveMeal';
 import { WineShop } from './pages/WineShop';
 import { SommelierButton } from './components/SommelierButton';
 import { Profile } from './pages/Profile';
 import { AuthCallback } from './pages/AuthCallback';
 import { Success } from './pages/Success';
-import { Cave } from './pages/Cave';
 import { Investment } from './pages/Investment';
 import { BottomNav } from './components/BottomNav';
 import { GlobalLogoHeader } from './components/GlobalLogoHeader';
 import { Privacy } from './pages/Privacy';
 import { ShareResult } from './pages/ShareResult';
+
+const Cave = lazy(() => import('./pages/Cave').then(m => ({ default: m.Cave })));
+const WineResult = lazy(() => import('./pages/WineResult').then(m => ({ default: m.WineResult })));
+const Sommelier = lazy(() => import('./pages/Sommelier').then(m => ({ default: m.Sommelier })));
 
 const NAV_HIDDEN = ['/', '/onboarding', '/privacy', '/result', '/share', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/success', '/cave-meal', '/shop'];
 
@@ -46,9 +47,10 @@ function AppContent({ onReady }: { onReady?: () => void }) {
   return (
     <div style={{ minHeight: '100vh' }}>
       <GlobalLogoHeader />
-      <div className={showNav ? 'pb-28' : ''}>
+      <div className={`${showNav ? 'pb-28' : ''} w-full`} style={{ maxWidth: 430, margin: '0 auto' }}>
         <ClarityScript />
         <GoogleAnalytics />
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-app)' }}><div className="w-8 h-8 rounded-full border-2 border-burgundy-dark border-t-transparent animate-spin" /></div>}>
         <Routes>
           <Route path="/investment" element={<Investment />} />
           <Route path="/" element={<Landing />} />
@@ -71,6 +73,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/cave" element={<Cave />} />
         </Routes>
+        </Suspense>
       </div>
       <BottomNav />
       <SommelierButton />

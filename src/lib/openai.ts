@@ -105,7 +105,15 @@ export async function fetchOpenAI(body: Record<string, unknown>): Promise<Respon
 
 // ─── CACHE ────────────────────────────────────────────────
 
+const ANALYSIS_CACHE_MAX = 50;
 const analysisCache = new Map<string, WineAnalysis>();
+
+function trimCache() {
+  if (analysisCache.size > ANALYSIS_CACHE_MAX) {
+    const keys = Array.from(analysisCache.keys()).slice(0, analysisCache.size - ANALYSIS_CACHE_MAX);
+    keys.forEach(k => analysisCache.delete(k));
+  }
+}
 
 function hashImage(base64: string): string {
   let hash = 0;
@@ -257,6 +265,7 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
   }
   const enriched = enrichMissingData(parsed);
   analysisCache.set(cacheKey, enriched);
+  trimCache();
   return enriched;
 }
 

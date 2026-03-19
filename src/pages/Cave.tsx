@@ -419,7 +419,7 @@ export function Cave() {
                   <div key={b.id} className={`rounded-2xl p-4 border ${up ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-semibold text-sm text-black-wine">{b.name} {b.year}</p>
+                        <p className="font-semibold text-sm text-black-wine" style={{ wordBreak: 'break-word', whiteSpace: 'normal', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{b.name} {b.year}</p>
                         <p className="text-xs text-gray-dark mt-0.5">{up ? '📈' : '📉'} {b.priceVariation24h > 0 ? '+' : ''}{b.priceVariation24h.toFixed(1)}% · Stock : {formatPrice(b.estimatedCurrentValue * b.quantity)}</p>
                         <p className="text-xs font-bold mt-1" style={{ color: up ? '#2E7D32' : '#C62828' }}>{gp >= 0 ? '+' : ''}{gp}% depuis l'achat</p>
                       </div>
@@ -476,7 +476,7 @@ export function Cave() {
                   {[{ v: totalBottles, l: 'Bouteilles' }, { v: ready, l: 'Prêtes' }, { v: alerts.length, l: 'Alertes' }].map(s => (
                     <div key={s.l} className="bg-white/10 rounded-xl p-2.5 text-center">
                       <p className="font-display text-xl font-bold">{s.v}</p>
-                      <p className="text-white/50 text-xs">{s.l}</p>
+                      <p className="text-white/50 text-xs" style={{ textAlign: 'center' }}>{s.l}</p>
                     </div>
                   ))}
                 </div>
@@ -526,13 +526,13 @@ export function Cave() {
               )}
 
               <div className="grid grid-cols-3 gap-3">
-                <button onClick={() => setView('list')} className="py-4 bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer hover:bg-burgundy-dark/5 transition-colors">
+                <button onClick={() => setView('list')} className="py-4 bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm cursor-pointer hover:bg-burgundy-dark/5 transition-colors" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textAlign: 'center' }}>
                   <Package size={16} /> Mes bouteilles
                 </button>
-                <button onClick={() => navigate('/scan', { state: { fromCave: true } })} className="py-4 bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer hover:bg-burgundy-dark/5 transition-colors">
+                <button onClick={() => navigate('/scan', { state: { fromCave: true } })} className="py-4 bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm cursor-pointer hover:bg-burgundy-dark/5 transition-colors" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textAlign: 'center' }}>
                   <Camera size={16} /> Scanner
                 </button>
-                <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="py-4 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer shadow-md hover:bg-burgundy-medium transition-colors">
+                <button onClick={() => { if (!canAdd) setShowPaywall(true); else setView('add'); }} className="py-4 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm border-none cursor-pointer shadow-md hover:bg-burgundy-medium transition-colors" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textAlign: 'center' }}>
                   <Plus size={16} /> Ajouter
                 </button>
               </div>
