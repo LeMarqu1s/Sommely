@@ -202,9 +202,9 @@ export function Premium() {
                   <p className={`font-semibold text-black-wine ${plan.highlight ? 'text-base' : 'text-sm'}`}>{plan.label}</p>
                   <p className={`text-xs mt-0.5 ${plan.highlight ? 'text-green-700 font-medium' : 'text-gray-dark'}`}>{plan.subline}</p>
                 </div>
-                <div className="text-right">
-                  <span className={`font-display font-bold text-burgundy-dark ${plan.highlight ? 'text-2xl' : 'text-xl'}`}>{plan.price}</span>
-                  <span className="text-xs text-gray-dark ml-0.5">{plan.period}</span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
+                  <span style={{ fontSize: plan.highlight ? '28px' : '24px', fontWeight: 900, color: '#722F37' }}>{plan.price}</span>
+                  <span style={{ fontSize: '14px', color: '#6B5D56' }}>{plan.period}</span>
                 </div>
               </div>
               {selectedPlan === plan.id && (

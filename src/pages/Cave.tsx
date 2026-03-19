@@ -406,7 +406,7 @@ export function Cave() {
       {/* MODAL ALERTES */}
       <AnimatePresence>
         {showAlerts && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center p-4" onClick={() => setShowAlerts(false)}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 90px)', paddingLeft: '16px', paddingRight: '16px', paddingTop: '16px' }} onClick={() => setShowAlerts(false)}>
             <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="rounded-3xl w-full max-w-lg p-6 space-y-3" style={{ background: 'var(--bg-card)' }} onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-display text-lg font-bold text-black-wine flex items-center gap-2"><Bell size={18} color="#D4AF37" /> Alertes prix</h3>
@@ -526,8 +526,11 @@ export function Cave() {
               )}
 
               <div className="grid grid-cols-3 gap-3">
-                <button onClick={() => setView('list')} className="py-4 bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm cursor-pointer hover:bg-burgundy-dark/5 transition-colors" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textAlign: 'center' }}>
-                  <Package size={16} /> Mes bouteilles
+                <button onClick={() => setView('list')} className="bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm cursor-pointer hover:bg-burgundy-dark/5 transition-colors" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%' }}>
+                    <span>📦</span>
+                    <span style={{ whiteSpace: 'nowrap' }}>Mes bouteilles</span>
+                  </span>
                 </button>
                 <button onClick={() => navigate('/scan', { state: { fromCave: true } })} className="py-4 bg-white border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm cursor-pointer hover:bg-burgundy-dark/5 transition-colors" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textAlign: 'center' }}>
                   <Camera size={16} /> Scanner
