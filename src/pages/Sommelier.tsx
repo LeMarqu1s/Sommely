@@ -5,6 +5,7 @@ import { ArrowLeft, Send, RotateCcw, Sparkles } from 'lucide-react';
 import { canAccessFeature } from '../utils/subscription';
 import { fetchOpenAI } from '../lib/openai';
 import { useAuth } from '../context/AuthContext';
+import { getCaveBottles } from '../lib/supabase';
 
 interface Message {
   id: string;
@@ -15,13 +16,15 @@ interface Message {
 }
 
 const QUICK_SUGGESTIONS = [
-  { emoji: '🍽️', label: 'Accord pour ce soir', prompt: 'Je cuisine ce soir, quel accord mets-vins me conseilles-tu ?' },
-  { emoji: '🍾', label: 'Ma cave — quoi ouvrir ?', prompt: 'Quelle bouteille de ma cave devrais-je ouvrir maintenant selon leur maturité ?' },
-  { emoji: '🎁', label: 'Cadeau — quel budget ?', prompt: 'Je cherche un vin à offrir en cadeau. Quel budget me recommandes-tu ?' },
-  { emoji: '📋', label: 'Au resto — que commander ?', prompt: 'Comment choisir un bon vin au restaurant sans me faire avoir ?' },
-  { emoji: '📈', label: 'Investissement vin', prompt: 'Quels sont les vins avec le meilleur potentiel d\'investissement actuellement ?' },
-  { emoji: '🌍', label: 'Découverte — surprends-moi', prompt: 'Surprends-moi ! Recommande-moi un vin que je ne connais pas encore.' },
+  { emoji: '🍽️', label: 'Accord pour ce soir', contextKey: 'Accord pour ce soir', placeholder: 'Quel plat préparez-vous ce soir ?' },
+  { emoji: '🍾', label: 'Ma cave — quoi ouvrir ?', contextKey: 'Ma cave', placeholder: 'Quelle bouteille souhaitez-vous ouvrir ?' },
+  { emoji: '🎁', label: 'Cadeau — quel budget ?', contextKey: 'Cadeau', placeholder: 'Quel est votre budget et l\'occasion ?' },
+  { emoji: '📋', label: 'Au resto — que commander ?', contextKey: 'Au resto', placeholder: 'Quel type de cuisine ou quelle carte ?' },
+  { emoji: '📈', label: 'Investissement vin', contextKey: 'Investissement', placeholder: 'Quel budget souhaitez-vous investir ?' },
+  { emoji: '🌍', label: 'Découverte — surprends-moi', contextKey: 'Découverte', placeholder: 'Quel style de vin aimez-vous en général ?' },
 ];
+
+const DEFAULT_PLACEHOLDER = "Posez votre question à Antoine...";
 
 function renderMessage(text: string) {
   // Convertit le markdown basique en JSX propre
@@ -44,14 +47,24 @@ function renderMessage(text: string) {
 
 export function Sommelier() {
   const navigate = useNavigate();
-  const { subscriptionState, profile: authProfile } = useAuth();
+  const { subscriptionState, profile: authProfile, user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [cave, setCave] = useState<any[]>([]);
+  const [caveBottles, setCaveBottles] = useState<any[]>([]);
+  const [activeContext, setActiveContext] = useState<string | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (user?.id) {
+      getCaveBottles(user.id).then(({ data }) => {
+        if (data?.length) setCaveBottles(data);
+      });
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (!canAccessFeature(subscriptionState, 'antoine')) {
@@ -92,6 +105,7 @@ export function Sommelier() {
 
     setShowSuggestions(false);
     setInput('');
+    setActiveContext(null);
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -104,15 +118,24 @@ export function Sommelier() {
     setIsLoading(true);
 
     try {
-      const caveContext =
-        cave.length > 0
-          ? `\n\nCAVE VIRTUELLE (${cave.length} références) :\n${cave
+      const bottles = caveBottles.length > 0 ? caveBottles : cave;
+      const caveContext = bottles.length > 0
+        ? caveBottles.length > 0
+          ? `\n\nCAVE DE L'UTILISATEUR (${caveBottles.length} bouteilles) :\n${caveBottles
+              .slice(0, 10)
+              .map((b: any) => `- ${b.name} ${b.vintage ?? b.year} · ${b.wine_type ?? ''} · ${b.region ?? ''} · acheté ${b.price_paid ?? b.purchasePrice}€ · valeur actuelle ${b.current_price ?? b.estimatedCurrentValue}€`)
+              .join('\n')}${caveBottles.length > 10 ? '\n(+ autres bouteilles...)' : ''}`
+          : `\n\nCAVE VIRTUELLE (${cave.length} références) :\n${cave
               .slice(0, 8)
               .map((b: any) => `- ${b.name} ${b.year} (${b.quantity}x) · Acheté ${b.purchasePrice}€ · Valeur actuelle ${b.estimatedCurrentValue}€ · Statut: ${b.status || 'ok'}`)
               .join('\n')}${cave.length > 8 ? '\n(+ autres bouteilles...)' : ''}\n\nValeur totale cave : ${cave
               .reduce((sum: number, b: any) => sum + b.estimatedCurrentValue * (b.quantity || 1), 0)
               .toFixed(0)}€`
-          : '';
+        : "\n\nCAVE : L'utilisateur n'a pas encore de bouteilles dans sa cave.";
+
+      const activeContextLine = activeContext
+        ? `\n\nCONTEXTE ACTIF : L'utilisateur veut parler de : ${activeContext}. Adapte ta première réponse à ce contexte précis.`
+        : '';
 
       const tasteProfile = (authProfile?.taste_profile as Record<string, unknown>) || profile || {};
       const userContext = (tasteProfile && (tasteProfile.budget || tasteProfile.experience || tasteProfile.expertise)) ?
@@ -143,7 +166,7 @@ EXPERTISE TECHNIQUE :
 - Cave : conseils de garde, fenêtres de dégustation, apogée
 - Restaurant : identifier les bonnes affaires sur une carte
 - Investissement : vins qui prennent de la valeur (Bourgogne, Barolo, vins en primeur)
-${caveContext}${userContext}
+${caveContext}${userContext}${activeContextLine}
 
 RÈGLE FORMAT : N'utilise JAMAIS de markdown (**gras**, *italique*, ##titres, listes avec tirets). Écris en texte naturel comme un vrai sommelier qui parle.`;
 
@@ -193,7 +216,12 @@ RÈGLE FORMAT : N'utilise JAMAIS de markdown (**gras**, *italique*, ##titres, li
     ]);
     setShowSuggestions(true);
     setInput('');
+    setActiveContext(null);
   };
+
+  const inputPlaceholder = activeContext
+    ? (QUICK_SUGGESTIONS.find((s) => s.contextKey === activeContext)?.placeholder ?? DEFAULT_PLACEHOLDER)
+    : DEFAULT_PLACEHOLDER;
 
   return (
     <div className="min-h-screen bg-cream font-body flex flex-col">
@@ -279,7 +307,7 @@ RÈGLE FORMAT : N'utilise JAMAIS de markdown (**gras**, *italique*, ##titres, li
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.4 + i * 0.05 }}
-                onClick={() => sendMessage(s.prompt)}
+                onClick={() => setActiveContext(s.contextKey)}
                 className="bg-white border border-gray-light/30 rounded-2xl p-3 text-left cursor-pointer hover:border-burgundy-dark/30 hover:shadow-sm transition-all"
               >
                 <div className="flex items-center gap-2 mb-1">
@@ -303,7 +331,7 @@ RÈGLE FORMAT : N'utilise JAMAIS de markdown (**gras**, *italique*, ##titres, li
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-              placeholder="Posez votre question à Antoine..."
+              placeholder={inputPlaceholder}
               disabled={isLoading}
               className="flex-1 bg-transparent border-none outline-none text-sm text-black-wine placeholder-gray-dark disabled:opacity-50"
             />
