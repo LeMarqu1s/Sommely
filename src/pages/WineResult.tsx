@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Heart,
   Share2,
-  ShoppingBag,
   Wine,
   MapPin,
   Calendar,
@@ -14,7 +13,6 @@ import {
   Percent,
   Star,
   ChevronRight,
-  X,
   ExternalLink,
   type LucideIcon,
 } from 'lucide-react';
@@ -132,7 +130,6 @@ export function WineResult() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [showScoreAnimation, setShowScoreAnimation] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [showPriceSheet, setShowPriceSheet] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
 
   const wine = location.state?.wine;
@@ -643,16 +640,6 @@ export function WineResult() {
             Scanner une autre bouteille
           </button>
 
-          {/* BOUTIQUE EN STANDBY — réactiver après lancement
-          <button
-            onClick={() => setShowPriceSheet(true)}
-            className="w-full py-4 bg-gold text-black-wine rounded-2xl font-semibold text-base flex items-center justify-center gap-3 hover:bg-gold-light active:scale-95 transition-all duration-200 shadow-md border-none cursor-pointer"
-          >
-            <ShoppingBag size={20} />
-            Acheter ce vin 🛒
-          </button>
-          */}
-
           <button
             onClick={handleFavorite}
             className={`w-full py-4 rounded-2xl font-semibold text-base flex items-center justify-center gap-3 active:scale-95 transition-all duration-200 border-2 cursor-pointer ${
@@ -693,88 +680,6 @@ export function WineResult() {
 
         <div className="h-4" />
       </div>
-
-      {/* ── PRICE COMPARISON BOTTOM SHEET ── */}
-      <AnimatePresence>
-        {showPriceSheet && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40"
-              onClick={() => setShowPriceSheet(false)}
-            />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl overflow-hidden"
-              style={{ maxHeight: '85vh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-            >
-              <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-light/20">
-                <div>
-                  <h3 className="font-display text-lg font-bold text-black-wine">Acheter ce vin</h3>
-                  <p className="text-xs text-gray-dark mt-0.5 truncate max-w-[240px]">
-                    {wine.name}{wine.year ? ` · ${wine.year}` : ''}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowPriceSheet(false)}
-                  className="w-8 h-8 rounded-full bg-gray-light/30 flex items-center justify-center border-none cursor-pointer"
-                >
-                  <X size={16} color="#6B5D56" />
-                </button>
-              </div>
-
-              <div className="overflow-y-auto px-6 py-5 space-y-3">
-                {/* Revendeurs */}
-                {[
-                  {
-                    name: 'Millésima',
-                    desc: 'Cave en ligne · Bordeaux & Grands crus',
-                    emoji: '🏰',
-                    url: `https://www.millesima.fr/recherche.html?q=${encodeURIComponent(wine.name)}`,
-                  },
-                  {
-                    name: 'Wine-Searcher',
-                    desc: 'Comparateur mondial · Prix en temps réel',
-                    emoji: '🌍',
-                    url: `https://www.wine-searcher.com/find/${encodeURIComponent(`${wine.name}${wine.year ? ' ' + wine.year : ''}`)}`,
-                  },
-                ].map((shop) => (
-                  <a
-                    key={shop.name}
-                    href={shop.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-4 bg-white border border-gray-light/30 rounded-2xl p-4 hover:border-burgundy-dark/20 hover:shadow-md transition-all no-underline"
-                    style={{ textDecoration: 'none' }}
-                  >
-                    <div className="w-11 h-11 rounded-xl bg-cream flex items-center justify-center flex-shrink-0 text-xl">
-                      {shop.emoji}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="font-semibold text-sm text-black-wine block">{shop.name}</span>
-                      <span className="text-xs text-gray-dark">{shop.desc}</span>
-                    </div>
-                    <ExternalLink size={15} color="#D1CBC4" className="flex-shrink-0" />
-                  </a>
-                ))}
-
-                {wine.avgPrice != null && (
-                  <div className="bg-cream rounded-2xl p-4 text-center">
-                    <p className="text-xs text-gray-dark mb-1">Prix de référence estimé</p>
-                    <p className="font-display text-xl font-bold text-burgundy-dark">~ {formatPrice(wine.avgPrice)}</p>
-                    <p className="text-xs text-gray-dark mt-1">pour une bouteille de 75 cl</p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

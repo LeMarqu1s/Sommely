@@ -15,7 +15,6 @@
     "cap:ios": "npx cap open ios"
   },
   "dependencies": {
-    "@zxing/library": "^0.21.0",
     "@capacitor/android": "^6.0.0",
     "@capacitor/cli": "^6.0.0",
     "@capacitor/core": "^6.0.0",
