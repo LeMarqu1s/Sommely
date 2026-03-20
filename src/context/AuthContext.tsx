@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase, getProfile, getSubscription, getScansCountThisMonth, upsertProfile, applyReferralCode } from '../lib/supabase';
 import type { Profile, Subscription } from '../lib/supabase';
@@ -52,8 +52,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [subscriptionState, setSubscriptionState] = useState<SubscriptionState>(defaultSubscriptionState);
   const [isLoading, setIsLoading] = useState(true);
   const [isOnboardingInProgress, setIsOnboardingInProgress] = useState(false);
-  const isOnboardingRef = useRef(false);
-  isOnboardingRef.current = isOnboardingInProgress;
 
   const refreshProfile = useCallback(async () => {
     if (!user?.id) return;
@@ -159,8 +157,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription: sub },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT' && isOnboardingRef.current) return;
-
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -168,26 +164,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           let { data: p } = await getProfile(session.user.id);
           if (!p) {
-            const { error } = await upsertProfile(session.user.id, {
+            await upsertProfile(session.user.id, {
               email: session.user.email ?? undefined,
               name: session.user.user_metadata?.full_name ?? session.user.email?.split('@')[0],
             });
-            if (!error) {
-              const res = await getProfile(session.user.id);
-              p = res.data ?? null;
-            }
+            const res = await getProfile(session.user.id);
+            p = res.data ?? null;
           }
           setProfile(p ?? null);
-          if (p?.onboarding_completed) {
-            localStorage.setItem('sommely_onboarding_done', 'true');
-          }
-          /* Pas de redirect ici — OnboardingGuard gère les redirections.
-             Un redirect ici créait une boucle avec OnboardingGuard. */
+          if (p?.onboarding_completed) localStorage.setItem('sommely_onboarding_done', 'true');
 
           const pendingRef = localStorage.getItem('pending_referral');
           if (pendingRef && p && !p.referred_by) {
-            const res = await applyReferralCode(session.user.id, pendingRef);
-            if (res.success) {
+            const ok = await applyReferralCode(session.user.id, pendingRef);
+            if (ok.success) {
               localStorage.removeItem('pending_referral');
               const { data: refreshed } = await getProfile(session.user.id);
               setProfile(refreshed ?? null);
@@ -198,16 +188,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!s) {
             const trialEnd = new Date();
             trialEnd.setDate(trialEnd.getDate() + 7);
-            const { error: subErr } = await supabase.from('subscriptions').insert({
+            await supabase.from('subscriptions').insert({
               user_id: session.user.id,
               plan: 'free',
               status: 'trial',
               trial_ends_at: trialEnd.toISOString(),
             });
-            if (!subErr) {
-              const res2 = await getSubscription(session.user.id);
-              s = res2.data ?? null;
-            }
+            const res2 = await getSubscription(session.user.id);
+            s = res2.data ?? null;
           }
           setSubscription(s ?? null);
         } catch (err) {
@@ -220,7 +208,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSubscription(null);
         setSubscriptionState(defaultSubscriptionState);
       }
-      // isLoading passe à false SEULEMENT après que tout soit chargé
       setIsLoading(false);
     });
 

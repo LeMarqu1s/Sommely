@@ -123,9 +123,10 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-            <OnboardingGuard />
-            <PushAutoSubscribe />
-            <AppContent onReady={hideSplash} />
+            <OnboardingGuard>
+              <PushAutoSubscribe />
+              <AppContent onReady={hideSplash} />
+            </OnboardingGuard>
           </BrowserRouter>
         </AuthProvider>
       </ThemeProvider>

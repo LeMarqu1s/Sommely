@@ -1,51 +1,49 @@
-import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const PUBLIC_ROUTES = ['/auth', '/auth/confirm', '/onboarding', '/invite', '/premium', '/share', '/success', '/privacy', '/', '/vin'];
-const ONBOARDING_ROUTES = ['/onboarding'];
+const PUBLIC_ROUTES = [
+  '/auth',
+  '/auth/confirm',
+  '/onboarding',
+  '/invite',
+  '/premium',
+  '/share',
+  '/vin',
+  '/',
+  '/success',
+  '/privacy',
+];
 
-export function OnboardingGuard() {
-  const navigate = useNavigate();
-  const { pathname, search } = useLocation();
+function LoadingSpinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAF9F6' }}>
+      <div className="w-8 h-8 rounded-full border-2 border-burgundy-dark border-t-transparent animate-spin" />
+    </div>
+  );
+}
+
+export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { user, profile, isLoading } = useAuth();
+  const location = useLocation();
 
-  useEffect(() => {
-    // OAuth / magic link en cours — ne jamais interrompre
-    if (search.includes('code=') || window.location.hash.includes('access_token')) return;
+  if (isLoading) return <LoadingSpinner />;
 
-    // Attendre fin du chargement
-    if (isLoading) return;
+  const isPublic = PUBLIC_ROUTES.some(r => location.pathname.startsWith(r));
 
-    // Pas connecté → page de connexion (sauf routes publiques et /profile, /cave)
-    if (!user) {
-      if (PUBLIC_ROUTES.some(p => pathname === p || pathname.startsWith(p + '/'))) return;
-      if (pathname === '/profile' || pathname === '/cave') return;
-      navigate('/auth', { replace: true });
-      return;
-    }
+  // Pas connecté + route privée → auth
+  if (!user && !isPublic) {
+    return <Navigate to="/auth" replace />;
+  }
 
-    // Connecté : vérifier onboarding
-    const localDone = localStorage.getItem('sommely_onboarding_done');
-    if (localDone) return;
+  // Connecté + onboarding pas fait + pas déjà sur onboarding
+  if (user && profile && !profile.onboarding_completed && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
 
-    // Ne jamais rediriger depuis /profile ou /cave — laisser l'utilisateur accéder
-    if (pathname === '/profile' || pathname === '/cave') return;
+  // Connecté + onboarding fait + sur page auth → accueil
+  if (user && profile?.onboarding_completed && location.pathname === '/auth') {
+    return <Navigate to="/" replace />;
+  }
 
-    // Connecté mais onboarding pas fait → /onboarding (sauf si déjà dessus)
-    if (profile && !profile.onboarding_completed) {
-      const alreadyOnAuthOrOnboarding = ['/auth', '/auth/confirm', '/onboarding'].some(
-        p => pathname === p || pathname.startsWith(p + '/')
-      );
-      if (!alreadyOnAuthOrOnboarding) {
-        navigate('/onboarding', { replace: true });
-      } else if (pathname === '/auth' || pathname.startsWith('/auth/')) {
-        // Sur /auth avec session : rediriger vers onboarding
-        navigate('/onboarding', { replace: true });
-      }
-      return;
-    }
-  }, [pathname, search, user, profile, isLoading, navigate]);
-
-  return null;
+  return <>{children}</>;
 }
