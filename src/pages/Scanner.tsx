@@ -65,6 +65,13 @@ export function Scanner() {
   }, [profile?.taste_profile]);
 
   useEffect(() => {
+    const mode = (location.state as { mode?: string })?.mode;
+    if (mode === 'menu') {
+      navigate('/menu', { replace: true });
+    }
+  }, [location.state, navigate]);
+
+  useEffect(() => {
     const hint = (location.state as { scanHint?: string })?.scanHint;
     if (hint) {
       setScanToast(hint);

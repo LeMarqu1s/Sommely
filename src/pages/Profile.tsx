@@ -158,23 +158,33 @@ export function Profile() {
     }
   }, [searchParams]);
 
-  const accountAgeMs = profile?.created_at ? Date.now() - new Date(profile.created_at).getTime() : 0;
-  const accountUnder7Days = accountAgeMs < 7 * 24 * 60 * 60 * 1000;
-  const showUseReferralSection = !profile?.referred_by && accountUnder7Days && user?.id;
+  const showUseReferralSection = !profile?.referred_by && user?.id;
 
   const handleApplyReferral = async () => {
-    if (!user?.id) return;
+    if (!referralInput.trim() || !user?.id) return;
+
     setReferralLoading(true);
-    const result = await applyReferralCode(user.id, referralInput);
-    setReferralLoading(false);
-    if (result.error) {
+    setReferralMessage('');
+
+    try {
+      const result = await applyReferralCode(user.id, referralInput.trim());
+
+      if (result.error) {
+        setReferralSuccess(false);
+        setReferralMessage('❌ ' + result.error);
+      } else {
+        setReferralSuccess(true);
+        setReferralMessage(
+          "✅ Code appliqué ! Vous obtiendrez 1 mois gratuit si votre ami s'abonne."
+        );
+        setReferralInput('');
+        refreshProfile?.();
+      }
+    } catch {
       setReferralSuccess(false);
-      setReferralMessage('❌ ' + result.error);
-    } else {
-      setReferralSuccess(true);
-      setReferralMessage('✅ Code appliqué ! 1 mois offert ajouté à votre compte.');
-      setReferralInput('');
-      refreshProfile?.();
+      setReferralMessage('❌ Une erreur est survenue. Réessayez.');
+    } finally {
+      setReferralLoading(false);
     }
   };
 
@@ -650,7 +660,7 @@ export function Profile() {
           </motion.div>
         )}
 
-        {profile?.referral_code && (
+        {subscription?.status === 'active' && profile?.referral_code && (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}

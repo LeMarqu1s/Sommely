@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, ChevronRight, Star, Zap } from 'lucide-react';
@@ -149,65 +149,64 @@ export function Home() {
     } catch { /* ignore */ }
   }, []);
 
-  const features = [
-    {
-      id: 'menu',
-      emoji: '📋',
-      title: 'Carte du restaurant',
-      subtitle: 'Meilleur rapport qualité-prix',
-      color: 'from-amber-500/10 to-amber-600/5',
-      border: 'border-amber-200/50',
-      route: '/menu',
-      tag: 'Exclusif',
-      tagColor: 'bg-amber-100 text-amber-700',
-    },
-    {
-      id: 'food',
-      emoji: '🍽️',
-      title: 'Accord mets & vins',
-      subtitle: 'Quel vin avec ce plat ?',
-      color: 'from-orange-500/10 to-orange-600/5',
-      border: 'border-orange-200/50',
-      route: '/food-pairing',
-      tag: 'IA',
-      tagColor: 'bg-orange-100 text-orange-700',
-    },
-    {
-      id: 'sommelier',
-      emoji: '🍷',
-      title: 'Chat Antoine',
-      subtitle: 'Votre sommelier IA disponible 24h/24',
-      color: 'from-burgundy-dark/10 to-burgundy-medium/5',
-      border: 'border-burgundy-dark/20',
-      route: '/sommelier',
-      tag: 'IA',
-      tagColor: 'bg-burgundy-dark/10 text-burgundy-dark',
-    },
-    {
-      id: 'cave-meal',
-      emoji: '👨‍🍳',
-      title: 'Ce soir je cuisine...',
-      subtitle: 'Quelle bouteille ouvrir dans ma cave ?',
-      color: 'from-orange-500/10 to-orange-600/5',
-      border: 'border-orange-200/50',
-      route: '/cave-meal',
-      tag: 'Nouveau',
-      tagColor: 'bg-orange-100 text-orange-700',
-    },
-    /* BOUTIQUE EN STANDBY — réactiver après lancement
-    {
-      id: 'shop',
-      emoji: '🛒',
-      title: 'Boutique & Parrainage',
-      subtitle: 'Offres exclusives · Invitez vos amis',
-      color: 'from-purple-500/10 to-purple-600/5',
-      border: 'border-purple-200/50',
-      route: '/shop',
-      tag: 'Offres',
-      tagColor: 'bg-purple-100 text-purple-700',
-    },
-    */
-  ];
+  const features = useMemo(
+    () => [
+      {
+        id: 'cave',
+        emoji: '🍾',
+        title: 'Ma cave virtuelle',
+        subtitle:
+          caveBottles > 0
+            ? `${caveBottles} bouteille${caveBottles > 1 ? 's' : ''} · ${formatPrice(caveValue)}`
+            : 'Gérez vos bouteilles · Prix en temps réel',
+        route: '/cave' as const,
+        navState: undefined as Record<string, unknown> | undefined,
+        tag: undefined as string | undefined,
+        tagColor: '',
+      },
+      {
+        id: 'menu',
+        emoji: '📋',
+        title: 'Carte du restaurant',
+        subtitle: 'Meilleur rapport qualité-prix',
+        route: '/scan' as const,
+        navState: { mode: 'menu' } as Record<string, unknown>,
+        tag: 'Exclusif',
+        tagColor: 'bg-amber-100 text-amber-700',
+      },
+      {
+        id: 'food',
+        emoji: '🍽️',
+        title: 'Accord mets & vins',
+        subtitle: 'Quel vin avec ce plat ?',
+        route: '/sommelier' as const,
+        navState: undefined,
+        tag: 'IA',
+        tagColor: 'bg-orange-100 text-orange-700',
+      },
+      {
+        id: 'sommelier',
+        emoji: '🍷',
+        title: 'Chat Antoine',
+        subtitle: 'Votre sommelier IA disponible 24h/24',
+        route: '/sommelier' as const,
+        navState: undefined,
+        tag: 'IA',
+        tagColor: 'bg-burgundy-dark/10 text-burgundy-dark',
+      },
+      {
+        id: 'cave-meal',
+        emoji: '👨‍🍳',
+        title: 'Ce soir je cuisine...',
+        subtitle: 'Quelle bouteille ouvrir dans ma cave ?',
+        route: '/sommelier' as const,
+        navState: undefined,
+        tag: 'Nouveau',
+        tagColor: 'bg-orange-100 text-orange-700',
+      },
+    ],
+    [caveBottles, caveValue, formatPrice]
+  );
 
   if (showLoader) {
     return (
@@ -395,30 +394,6 @@ export function Home() {
           </motion.div>
         )}
 
-        {/* CAVE */}
-        <motion.button
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          onClick={() => navigate('/cave')}
-          className="w-full rounded-2xl p-5 text-left border cursor-pointer"
-          style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
-              style={{ background: 'rgba(114,47,55,0.06)' }}>🍾</div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm mb-0.5" style={{ color: 'var(--text-primary)' }}>Ma cave virtuelle</p>
-              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                {caveBottles > 0
-                  ? `${caveBottles} bouteille${caveBottles > 1 ? 's' : ''} · ${formatPrice(caveValue)}`
-                  : 'Gérez vos bouteilles · Prix en temps réel'}
-              </p>
-            </div>
-            <ChevronRight size={16} style={{ color: '#D1CBC4', flexShrink: 0 }} />
-          </div>
-        </motion.button>
-
         {/* FONCTIONNALITÉS */}
         <div>
           <div className="flex items-center justify-between mb-3">
@@ -436,7 +411,11 @@ export function Home() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 + i * 0.06 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate(f.route)}
+                onClick={() =>
+                  f.navState
+                    ? navigate(f.route, { state: f.navState })
+                    : navigate(f.route)
+                }
                 className="w-full rounded-2xl p-4 text-left border cursor-pointer flex items-center gap-2"
                 style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
               >
@@ -445,7 +424,9 @@ export function Home() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5 min-w-0">
                     <p className="font-semibold text-sm flex-shrink-0" style={{ color: 'var(--text-primary)' }}>{f.title}</p>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${f.tagColor}`}>{f.tag}</span>
+                    {f.tag ? (
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${f.tagColor}`}>{f.tag}</span>
+                    ) : null}
                   </div>
                   <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{f.subtitle}</p>
                 </div>

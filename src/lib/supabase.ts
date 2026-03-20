@@ -224,57 +224,65 @@ export async function getUserScans(userId: string, limit = 20) {
 
 // ─── REFERRALS ────────────────────────────────────────────
 
-/** Appliquer un code de parrainage (nouveau compte < 7 jours, pas déjà utilisé) */
-export async function applyReferralCode(userId: string, code: string): Promise<{ success?: boolean; error?: string }> {
-  const { data: referrer } = await supabase
+/** Appliquer un code de parrainage (insert referrals puis profil ; notif push au parrain) */
+export async function applyReferralCode(
+  userId: string,
+  code: string
+): Promise<{ success?: boolean; error?: string }> {
+  const upperCode = code.toUpperCase().trim();
+
+  const { data: referrer, error: refError } = await supabase
     .from('profiles')
-    .select('id, referral_code, first_name')
-    .eq('referral_code', code.toUpperCase())
-    .single();
+    .select('id, first_name')
+    .eq('referral_code', upperCode)
+    .maybeSingle();
 
-  if (!referrer) return { error: 'Code invalide' };
-  if (referrer.id === userId) return { error: 'Vous ne pouvez pas utiliser votre propre code' };
+  if (refError || !referrer) {
+    return { error: 'Code invalide ou inexistant.' };
+  }
 
-  // Compter combien de fois ce code a déjà été utilisé
+  if (referrer.id === userId) {
+    return { error: 'Vous ne pouvez pas utiliser votre propre code.' };
+  }
+
   const { count } = await supabase
     .from('referrals')
     .select('id', { count: 'exact', head: true })
-    .eq('referral_code', code.toUpperCase());
+    .eq('referral_code', upperCode);
 
-  if ((count ?? 0) >= 3) return { error: 'Ce code de parrainage a déjà été utilisé 3 fois.' };
+  if ((count || 0) >= 3) {
+    return { error: 'Ce code a déjà été utilisé 3 fois.' };
+  }
 
-  // Vérifier que cet utilisateur précis n'a pas déjà utilisé CE code
   const { data: alreadyUsed } = await supabase
-    .from('referrals')
-    .select('id')
-    .eq('referral_code', code.toUpperCase())
-    .eq('referred_id', userId)
+    .from('profiles')
+    .select('referred_by')
+    .eq('id', userId)
     .maybeSingle();
 
-  if (alreadyUsed) return { error: 'Vous avez déjà utilisé ce code.' };
+  if (alreadyUsed?.referred_by) {
+    return { error: 'Vous avez déjà utilisé un code de parrainage.' };
+  }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('referred_by, created_at, first_name')
-    .eq('id', userId)
-    .single();
-
-  if (profile?.referred_by) return { error: 'Vous avez déjà utilisé un code de parrainage' };
-
-  const accountAge = Date.now() - new Date(profile?.created_at || 0).getTime();
-  const sevenDays = 7 * 24 * 60 * 60 * 1000;
-  if (accountAge > sevenDays) return { error: 'Le code de parrainage est réservé aux nouveaux comptes (7 jours)' };
-
-  await supabase.from('profiles').update({ referred_by: code.toUpperCase() }).eq('id', userId);
-
-  const { error: insertErr } = await supabase.from('referrals').insert({
+  const { error: insertError } = await supabase.from('referrals').insert({
     referrer_id: referrer.id,
     referred_id: userId,
-    referral_code: code.toUpperCase(),
+    referral_code: upperCode,
     status: 'pending',
   });
 
-  if (insertErr) return { error: 'Ce code a déjà été utilisé.' };
+  if (insertError) {
+    return { error: "Erreur lors de l'application du code." };
+  }
+
+  const { error: updateErr } = await supabase
+    .from('profiles')
+    .update({ referred_by: upperCode })
+    .eq('id', userId);
+
+  if (updateErr) {
+    return { error: "Erreur lors de l'application du code." };
+  }
 
   const { data: sub } = await supabase
     .from('subscriptions')
@@ -293,8 +301,6 @@ export async function applyReferralCode(userId: string, code: string): Promise<{
       .eq('id', sub.id);
   }
 
-  // Notif 1 : parrain notifié dès que son code est utilisé (avant paiement)
-  const filleulFirstName = (profile as { first_name?: string })?.first_name || "Quelqu'un";
   try {
     await fetch('/api/send-push', {
       method: 'POST',
@@ -302,12 +308,12 @@ export async function applyReferralCode(userId: string, code: string): Promise<{
       body: JSON.stringify({
         user_id: referrer.id,
         title: '🔔 Sommely',
-        body: `${filleulFirstName} a utilisé votre code de parrainage ! Si il s'abonne, vous gagnez 1 mois gratuit. 🍷`,
+        body: `Quelqu'un a utilisé votre code de parrainage ! S'il s'abonne, vous gagnez 1 mois gratuit. 🍷`,
         url: '/profile',
       }),
     });
-  } catch {
-    // Ignorer les erreurs de notification
+  } catch (e) {
+    console.error('Push notification failed:', e);
   }
 
   return { success: true };
