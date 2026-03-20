@@ -144,7 +144,7 @@ export function Profile() {
       setIsLoadingScans(false);
     });
     return () => { mounted = false; };
-  }, [user?.id]);
+  }, [user?.id, profile]);
 
   useEffect(() => {
     if (user?.id) getReferralStats(user.id).then(setReferralStats);
@@ -224,22 +224,70 @@ export function Profile() {
   };
 
   const copyReferralCode = async () => {
-    if (profile?.referral_code) {
-      await navigator.clipboard.writeText(profile.referral_code);
+    const code = profile?.referral_code || '';
+    if (!code) return;
+
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+      }
+
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 2500);
+    } catch (err) {
+      console.error('Copy failed:', err);
+      alert('Votre code : ' + code);
     }
   };
 
-  const shareReferral = () => {
-    if (profile?.referral_code && navigator.share) {
-      navigator.share({
-        title: 'Sommely — Le Yuka du vin',
-        text: `Rejoins-moi sur Sommely avec mon code ${profile.referral_code} et obtiens 1 mois offert ! 🍷`,
-        url: `https://sommely.shop?ref=${profile.referral_code}`,
-      });
-    } else if (profile?.referral_code) {
-      copyReferralCode();
+  const shareReferral = async () => {
+    const code = profile?.referral_code || '';
+    const url = `https://sommely.shop?ref=${code}`;
+    const text = `Rejoins-moi sur Sommely avec mon code ${code} et obtiens 1 mois offert ! 🍷`;
+
+    if (!code) return;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Sommely — Le Yuka du vin',
+          text,
+          url,
+        });
+      } else {
+        const payload = `${text}\n${url}`;
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(payload);
+        } else {
+          const textArea = document.createElement('textarea');
+          textArea.value = payload;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          document.execCommand('copy');
+          textArea.remove();
+        }
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        console.error('Share failed:', err);
+      }
     }
   };
 

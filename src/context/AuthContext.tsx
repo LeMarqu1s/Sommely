@@ -23,7 +23,7 @@ interface AuthContextType {
   isOnboardingInProgress: boolean;
   setIsOnboardingInProgress: (v: boolean) => void;
   refreshProfile: () => Promise<void>;
-  refreshSubscription: () => Promise<void>;
+  refreshSubscription: (overrideUserId?: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithMagicLink: (email: string) => Promise<{ error: unknown }>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: unknown }>;
@@ -59,15 +59,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(data ?? null);
   }, [user?.id]);
 
-  const refreshSubscription = useCallback(async () => {
-    if (!user?.id) {
+  const refreshSubscription = useCallback(async (overrideUserId?: string) => {
+    const uid = overrideUserId ?? user?.id;
+    if (!uid) {
       setSubscription(null);
       setSubscriptionState(defaultSubscriptionState);
       return;
     }
     const [{ data: sub }, { count: scansThisMonth }] = await Promise.all([
-      getSubscription(user.id),
-      getScansCountThisMonth(user.id),
+      getSubscription(uid),
+      getScansCountThisMonth(uid),
     ]);
     setSubscription(sub ?? null);
 
@@ -221,20 +222,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshSubscription();
   }, [user?.id, refreshSubscription]);
 
-  /* Session expirée silencieuse : vérifier au retour au premier plan */
+  /* Retour au premier plan (iOS / veille) : rafraîchir session + profil + abonnement */
   useEffect(() => {
-    const h = () => {
+    const handleVisibilityChange = async () => {
       if (document.hidden) return;
-      supabase.auth.getSession().then(({ data }) => {
-        if (!data.session) {
+
+      try {
+        const { data: { session: current }, error } = await supabase.auth.getSession();
+
+        if (error || !current) {
           setUser(null);
           setSession(null);
+          setProfile(null);
+          setSubscription(null);
+          setSubscriptionState(defaultSubscriptionState);
+          return;
         }
-      });
+
+        const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
+        const activeSession = refreshed.session ?? current;
+
+        if (refreshErr && !activeSession) {
+          setUser(null);
+          setSession(null);
+          setProfile(null);
+          setSubscription(null);
+          setSubscriptionState(defaultSubscriptionState);
+          return;
+        }
+
+        if (!activeSession?.user) {
+          setUser(null);
+          setSession(null);
+          setProfile(null);
+          setSubscription(null);
+          setSubscriptionState(defaultSubscriptionState);
+          return;
+        }
+
+        setSession(activeSession);
+        setUser(activeSession.user);
+
+        const { data: profileData } = await getProfile(activeSession.user.id);
+        setProfile(profileData ?? null);
+
+        await refreshSubscription(activeSession.user.id);
+      } catch (err) {
+        console.error('Visibility change error:', err);
+      }
     };
-    document.addEventListener('visibilitychange', h);
-    return () => document.removeEventListener('visibilitychange', h);
-  }, []);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [refreshSubscription]);
 
   /* Heartbeat : garder session vivante quand app en foreground */
   useEffect(() => {
