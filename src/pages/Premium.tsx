@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Check, Zap, Star, TrendingUp, Wine, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { redirectToCheckout } from '../utils/stripe';
-import { useTheme } from '../context/ThemeContext';
 
 type Plan = 'monthly' | 'annual';
 
@@ -14,7 +13,6 @@ export function Premium() {
   const [isLoading, setIsLoading] = useState(false);
   const { subscriptionState } = useAuth();
   const { isPro, isTrial, daysLeftInTrial } = subscriptionState;
-  const { formatPrice } = useTheme();
 
   const handleSubscribe = async (plan: Plan) => {
     setIsLoading(true);
@@ -25,30 +23,8 @@ export function Premium() {
     }
   };
 
-  const plans = [
-    {
-      id: 'annual' as Plan,
-      label: 'Annuel',
-      badge: 'Meilleure valeur',
-      price: formatPrice(47.99),
-      period: '/an',
-      subline: `Soit ${formatPrice(4)}/mois · Économisez ${formatPrice(60)}`,
-      sublineGreen: true,
-      highlight: true,
-      cta: 'Commencer maintenant →',
-    },
-    {
-      id: 'monthly' as Plan,
-      label: 'Mensuel',
-      badge: null,
-      price: formatPrice(8.99),
-      period: '/mois',
-      subline: 'Sans engagement · Résiliable à tout moment',
-      sublineGreen: false,
-      highlight: false,
-      cta: 'Essayer un mois',
-    },
-  ];
+  const ctaLabel =
+    selectedPlan === 'annual' ? 'Commencer maintenant →' : 'Essayer un mois';
 
   const features = [
     { icon: <Zap size={18} />, title: 'Scans illimités', desc: 'Identifiez autant de vins que vous voulez' },
@@ -177,45 +153,69 @@ export function Premium() {
           ))}
         </div>
 
-        {/* Plans · 2 plans : Annuel mis en avant, Mensuel neutre */}
-        <div className="space-y-3 pt-1">
-          {plans.map((plan) => (
-            <motion.button
-              key={plan.id}
-              onClick={() => setSelectedPlan(plan.id)}
-              whileTap={{ scale: 0.98 }}
-              className={`w-full text-left rounded-2xl border-2 transition-all relative bg-white ${
-                plan.highlight
-                  ? 'p-5 shadow-md cursor-pointer min-h-[88px]'
-                  : 'p-5 cursor-pointer min-h-[88px]'
-              } ${
-                selectedPlan === plan.id
-                  ? plan.highlight ? 'border-burgundy-dark shadow-lg' : 'border-burgundy-dark shadow-md'
-                  : plan.highlight ? 'border-burgundy-dark/60 hover:border-burgundy-dark' : 'border-gray-light/40 hover:border-gray-dark/30'
-              }`}
-            >
-              {plan.badge && (
-                <span className="absolute -top-3 left-4 text-xs font-bold px-3 py-1 rounded-full bg-gold text-black-wine">
-                  {plan.badge}
-                </span>
-              )}
-              <div className={`flex items-center justify-between ${plan.highlight ? 'pr-8' : 'pr-6'} min-h-[72px]`}>
-                <div>
-                  <p className={`font-semibold text-black-wine ${plan.highlight ? 'text-base' : 'text-sm'}`}>{plan.label}</p>
-                  <p className={`text-xs mt-0.5 ${plan.sublineGreen ? 'text-green-700 font-medium' : 'text-gray-dark'}`}>{plan.subline}</p>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px', flexShrink: 0 }}>
-                  <span style={{ fontSize: plan.highlight ? '28px' : '24px', fontWeight: 900, color: '#722F37' }}>{plan.price}</span>
-                  <span style={{ fontSize: '14px', color: '#6B5D56' }}>{plan.period}</span>
-                </div>
+        {/* Plans · Mensuel + Annuel (même largeur, même structure) */}
+        <div className="grid grid-cols-2 gap-3 w-full items-stretch pt-1">
+          <motion.button
+            type="button"
+            onClick={() => setSelectedPlan('monthly')}
+            whileTap={{ scale: 0.98 }}
+            className="relative rounded-2xl border-2 bg-white p-4 text-left flex flex-col"
+            style={{
+              borderColor: selectedPlan === 'monthly' ? '#722F37' : 'rgba(0,0,0,0.08)',
+              boxShadow: selectedPlan === 'monthly' ? '0 4px 14px rgba(114,47,55,0.12)' : undefined,
+              minHeight: 200,
+            }}
+          >
+            <div style={{ minHeight: 26, marginBottom: 8 }} />
+            <p className="font-semibold text-black-wine text-sm mb-3">Mensuel</p>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, flexWrap: 'nowrap' }}>
+              <span style={{ fontSize: 40, fontWeight: 900, lineHeight: 1, color: '#1a0508' }}>8,99</span>
+              <span style={{ fontSize: 18, fontWeight: 700, color: '#1a0508' }}>€</span>
+              <span style={{ fontSize: 15, color: '#9E9E9E', marginLeft: 2 }}>/mois</span>
+            </div>
+            <div style={{ fontSize: 13, color: '#9E9E9E', marginTop: 8, lineHeight: 1.35, flex: 1 }}>
+              Sans engagement · Résiliable à tout moment
+            </div>
+            {selectedPlan === 'monthly' && (
+              <div className="absolute right-3 bottom-3 w-5 h-5 rounded-full bg-burgundy-dark flex items-center justify-center">
+                <Check size={12} color="white" />
               </div>
-              {selectedPlan === plan.id && (
-                <div className={`absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-burgundy-dark flex items-center justify-center`}>
-                  <Check size={12} color="white" />
-                </div>
-              )}
-            </motion.button>
-          ))}
+            )}
+          </motion.button>
+
+          <motion.button
+            type="button"
+            onClick={() => setSelectedPlan('annual')}
+            whileTap={{ scale: 0.98 }}
+            className="relative rounded-2xl border-2 bg-white p-4 text-left flex flex-col"
+            style={{
+              borderColor: selectedPlan === 'annual' ? '#722F37' : 'rgba(0,0,0,0.08)',
+              boxShadow: selectedPlan === 'annual' ? '0 4px 14px rgba(114,47,55,0.12)' : undefined,
+              minHeight: 200,
+            }}
+          >
+            <div
+              className="absolute left-1/2 -translate-x-1/2 -top-2.5 whitespace-nowrap text-xs font-bold px-2 py-0.5 rounded-full"
+              style={{ background: '#FFFBF0', color: '#D4AF37', border: '1px solid #D4AF37' }}
+            >
+              ⭐ Meilleure valeur
+            </div>
+            <div style={{ minHeight: 26, marginBottom: 8 }} />
+            <p className="font-semibold text-black-wine text-sm mb-3">Annuel</p>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, flexWrap: 'nowrap' }}>
+              <span style={{ fontSize: 40, fontWeight: 900, lineHeight: 1, color: '#1a0508' }}>47,99</span>
+              <span style={{ fontSize: 18, fontWeight: 700, color: '#1a0508' }}>€</span>
+              <span style={{ fontSize: 15, color: '#9E9E9E', marginLeft: 2 }}>/an</span>
+            </div>
+            <div style={{ fontSize: 13, color: '#2E7D32', marginTop: 4 }}>
+              Soit 4€/mois · Économisez 12€/an
+            </div>
+            {selectedPlan === 'annual' && (
+              <div className="absolute right-3 bottom-3 w-5 h-5 rounded-full bg-burgundy-dark flex items-center justify-center">
+                <Check size={12} color="white" />
+              </div>
+            )}
+          </motion.button>
         </div>
 
         {/* Trust points */}
@@ -232,7 +232,7 @@ export function Premium() {
           disabled={isLoading}
           className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-bold text-base border-none cursor-pointer shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-60"
         >
-          {isLoading ? 'Redirection...' : (plans.find(p => p.id === selectedPlan)?.cta ?? 'Commencer maintenant →')}
+          {isLoading ? 'Redirection...' : ctaLabel}
         </motion.button>
 
         {/* Features */}

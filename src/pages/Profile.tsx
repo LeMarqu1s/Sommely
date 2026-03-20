@@ -5,7 +5,6 @@ import {
   Wine,
   Settings,
   Crown,
-  LogOut,
   Edit3,
   Star,
   Heart,
@@ -119,11 +118,6 @@ export function Profile() {
       window.history.replaceState(null, '', '/profile');
     }
   }, [searchParams]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/auth';
-  };
 
   const accountAgeMs = profile?.created_at ? Date.now() - new Date(profile.created_at).getTime() : 0;
   const accountUnder7Days = accountAgeMs < 7 * 24 * 60 * 60 * 1000;
@@ -731,17 +725,35 @@ export function Profile() {
         </motion.div>
 
         {isAuthenticated ? (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.25 }}
-            onClick={handleSignOut}
-            className="w-full py-4 border-2 border-danger/30 text-danger rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer hover:bg-danger/5 transition-colors"
-            style={{ background: 'var(--bg-card)' }}
-          >
-            <LogOut size={18} />
-            Se déconnecter
-          </motion.button>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await supabase.auth.signOut();
+                } catch (e) {
+                  console.error(e);
+                } finally {
+                  localStorage.clear();
+                  window.location.replace('/auth');
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: 'transparent',
+                border: '1.5px solid #C62828',
+                borderRadius: 12,
+                color: '#C62828',
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginTop: 16,
+              }}
+            >
+              Se déconnecter
+            </button>
+          </motion.div>
         ) : (
           <motion.button
             initial={{ opacity: 0 }}
@@ -822,7 +834,22 @@ export function Profile() {
                 </div>
                 <div className="flex items-center justify-between"><span className="text-sm text-gray-dark">Version</span><span className="text-sm font-semibold text-black-wine">Sommely 1.0</span></div>
               </div>
-              <button onClick={() => { handleSignOut(); setShowSettings(false); }} className="w-full py-3.5 border-2 border-red-200 text-red-600 rounded-2xl font-semibold text-sm bg-transparent cursor-pointer">Supprimer mon compte</button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await supabase.auth.signOut();
+                  } catch (e) {
+                    console.error(e);
+                  } finally {
+                    localStorage.clear();
+                    window.location.replace('/auth');
+                  }
+                }}
+                className="w-full py-3.5 border-2 border-red-200 text-red-600 rounded-2xl font-semibold text-sm bg-transparent cursor-pointer"
+              >
+                Supprimer mon compte
+              </button>
               <button onClick={() => setShowSettings(false)} className="w-full py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm border-none cursor-pointer">Fermer</button>
             </motion.div>
           </motion.div>
