@@ -12,8 +12,8 @@ export function BottomNav() {
 
   const items: Item[] = [
     { path: '/home', label: 'Accueil', icon: 'home' },
-    { path: '/scan', label: 'Scanner', icon: 'scan' },
     { path: '/sommelier', label: 'Antoine', icon: 'antoine' },
+    { path: '/scan', label: 'Scanner', icon: 'scan' },
     { path: '/cave', label: 'Ma cave', icon: 'cave' },
     { path: '/profile', label: 'Profil', icon: 'profile' },
   ];

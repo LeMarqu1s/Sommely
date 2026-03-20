@@ -3,7 +3,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, Search, Zap, AlertCircle, X, RotateCcw, ChevronRight } from 'lucide-react';
 import { analyzeWineLabel, enrichWineData } from '../lib/openai';
-import { calculatePersonalizedScore, generateDetailedExplanation } from '../lib/matchScore';
+import {
+  calculatePersonalizedScore,
+  generateDetailedExplanation,
+  type ExplanationOptions,
+} from '../lib/matchScore';
 import { canScan } from '../utils/subscription';
 import { PaywallModal } from '../components/PaywallModal';
 import { useAuth } from '../context/AuthContext';
@@ -284,11 +288,20 @@ export function Scanner() {
 
       // Score personnalisé selon profil utilisateur
       const scoreBreakdown = calculatePersonalizedScore(wineAnalysis, enrichedData, userProfile);
+      const navState = location.state as
+        | { scanContext?: ExplanationOptions['scanContext']; restaurantPrice?: number; marketPrice?: number }
+        | undefined;
+      const explanationOptions: ExplanationOptions = {
+        scanContext: navState?.scanContext ?? 'retail',
+        restaurantPrice: navState?.restaurantPrice,
+        marketPrice: navState?.marketPrice,
+      };
       const explanation = generateDetailedExplanation(
         wineAnalysis,
         scoreBreakdown,
         userProfile,
-        enrichedData.avgPrice as number | undefined
+        enrichedData.avgPrice as number | undefined,
+        explanationOptions
       );
 
       // Accords mets-vins : structure { perfect, good, avoid } pour WineResult

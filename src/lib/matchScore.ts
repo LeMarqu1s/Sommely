@@ -1,6 +1,6 @@
 import { WineAnalysis } from './openai';
 
-interface UserProfile {
+export interface UserProfile {
   types?: string[];
   budget?: string;
   body?: number;
@@ -8,7 +8,20 @@ interface UserProfile {
   sweetness?: number;
   regions?: string[];
   expertise?: string;
+  /** ex. onboarding : debutant, curieux, passionne, expert */
+  experience?: string;
   occasions?: string[];
+}
+
+/** Contexte de scan pour « Pourquoi ce score » (restaurant / cave / supermarché). */
+export type ScanContextKind = 'restaurant' | 'cave' | 'retail';
+
+export interface ExplanationOptions {
+  scanContext?: ScanContextKind;
+  /** Prix affiché sur la carte resto (comparé à marketPrice si les deux sont définis) */
+  restaurantPrice?: number;
+  /** Prix marché de référence (ex. estimé menu) */
+  marketPrice?: number;
 }
 
 interface ScoreBreakdown {
@@ -152,56 +165,273 @@ export function calculatePersonalizedScore(
   return { total, typeMatch, budgetMatch, intensityMatch, aromaMatch, sweetnessMatch, regionBonus, explanation };
 }
 
+// ─── « POURQUOI CE SCORE » — templates & variantes ─────────────────────────
+
+function hashSeed(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i);
+  return Math.abs(h);
+}
+
+function isBeginnerProfile(p: UserProfile): boolean {
+  return p.expertise === 'beginner' || p.experience === 'debutant';
+}
+
+function isExpertProfile(p: UserProfile): boolean {
+  return p.expertise === 'expert' || p.experience === 'expert' || p.experience === 'passionne';
+}
+
+function isBubbleWine(wine: WineAnalysis): boolean {
+  const t = (wine.type || '').toLowerCase();
+  return t.includes('champagne') || t.includes('pétillant') || t.includes('mousseux') || t.includes('petillant');
+}
+
+function userLikesBubbles(profile: UserProfile): boolean {
+  if (!profile.types?.length) return false;
+  return profile.types.some((k) => k === 'champagne');
+}
+
+/** Vérifie si le type de vin correspond aux préférences (TYPE_MAPPING). */
+function wineTypeMatchesUser(wine: WineAnalysis, profile: UserProfile): boolean {
+  if (!profile.types?.length || !wine.type) return false;
+  for (const pref of profile.types) {
+    const mapped = TYPE_MAPPING[pref] || [];
+    if (mapped.some((t) => wine.type!.toLowerCase().includes(t.toLowerCase()))) return true;
+  }
+  return false;
+}
+
+/** Région / appellation pour templates « région » (ex. Bordeaux, Bourgogne). */
+function regionLabelForTemplate(wine: WineAnalysis): string | null {
+  const blob = [
+    wine.appellation,
+    wine.region,
+    wine.subRegion,
+    wine.village,
+    wine.country,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  const keys: [string, string][] = [
+    ['bordeaux', 'Bordeaux'],
+    ['bourgogne', 'Bourgogne'],
+    ['burgundy', 'Bourgogne'],
+    ['rhône', 'le Rhône'],
+    ['rhone', 'le Rhône'],
+    ['champagne', 'Champagne'],
+    ['loire', 'la Loire'],
+    ['alsace', 'l’Alsace'],
+    ['provence', 'la Provence'],
+    ['languedoc', 'le Languedoc'],
+  ];
+  for (const [needle, label] of keys) {
+    if (blob.includes(needle)) return label;
+  }
+  if (wine.region?.trim()) return wine.region.trim();
+  return null;
+}
+
+function userRegionMatchesWine(wine: WineAnalysis, profile: UserProfile): boolean {
+  if (!profile.regions?.length || !wine.region) return false;
+  for (const pref of profile.regions) {
+    const mapped = REGION_MAPPING[pref] || [];
+    if (mapped.some((r) => wine.region!.toLowerCase().includes(r.toLowerCase()))) return true;
+  }
+  return false;
+}
+
+function isGrandCruStyle(wine: WineAnalysis): boolean {
+  const c = (wine.classification || '').toLowerCase();
+  if (c.includes('cru') || c.includes('grand cru') || c.includes('premier cru')) return true;
+  const full = [wine.name, wine.appellation, wine.chateau].filter(Boolean).join(' ').toLowerCase();
+  return /grand cru|premier cru|1er cru|classé/.test(full);
+}
+
+function priceAboveBudget(profile: UserProfile, avgPrice: number): boolean {
+  if (!profile.budget) return false;
+  const [, max] = BUDGET_RANGES[profile.budget] || [0, 999];
+  return avgPrice > max * 1.35;
+}
+
+function scoreBand(total: number): 'top' | 'high' | 'mid' | 'low' {
+  if (total >= 90) return 'top';
+  if (total >= 75) return 'high';
+  if (total >= 55) return 'mid';
+  return 'low';
+}
+
+function buildFooterLine(wine: WineAnalysis, avgPrice?: number): string {
+  const name = wine.name?.trim() || 'Ce vin';
+  const region = wine.region?.trim() || wine.appellation?.trim() || 'France';
+  const priceStr =
+    typeof avgPrice === 'number' && avgPrice > 0 ? Math.round(avgPrice).toString() : '—';
+  const perfect = wine.foodPairings?.perfect;
+  const accord =
+    (Array.isArray(perfect) && perfect[0]) ||
+    (typeof perfect === 'string' ? perfect : null) ||
+    'un accord mets-vins adapté';
+  return `${name}, ${region}, ${priceStr}€ — ${accord}.`;
+}
+
+function pickTemplateBody(
+  total: number,
+  band: 'top' | 'high' | 'mid' | 'low',
+  wine: WineAnalysis,
+  profile: UserProfile,
+  avgPrice: number | undefined,
+  options: ExplanationOptions | undefined
+): string {
+  const ctx = options?.scanContext ?? 'retail';
+  const rp = options?.restaurantPrice;
+  const mp = options?.marketPrice;
+  const markup = rp != null && mp != null && mp > 0 && rp > 2 * mp;
+
+  const regionLabel = regionLabelForTemplate(wine);
+  const typeMatch = wineTypeMatchesUser(wine, profile);
+  const bubbleWine = isBubbleWine(wine);
+  const bubblePref = userLikesBubbles(profile);
+  const beginner = isBeginnerProfile(profile);
+  const expert = isExpertProfile(profile);
+  const seed = `${wine.name}|${wine.region}|${total}|${band}`;
+  const idx = hashSeed(seed) % 6;
+
+  // 1 — Markup resto > 2× marché
+  if (markup) {
+    if (band === 'top') {
+      return `Même avec un excellent score pour vous, au resto ce prix fait plus de 2× le marché — comparez les autres lignes avant de trancher.`;
+    }
+    if (band === 'high') {
+      return `Bon vin. Mais au prix restaurant on a vu mieux. Scannez les voisins sur la carte avant de décider.`;
+    }
+    if (band === 'mid') {
+      return `Pour ce prix-là, l'équation ne tient pas vraiment. Vous pouvez faire mieux.`;
+    }
+    return `À ce prix au resto, avec ce score pour vous, il y a forcément mieux sur cette carte.`;
+  }
+
+  // 2 — Score > 85 & débutant
+  if (total > 85 && beginner && (band === 'top' || band === 'high')) {
+    return `Pour quelqu'un qui débute, tomber sur ça c'est une bonne surprise. Gardez cette référence.`;
+  }
+
+  // 3 — Type / profil (bulles / correspondance)
+  if (bubbleWine && bubblePref && band === 'top') {
+    return `Pour vos préférences en bulles, c'est le bon choix. Même chose dans un resto étoilé, ça passerait sans rougir.`;
+  }
+  if (typeMatch && band === 'top' && !bubbleWine) {
+    return `Exactement votre profil. Niveau arômes, structure, finale — tout y est. Rare qu'on tombe aussi juste.`;
+  }
+  if (typeMatch && !bubbleWine && band === 'high') {
+    return `Correspond à une partie de vos préférences. Vous apprécierez, sans forcément vous souvenir de lui dans 6 mois.`;
+  }
+  if (!typeMatch && band === 'mid') {
+    return `Ce vin est fait pour quelqu'un d'autre. Pas vous. Pas ce soir.`;
+  }
+  if (!typeMatch && band === 'low') {
+    return `Tout ce que vous n'aimez pas est réuni dans ce verre. Respect pour la cohérence.`;
+  }
+
+  // 4 — Appellation / région connue
+  if (regionLabel && band === 'high') {
+    return `Bel exemple de ce que ${regionLabel} sait faire. Pas révolutionnaire, mais propre et honnête.`;
+  }
+
+  // Contexte
+  if (ctx === 'restaurant' && band === 'top') {
+    return `Sur une carte de resto, c'est le genre de bouteille que le sommelier recommande aux clients qui savent ce qu'ils veulent.`;
+  }
+  if (ctx === 'retail' && band === 'mid') {
+    return `Dans sa catégorie supermarché, il est dans la moyenne. La moyenne c'est parfois suffisant.`;
+  }
+  if (ctx === 'cave' && band === 'top' && avgPrice != null && avgPrice > 0) {
+    return `Score ${total}/100 ET prix raisonnable. C'est le genre de trouvaille qu'on garde pour soi normalement.`;
+  }
+
+  if (isGrandCruStyle(wine) && band === 'top') {
+    return `Techniquement au-dessus du lot. Votre profil correspond. La seule question : pour quelle occasion ?`;
+  }
+
+  if (expert && band === 'high') {
+    return `Pour votre niveau, vous avez certainement vu mieux. Mais dans son style, il fait ce qu'on lui demande.`;
+  }
+
+  if (avgPrice != null && priceAboveBudget(profile, avgPrice) && band === 'high') {
+    return `Bon vin. Pour votre budget habituel, à ce prix-là on a souvent vu mieux — regardez une gamme au-dessus ou une autre cuvée.`;
+  }
+
+  if (userRegionMatchesWine(wine, profile) && band === 'top' && regionLabel) {
+    return `Techniquement au-dessus du lot. Votre profil correspond. La seule question : pour quelle occasion ?`;
+  }
+
+  // Fallback : 6 variantes par plage (diversification)
+  const TOP: string[] = [
+    `Exactement votre profil. Niveau arômes, structure, finale — tout y est. Rare qu'on tombe aussi juste.`,
+    `Score ${total}/100 ET prix raisonnable. C'est le genre de trouvaille qu'on garde pour soi normalement.`,
+    `Pour vos préférences en bulles, c'est le bon choix. Même chose dans un resto étoilé, ça passerait sans rougir.`,
+    `Techniquement au-dessus du lot. Votre profil correspond. La seule question : pour quelle occasion ?`,
+    `Sur une carte de resto, c'est le genre de bouteille que le sommelier recommande aux clients qui savent ce qu'ils veulent.`,
+    `Pour quelqu'un qui débute, tomber sur ça c'est une bonne surprise. Gardez cette référence.`,
+  ];
+
+  const HIGH: string[] = [
+    `Solide. Pas le vin de votre vie, mais vous passerez une bonne soirée. C'est déjà beaucoup.`,
+    `Bon vin. Mais au prix restaurant on a vu mieux. Scannez les voisins sur la carte avant de décider.`,
+    `Correspond à une partie de vos préférences. Vous apprécierez, sans forcément vous souvenir de lui dans 6 mois.`,
+    regionLabel
+      ? `Bel exemple de ce que ${regionLabel} sait faire. Pas révolutionnaire, mais propre et honnête.`
+      : `Bel exemple de cette région. Pas révolutionnaire, mais propre et honnête.`,
+    `Pour ce prix, c'est honnête. Ni une claque, ni une déception. Le vin du mardi soir parfait.`,
+    `Pour votre niveau, vous avez certainement vu mieux. Mais dans son style, il fait ce qu'on lui demande.`,
+  ];
+
+  const MID: string[] = [
+    `Ça se boit. C'est peut-être le meilleur compliment qu'on puisse lui faire.`,
+    `Ce vin est fait pour quelqu'un d'autre. Pas vous. Pas ce soir.`,
+    `Pour ce prix-là, l'équation ne tient pas vraiment. Vous pouvez faire mieux.`,
+    `Dans sa catégorie supermarché, il est dans la moyenne. La moyenne c'est parfois suffisant.`,
+    `Techniquement potable. Mais 'potable' c'est aussi ce qu'on dit de l'eau du robinet.`,
+    `Ce vin a été conçu pour plaire à tout le monde. Résultat : il ne plaît vraiment à personne.`,
+  ];
+
+  const LOW: string[] = [
+    `Honnêtement ? Remettez-le en rayon. Ce n'est pas une critique, c'est un service.`,
+    `À ce prix au resto, avec ce score pour vous, il y a forcément mieux sur cette carte.`,
+    `Tout ce que vous n'aimez pas est réuni dans ce verre. Respect pour la cohérence.`,
+    `Ce vin mérite quelqu'un qui l'apprécie vraiment. Vous n'êtes pas cette personne. Et c'est OK.`,
+    `Pour votre budget habituel, c'est en dessous de ce que vous méritez.`,
+    `Si ce vin était une réunion, ce serait celle qu'on aurait pu faire par email.`,
+  ];
+
+  const pool = band === 'top' ? TOP : band === 'high' ? HIGH : band === 'mid' ? MID : LOW;
+  return pool[idx] ?? pool[0];
+}
+
 /**
- * Texte « Pourquoi ce score » — ton Sommely : honnête, un peu sarcastique, jamais condescendant.
- * Toujours un élément concret (prix, profil, caractéristique du vin). Pas de jargon oenologique obscur.
+ * Texte « Pourquoi ce score » — ton Sommely : honnête, humour bienveillant, jamais condescendant.
+ * Combine plage de score, type, région, prix, profil et contexte ; termine par une ligne concrète sur le vin.
  */
 export function generateDetailedExplanation(
   wine: WineAnalysis,
   score: ScoreBreakdown,
   profile: UserProfile | null,
-  avgPrice?: number
+  avgPrice?: number,
+  options?: ExplanationOptions
 ): string {
+  const footer = buildFooterLine(wine, avgPrice);
+
   if (!profile) {
-    return 'Sans profil, on note le vin ; avec vous, on le note pour vous. Complétez vos goûts — promis, on ne juge pas.';
+    return `Sans profil complet, on calibre quand même le score pour vous. ${footer}`.replace(/\s+/g, ' ').trim();
   }
 
   const total = score.total;
-  const type = (wine.type || 'vin').toLowerCase();
-  const region = wine.region?.trim() || '';
-  const price = typeof avgPrice === 'number' && avgPrice > 0 ? Math.round(avgPrice) : null;
-  const budgetLabel =
-    profile.budget === 'low'
-      ? 'moins de 10€'
-      : profile.budget === 'medium'
-        ? '10–20€'
-        : profile.budget === 'high'
-          ? '20–45€'
-          : profile.budget === 'premium'
-            ? '45€ et plus'
-            : '';
+  const band = scoreBand(total);
+  const body = pickTemplateBody(total, band, wine, profile, avgPrice, options);
 
-  const priceBit =
-    price != null
-      ? ` À environ ${price}€, c'est ${total >= 70 ? 'cohérent' : 'discutable'} avec votre budget${budgetLabel ? ` (${budgetLabel})` : ''}.`
-      : '';
+  const extra = score.explanation[0] ? ` ${score.explanation[0]}` : '';
 
-  const regionBit = region ? ` ${region} — on sait pourquoi ça vous parle (ou pas).` : '';
-
-  let hook = '';
-  if (total >= 85) {
-    hook = `Ce ${type} colle à votre profil comme un bouchon dans une bonne bouteille.${priceBit}${regionBit} Acheté en boutique, servi trois fois le prix au resto — vous méritez de savoir.`;
-  } else if (total >= 60) {
-    hook = `Techniquement buvable. Pour votre profil, c'est plutôt « presque » — un bon vin, pas forcément votre vin.${priceBit}${regionBit}`;
-  } else {
-    hook = `Soyons honnêtes : pour ce que vous aimez, là on est sur du décalage.${priceBit}${regionBit} Pas la cata, mais vous pouvez mieux faire — et votre cave le saura.`;
-  }
-
-  const extra = score.explanation[0]
-    ? ` ${score.explanation[0]}`
-    : '';
-
-  const out = (hook + extra).replace(/\s+/g, ' ').trim();
-  if (out.length > 420) return `${out.slice(0, 417)}…`;
+  const out = `${body}${extra} ${footer}`.replace(/\s+/g, ' ').trim();
+  if (out.length > 720) return `${out.slice(0, 717)}…`;
   return out;
 }
