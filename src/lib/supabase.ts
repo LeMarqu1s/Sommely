@@ -27,6 +27,11 @@ export interface Profile {
   referral_code: string | null;
   discount_used?: boolean;
   created_at: string;
+  first_name?: string | null;
+  birthday?: string | null;
+  last_scan_at?: string | null;
+  total_scans?: number;
+  push_enabled?: boolean;
 }
 
 export interface Subscription {

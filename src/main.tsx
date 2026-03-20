@@ -4,6 +4,11 @@ import { ErrorBoundary } from './ErrorBoundary';
 import App from './App';
 import './index.css';
 
+// Enregistrer le Service Worker pour les push notifications
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
 // Initialiser Sentry si disponible (seulement si DSN non vide)
 const sentry = import.meta.env.VITE_SENTRY_DSN;
 if (sentry && typeof sentry === 'string' && sentry.length > 10) {

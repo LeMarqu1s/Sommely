@@ -7,7 +7,7 @@ import { calculatePersonalizedScore, generateDetailedExplanation } from '../lib/
 import { canScan } from '../utils/subscription';
 import { PaywallModal } from '../components/PaywallModal';
 import { useAuth } from '../context/AuthContext';
-import { insertScan } from '../lib/supabase';
+import { insertScan, updateProfile, getProfile } from '../lib/supabase';
 
 type ScanState = 'idle' | 'camera_active' | 'capturing' | 'analyzing' | 'error';
 
@@ -320,6 +320,11 @@ export function Scanner() {
           year: wineObject.year,
           region: wineObject.region,
           type: wineObject.type,
+        });
+        const { data: prof } = await getProfile(user.id);
+        await updateProfile(user.id, {
+          last_scan_at: new Date().toISOString(),
+          total_scans: (prof?.total_scans ?? 0) + 1,
         });
         refreshSubscription();
       }

@@ -1,7 +1,8 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from './ErrorBoundary';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { usePushNotifications } from './hooks/usePushNotifications';
 import { ThemeProvider } from './context/ThemeContext';
 import { ClarityScript } from './components/analytics/Clarity';
 import { GoogleAnalytics } from './components/analytics/Analytics';
@@ -26,12 +27,27 @@ import { BottomNav } from './components/BottomNav';
 import { GlobalLogoHeader } from './components/GlobalLogoHeader';
 import { Privacy } from './pages/Privacy';
 import { ShareResult } from './pages/ShareResult';
+import { WineLanding } from './pages/wines/WineLanding';
 
 const Cave = lazy(() => import('./pages/Cave').then(m => ({ default: m.Cave })));
 const WineResult = lazy(() => import('./pages/WineResult').then(m => ({ default: m.WineResult })));
 const Sommelier = lazy(() => import('./pages/Sommelier').then(m => ({ default: m.Sommelier })));
 
-const NAV_HIDDEN = ['/', '/onboarding', '/privacy', '/result', '/share', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/success', '/cave-meal', '/shop'];
+const NAV_HIDDEN = ['/', '/onboarding', '/privacy', '/result', '/share', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/success', '/cave-meal', '/shop', '/vin'];
+
+function PushAutoSubscribe() {
+  const { user, profile } = useAuth();
+  const { subscribe } = usePushNotifications();
+  const done = useRef(false);
+  useEffect(() => {
+    if (done.current || !user?.id) return;
+    const localDone = localStorage.getItem('sommely_onboarding_done');
+    if (!localDone && !profile?.onboarding_completed) return;
+    done.current = true;
+    subscribe();
+  }, [user?.id, profile?.onboarding_completed, subscribe]);
+  return null;
+}
 
 function AppContent({ onReady }: { onReady?: () => void }) {
   const { pathname } = useLocation();
@@ -71,6 +87,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
           <Route path="/profile" element={<Profile />} />
           <Route path="/success" element={<Success />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/vin/:slug" element={<WineLanding />} />
           <Route path="/cave" element={<Cave />} />
         </Routes>
         </Suspense>
@@ -98,6 +115,7 @@ export default function App() {
         <AuthProvider>
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <OnboardingGuard />
+            <PushAutoSubscribe />
             <AppContent onReady={hideSplash} />
           </BrowserRouter>
         </AuthProvider>

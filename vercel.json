@@ -1,8 +1,15 @@
 {
+  "crons": [
+    { "path": "/api/push-triggers", "schedule": "0 9 * * *" },
+    { "path": "/api/scan-followup", "schedule": "*/15 * * * *" }
+  ],
   "functions": {
     "api/openai-proxy.js": { "maxDuration": 30 },
     "api/analyze-wine.js": { "maxDuration": 30 },
-    "api/stripe-retention.js": { "maxDuration": 30 }
+    "api/stripe-retention.js": { "maxDuration": 30 },
+    "api/send-push.js": { "maxDuration": 30 },
+    "api/push-triggers.js": { "maxDuration": 60 },
+    "api/scan-followup.js": { "maxDuration": 30 }
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
