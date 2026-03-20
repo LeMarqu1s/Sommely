@@ -102,7 +102,7 @@ export function Premium() {
               <p className="font-semibold text-amber-800 text-sm">Essai gratuit en cours</p>
               <p className="text-amber-700 text-xs">
                 {daysLeftInTrial > 0
-                  ? `Il vous reste ${daysLeftInTrial} jour${daysLeftInTrial > 1 ? 's' : ''} — choisissez votre plan pour continuer`
+                  ? `Il vous reste ${daysLeftInTrial} jour${daysLeftInTrial > 1 ? 's' : ''} · Choisissez votre plan pour continuer`
                   : "Votre essai se termine aujourd'hui"}
               </p>
             </div>
@@ -120,7 +120,7 @@ export function Premium() {
           </p>
         </motion.div>
 
-        {/* Pourquoi passer Pro ? — 3 cards horizontales */}
+        {/* Pourquoi passer Pro ? · 3 cards horizontales */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
           <h3 className="font-display text-base font-bold text-black-wine">Pourquoi passer Pro ?</h3>
           <div className="flex gap-3 overflow-x-auto pb-1 -mx-1">
@@ -177,7 +177,7 @@ export function Premium() {
           ))}
         </div>
 
-        {/* Plans — 2 plans : Annuel mis en avant, Mensuel neutre */}
+        {/* Plans · 2 plans : Annuel mis en avant, Mensuel neutre */}
         <div className="space-y-3 pt-1">
           {plans.map((plan) => (
             <motion.button
