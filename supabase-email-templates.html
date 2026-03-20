@@ -1,0 +1,93 @@
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SUPABASE EMAIL TEMPLATES — Sommely -->
+<!-- Copier chaque bloc dans : Authentication → Email Templates -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+
+<!-- ───────────────────────────────────────────────────────────────── -->
+<!-- ONGLET 1 : Confirm signup -->
+<!-- Subject : Confirmez votre compte Sommely 🍷 -->
+<!-- ───────────────────────────────────────────────────────────────── -->
+
+<div style="font-family: 'Georgia', serif; max-width: 480px; margin: 0 auto; background: #FAF9F6; padding: 0; border-radius: 16px; overflow: hidden;">
+  <!-- Header bordeaux -->
+  <div style="background: #722F37; padding: 32px 40px; text-align: center;">
+    <div style="display: inline-block; background: rgba(255,255,255,0.15); border-radius: 50px; padding: 8px 20px;">
+      <span style="color: #D4AF37; font-size: 22px; font-weight: 700; letter-spacing: 1px;">$ Sommely</span>
+    </div>
+    <p style="color: rgba(255,255,255,0.8); font-size: 13px; margin: 8px 0 0;">Le Yuka du vin</p>
+  </div>
+  
+  <!-- Body -->
+  <div style="padding: 40px; background: white;">
+    <h1 style="color: #2C1810; font-size: 24px; margin: 0 0 12px; font-weight: 700;">
+      Bienvenue sur Sommely 🍷
+    </h1>
+    <p style="color: #6B5D56; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
+      Plus jamais gêné face à une carte des vins.<br>
+      Confirmez votre adresse email pour commencer.
+    </p>
+    
+    <!-- CTA Button -->
+    <a href="{{ .ConfirmationURL }}" 
+       style="display: block; background: #722F37; color: white; text-decoration: none; 
+              text-align: center; padding: 16px 32px; border-radius: 12px; 
+              font-size: 16px; font-weight: 700; letter-spacing: 0.5px;">
+      Confirmer mon compte →
+    </a>
+    
+    <p style="color: #9E9E9E; font-size: 12px; margin: 24px 0 0; text-align: center;">
+      Ce lien expire dans 24 heures.<br>
+      Si vous n'avez pas créé de compte, ignorez cet email.
+    </p>
+  </div>
+  
+  <!-- Footer -->
+  <div style="background: #F5F0E8; padding: 20px 40px; text-align: center;">
+    <p style="color: #9E9E9E; font-size: 11px; margin: 0;">
+      © 2026 Sommely — sommely.shop<br>
+      Le Yuka du vin
+    </p>
+  </div>
+</div>
+
+<!-- ───────────────────────────────────────────────────────────────── -->
+<!-- ONGLET 2 : Magic Link -->
+<!-- Subject : Votre lien de connexion Sommely 🍷 -->
+<!-- ───────────────────────────────────────────────────────────────── -->
+
+<div style="font-family: 'Georgia', serif; max-width: 480px; margin: 0 auto; background: #FAF9F6; padding: 0; border-radius: 16px; overflow: hidden;">
+  <div style="background: #722F37; padding: 32px 40px; text-align: center;">
+    <div style="display: inline-block; background: rgba(255,255,255,0.15); border-radius: 50px; padding: 8px 20px;">
+      <span style="color: #D4AF37; font-size: 22px; font-weight: 700; letter-spacing: 1px;">$ Sommely</span>
+    </div>
+    <p style="color: rgba(255,255,255,0.8); font-size: 13px; margin: 8px 0 0;">Le Yuka du vin</p>
+  </div>
+  
+  <div style="padding: 40px; background: white;">
+    <h1 style="color: #2C1810; font-size: 24px; margin: 0 0 12px; font-weight: 700;">
+      Votre lien de connexion 🔐
+    </h1>
+    <p style="color: #6B5D56; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
+      Cliquez sur le bouton ci-dessous pour vous connecter à Sommely.<br>
+      <strong>Ce lien est à usage unique et expire dans 1 heure.</strong>
+    </p>
+    
+    <a href="{{ .ConfirmationURL }}"
+       style="display: block; background: #722F37; color: white; text-decoration: none; 
+              text-align: center; padding: 16px 32px; border-radius: 12px; 
+              font-size: 16px; font-weight: 700; letter-spacing: 0.5px;">
+      Me connecter à Sommely →
+    </a>
+    
+    <p style="color: #9E9E9E; font-size: 12px; margin: 24px 0 0; text-align: center;">
+      Si vous n'avez pas demandé ce lien, ignorez cet email.<br>
+      Ce lien expire dans 1 heure.
+    </p>
+  </div>
+  
+  <div style="background: #F5F0E8; padding: 20px 40px; text-align: center;">
+    <p style="color: #9E9E9E; font-size: 11px; margin: 0;">
+      © 2026 Sommely — sommely.shop
+    </p>
+  </div>
+</div>

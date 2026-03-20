@@ -97,7 +97,7 @@ const TYPE_TO_MATCHSCORE: Record<string, string> = {
 
 export function Onboarding() {
   const navigate = useNavigate();
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, setIsOnboardingInProgress } = useAuth();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [data, setData] = useState<OnboardingData>({
