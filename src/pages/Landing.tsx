@@ -354,14 +354,14 @@ export function Landing() {
               Simple et transparent.
             </h2>
           </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto">
             {/* Mensuel */}
             <Reveal>
               <div className="rounded-3xl p-6 h-full flex flex-col"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <p className="text-sm font-semibold mb-3" style={{ color: '#86868b' }}>Mensuel</p>
                 <div className="flex items-baseline gap-1 mb-5">
-                  <span className="font-display font-bold text-white" style={{ fontSize: '2.5rem', letterSpacing: '-0.04em', lineHeight: 1 }}>4,99€</span>
+                  <span className="font-display font-bold text-white" style={{ fontSize: '2.5rem', letterSpacing: '-0.04em', lineHeight: 1 }}>8,99€</span>
                   <span className="text-xs" style={{ color: '#86868b' }}>/mois</span>
                 </div>
                 <div className="space-y-2.5 mb-6 flex-1">
@@ -403,8 +403,8 @@ export function Landing() {
                     <span className="font-display font-bold text-white" style={{ fontSize: '2.5rem', letterSpacing: '-0.04em', lineHeight: 1 }}>4€</span>
                     <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>/mois</span>
                   </div>
-                  <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.28)' }}>48€/an</p>
-                  <p className="text-xs mb-5" style={{ color: '#D4AF37' }}>✦ Économisez 11,88€</p>
+                  <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.28)' }}>47,99€/an</p>
+                  <p className="text-xs mb-5" style={{ color: '#D4AF37' }}>✦ Économisez 12€/an</p>
                   <div className="space-y-2.5 mb-6 flex-1">
                     {['Tout du mensuel', 'Nouvelles features en priorité', 'IA Investissement', 'Support prioritaire'].map(f => (
                       <div key={f} className="flex items-center gap-2">
@@ -417,43 +417,6 @@ export function Landing() {
                     onClick={() => navigate('/auth')}
                     className="w-full py-2.5 rounded-2xl font-bold text-sm cursor-pointer border-none"
                     style={{ background: 'linear-gradient(135deg, #D4AF37, #c9a227)', color: '#1d1d1f' }}>
-                    Commencer →
-                  </motion.button>
-                </div>
-              </div>
-            </Reveal>
-
-            {/* Prestige */}
-            <Reveal delay={0.14}>
-              <div className="rounded-3xl p-6 h-full flex flex-col relative overflow-hidden"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl -translate-y-4 translate-x-4 pointer-events-none"
-                  style={{ background: 'rgba(255,255,255,0.04)' }}/>
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-semibold" style={{ color: '#86868b' }}>Prestige</p>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-                      style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                      Premium
-                    </span>
-                  </div>
-                  <div className="flex items-baseline gap-1 mb-1">
-                    <span className="font-display font-bold text-white" style={{ fontSize: '2.5rem', letterSpacing: '-0.04em', lineHeight: 1 }}>14,99€</span>
-                    <span className="text-xs" style={{ color: '#86868b' }}>/mois</span>
-                  </div>
-                  <p className="text-xs mb-5" style={{ color: '#86868b' }}>Paiement unique</p>
-                  <div className="space-y-2.5 mb-6 flex-1">
-                    {["Tout de l'annuel", 'Consultation Antoine illimitée', 'Accès expert & dégustation', 'Badge Sommelier Prestige'].map(f => (
-                      <div key={f} className="flex items-center gap-2">
-                        <CheckCircle2 size={13} color="rgba(255,255,255,0.4)"/>
-                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>{f}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-                    onClick={() => navigate('/auth')}
-                    className="w-full py-2.5 rounded-2xl font-semibold text-sm cursor-pointer"
-                    style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent' }}>
                     Commencer →
                   </motion.button>
                 </div>

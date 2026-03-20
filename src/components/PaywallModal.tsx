@@ -56,14 +56,14 @@ export function PaywallModal({ isOpen, onClose, feature, description }: PaywallM
               onClick={() => { onClose(); redirectToCheckout('monthly'); }}
               className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-bold border-none cursor-pointer shadow-lg active:scale-95 transition-all"
             >
-              Débloquer · 4,99€/mois
+              Débloquer · 8,99€/mois
             </button>
 
             <button
               onClick={() => { onClose(); redirectToCheckout('annual'); }}
               className="w-full py-3 mt-2 border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm bg-transparent cursor-pointer active:scale-95 transition-all"
             >
-              Ou 49€/an · Économie 32% 🎯
+              Ou 47,99€/an (4€/mois) · Meilleure valeur 🎯
             </button>
           </motion.div>
         </motion.div>

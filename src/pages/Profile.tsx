@@ -728,15 +728,11 @@ export function Profile() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}>
             <button
               type="button"
-              onClick={async () => {
-                try {
-                  await supabase.auth.signOut();
-                } catch (e) {
-                  console.error(e);
-                } finally {
-                  localStorage.clear();
-                  window.location.replace('/auth');
-                }
+              onClick={() => {
+                supabase.auth.signOut().catch(console.error);
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.replace('/auth');
               }}
               style={{
                 width: '100%',
@@ -836,15 +832,11 @@ export function Profile() {
               </div>
               <button
                 type="button"
-                onClick={async () => {
-                  try {
-                    await supabase.auth.signOut();
-                  } catch (e) {
-                    console.error(e);
-                  } finally {
-                    localStorage.clear();
-                    window.location.replace('/auth');
-                  }
+                onClick={() => {
+                  supabase.auth.signOut().catch(console.error);
+                  localStorage.clear();
+                  sessionStorage.clear();
+                  window.location.replace('/auth');
                 }}
                 className="w-full py-3.5 border-2 border-red-200 text-red-600 rounded-2xl font-semibold text-sm bg-transparent cursor-pointer"
               >

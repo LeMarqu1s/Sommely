@@ -177,7 +177,7 @@ export function Paywall() {
                 <p className="text-gray-dark text-xs mt-0.5">10 scans par mois · Recommandations de base</p>
               </div>
               <div className="text-right">
-                <p className="font-display text-2xl font-bold text-black-wine">4,99 €</p>
+                <p className="font-display text-2xl font-bold text-black-wine">8,99 €</p>
                 <p className="text-xs text-gray-dark">par mois</p>
               </div>
             </div>
@@ -193,7 +193,7 @@ export function Paywall() {
           >
             <div className="bg-gold px-4 py-1.5 flex items-center justify-between">
               <span className="text-black-wine text-xs font-bold uppercase tracking-wide">⭐ Le plus populaire</span>
-              <span className="text-black-wine text-xs font-bold">-40% aujourd'hui</span>
+              <span className="text-black-wine text-xs font-bold">Meilleure valeur</span>
             </div>
             <div className="p-4 bg-white">
               <div className="flex items-center justify-between mb-2">
@@ -202,16 +202,14 @@ export function Paywall() {
                   <p className="text-gray-dark text-xs mt-0.5">Scans illimités + tout inclus</p>
                 </div>
                 <div className="text-right">
-                  <div className="flex items-baseline gap-1 justify-end">
-                    <span className="font-display text-3xl font-bold text-burgundy-dark">1€</span>
-                  </div>
-                  <p className="text-xs text-gray-dark">puis 29,99 €/an</p>
-                  <p className="text-xs text-gray-light line-through">49,99 €/an</p>
+                  <p className="font-display text-2xl font-bold text-burgundy-dark">47,99 €</p>
+                  <p className="text-xs text-gray-dark">/an</p>
+                  <p className="text-xs font-semibold text-green-700 mt-0.5">Soit 4€/mois</p>
                 </div>
               </div>
               <div className="bg-gold/10 rounded-xl px-3 py-2">
                 <p className="text-xs font-semibold text-yellow-800">
-                  Soit 2,50 €/mois, moins cher qu'un café
+                  Économisez 12€/an vs mensuel
                 </p>
               </div>
             </div>
@@ -229,8 +227,8 @@ export function Paywall() {
             <Shield size={16} color="#2E7D32" />
             <p className="text-sm font-semibold text-black-wine">
               {selectedTier === 'annual'
-                ? "Offre sélectionnée : 1 € aujourd'hui puis 29,99 €/an"
-                : "Offre sélectionnée : 4,99 € par mois"}
+                ? 'Offre sélectionnée : 47,99 €/an (soit 4€/mois)'
+                : 'Offre sélectionnée : 8,99 € par mois'}
             </p>
           </div>
 
@@ -382,8 +380,8 @@ export function Paywall() {
           <h3 className="font-display text-xl font-bold text-white mb-1">
             Offre actuelle :{' '}
             {selectedTier === 'annual'
-              ? "1 € aujourd'hui"
-              : "4,99 €/mois"}
+              ? '47,99 €/an'
+              : '8,99 €/mois'}
           </h3>
           <p className="text-white/60 text-xs mb-5">Paiement sécurisé Stripe</p>
           <PaymentButtons selectedTier={selectedTier} onSuccess={handlePaymentSuccess} onError={handlePaymentError} />

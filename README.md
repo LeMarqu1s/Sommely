@@ -38,9 +38,8 @@ Dans **Project Settings → Environment Variables**, ajouter (valeurs réelles �
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_STRIPE_PUBLIC_KEY`
-- `VITE_STRIPE_MONTHLY_PAYMENT_LINK` (lien Stripe mensuel)
-- `VITE_STRIPE_ANNUAL_PAYMENT_LINK` (lien Stripe annuel)
-- `VITE_STRIPE_PRESTIGE_PAYMENT_LINK` (lien Stripe Prestige 14,99€/mois)
+- `VITE_STRIPE_MONTHLY_PAYMENT_LINK` (lien Stripe mensuel 8,99€/mois)
+- `VITE_STRIPE_ANNUAL_PAYMENT_LINK` (lien Stripe annuel 47,99€/an)
 - `VITE_OPENAI_API_KEY`
 - `VITE_CLARITY_ID`
 - `VITE_GA_ID`
@@ -89,7 +88,7 @@ Dans Supabase SQL editor, exécuter le contenu de `supabase-schema.sql` (tables 
 - Landing page OK sur mobile (Vercel URL + domaine custom)
 - Flow onboarding complet fonctionne (`/onboarding`)
 - Scan + résultat vin fonctionnent (`/scan` → `/result`)
-- Paywall 3 tiers fonctionne (`/premium`) + simulation paiement
+- Paywall 2 plans fonctionne (`/premium`) + simulation paiement
 - Microsoft Clarity reçoit des sessions (user recordings)
 - Google Analytics reçoit des visites (événements page_view)
 - Connexion Google OAuth en production fonctionne (`/auth`)
@@ -124,7 +123,7 @@ Dans Supabase SQL editor, exécuter le contenu de `supabase-schema.sql` (tables 
 ### STRIPE
 - [ ] Compte Stripe cree
 - [ ] Produit "Sommely Club" cree
-- [ ] 3 prix crees (monthly 4.99, annual 29.99, lifetime 79)
+- [ ] 2 prix crees (monthly 8.99, annual 47.99)
 - [ ] Price IDs copies dans stripe.ts
 - [ ] Cle publique dans .env Vercel
 

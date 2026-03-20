@@ -63,7 +63,7 @@ export function Success() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
         className="text-gray-dark text-center text-sm mb-6 max-w-xs leading-relaxed">
-        Abonnement {plan === 'annual' ? 'annuel · 49€/an' : 'mensuel · 4,99€/mois'} activé.
+        Abonnement {plan === 'annual' ? 'annuel · 47,99€/an' : 'mensuel · 8,99€/mois'} activé.
         Toutes les fonctionnalités sont débloquées !
       </motion.p>
 

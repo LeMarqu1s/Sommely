@@ -150,12 +150,12 @@ export function PaymentButtons({ selectedTier, onSuccess, onError }: PaymentButt
 
       {selectedTier === 'annual' && (
         <p className="text-xs text-gray-dark text-center leading-relaxed">
-          1 € débité aujourd'hui. Puis 29,99 € automatiquement dans 30 jours.
+          47,99 € débités aujourd&apos;hui. Renouvellement automatique chaque année.
         </p>
       )}
       {selectedTier === 'monthly' && (
         <p className="text-xs text-gray-dark text-center leading-relaxed">
-          4,99 € débités aujourd'hui. Renouvellement automatique chaque mois.
+          8,99 € débités aujourd&apos;hui. Renouvellement automatique chaque mois.
         </p>
       )}
     </div>

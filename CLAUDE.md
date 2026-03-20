@@ -26,7 +26,7 @@ There are no lint or test scripts — TypeScript strict mode is used for type sa
 1. **Auth & State** — `src/context/AuthContext.tsx` is the central state hub: user session, profile (12-question onboarding), and subscription tier all live here.
 2. **Scan Pipeline** — Camera → image enhancement (`src/lib/imageEnhance.ts` + `imageOptimize.ts`) → OpenAI GPT-4 Vision (`src/lib/openai.ts`) → match score algorithm (`src/lib/matchScore.ts`) → `/result` page.
 3. **Database** — Supabase (`src/lib/supabase.ts`) for auth, user profiles, scan history, wine cave, and subscriptions with RLS.
-4. **Payments** — Stripe 3-tier subscription (free / monthly 4.99€ / annual 29.99€ / prestige 14.99€/mo) via `src/lib/stripe.ts` and `src/utils/subscription.ts`.
+4. **Payments** — Stripe 2 plans Pro (mensuel 8,99€ / annuel 47,99€) via `src/lib/stripe.ts` et `src/utils/stripe.ts` (liens Payment Links).
 5. **Sharing** — `/share` route generates dynamic OG images via a Vercel serverless endpoint (`api/og.tsx`).
 
 ### Key Directories
