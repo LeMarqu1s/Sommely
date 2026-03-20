@@ -1,18 +1,23 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'fr.sommely.app',
+  appId: 'shop.sommely.app',
   appName: 'Sommely',
   webDir: 'dist',
-  server: {
-    androidScheme: 'https',
-  },
+  bundledWebRuntime: false,
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
-      launchAutoHide: true,
+      backgroundColor: '#FAF9F6',
+      showSpinner: false,
+    },
+    StatusBar: {
+      style: 'DARK',
+      backgroundColor: '#FAF9F6',
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
     },
   },
 };
-
 export default config;

@@ -10,6 +10,7 @@ export default defineConfig({
   plugins: [react(), basicSsl()],
   resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
   build: {
+    outDir: 'dist',
     chunkSizeWarningLimit: 1000, // KB - évite le warning Vercel sur les chunks volumineux
   },
   server: {
