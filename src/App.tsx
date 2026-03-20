@@ -73,8 +73,9 @@ function AppContent({ onReady }: { onReady?: () => void }) {
       <div className={`${showNav ? 'pb-28' : ''} w-full`} style={{ maxWidth: 430, margin: '0 auto' }}>
         <ClarityScript />
         <GoogleAnalytics />
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-app)' }}><div className="w-8 h-8 rounded-full border-2 border-burgundy-dark border-t-transparent animate-spin" /></div>}>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ background: '#FAF9F6' }}><div className="w-8 h-8 rounded-full border-2 border-burgundy-dark border-t-transparent animate-spin" /></div>}>
         <Routes>
+          <Route path="/vin/:slug" element={<WinePage />} />
           <Route path="/investment" element={<Investment />} />
           <Route path="/" element={<Landing />} />
           <Route path="/home" element={<Home />} />
@@ -95,7 +96,6 @@ function AppContent({ onReady }: { onReady?: () => void }) {
           <Route path="/profile" element={<Profile />} />
           <Route path="/success" element={<Success />} />
           <Route path="/privacy" element={<Privacy />} />
-          <Route path="/vin/:slug" element={<WinePage />} />
           <Route path="/cave" element={<Cave />} />
         </Routes>
         </Suspense>

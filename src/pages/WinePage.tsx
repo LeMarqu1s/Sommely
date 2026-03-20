@@ -14,6 +14,8 @@ export default function WinePage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
+  console.log('WinePage rendu, slug:', slug);
+
   const wine = WINES[slug || ''] || {
     name: slug?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Vin',
     region: 'France',

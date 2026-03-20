@@ -46,7 +46,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const [theme, setTheme] = useState<Theme>(() => {
-    return (localStorage.getItem('sommely_theme') as Theme) || 'light';
+    const stored = localStorage.getItem('sommely_theme');
+    return stored === 'dark' ? 'dark' : 'light'; // Toujours clair par défaut, jamais prefers-color-scheme
   });
 
   const [currency, setCurrencyState] = useState<Currency>(() => {
