@@ -180,10 +180,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(p ?? null);
           if (p?.onboarding_completed) {
             localStorage.setItem('sommely_onboarding_done', 'true');
-          } else if (event === 'SIGNED_IN') {
-            window.location.href = '/onboarding';
-            return;
           }
+          /* Pas de redirect ici — OnboardingGuard gère les redirections.
+             Un redirect ici créait une boucle avec OnboardingGuard. */
 
           const pendingRef = localStorage.getItem('pending_referral');
           if (pendingRef && p && !p.referred_by) {
