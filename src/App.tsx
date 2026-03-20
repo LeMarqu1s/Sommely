@@ -27,7 +27,7 @@ import { BottomNav } from './components/BottomNav';
 import { GlobalLogoHeader } from './components/GlobalLogoHeader';
 import { Privacy } from './pages/Privacy';
 import { ShareResult } from './pages/ShareResult';
-import { WineLanding } from './pages/wines/WineLanding';
+import { WinePage } from './pages/WinePage';
 import { InstallPrompt } from './components/InstallPrompt';
 
 const Cave = lazy(() => import('./pages/Cave').then(m => ({ default: m.Cave })));
@@ -95,7 +95,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
           <Route path="/profile" element={<Profile />} />
           <Route path="/success" element={<Success />} />
           <Route path="/privacy" element={<Privacy />} />
-          <Route path="/vin/:slug" element={<WineLanding />} />
+          <Route path="/vin/:slug" element={<WinePage />} />
           <Route path="/cave" element={<Cave />} />
         </Routes>
         </Suspense>

@@ -4,4 +4,34 @@
   <url><loc>https://sommely.shop/scan</loc><priority>0.9</priority></url>
   <url><loc>https://sommely.shop/cave</loc><priority>0.8</priority></url>
   <url><loc>https://sommely.shop/premium</loc><priority>0.9</priority></url>
+  <url><loc>https://sommely.shop/vin/chateau-margaux</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/petrus</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/romanee-conti</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/sancerre</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/chablis</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/muscadet</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/cotes-du-rhone</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/bordeaux-rouge</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/bourgogne-blanc</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/champagne-brut</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/rose-provence</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/gewurztraminer</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/riesling-alsace</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/beaujolais-nouveau</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/saint-emilion</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/pomerol</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/medoc</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/graves</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/entre-deux-mers</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/macon-villages</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/pouilly-fume</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/vouvray</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/chinon</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/languedoc</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/bandol</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/crozes-hermitage</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/chateauneuf-du-pape</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/gigondas</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/hermitage</loc><priority>0.7</priority></url>
+  <url><loc>https://sommely.shop/vin/condrieu</loc><priority>0.7</priority></url>
 </urlset>
