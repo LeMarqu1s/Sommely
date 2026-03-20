@@ -561,6 +561,29 @@ export function Profile() {
                 </div>
               </div>
             )}
+            {(profile?.referral_reward_months ?? 0) > 0 && (
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, #722F37, #8B4049)',
+                  borderRadius: 12,
+                  padding: '12px 16px',
+                  marginTop: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                }}
+              >
+                <span style={{ fontSize: 24 }}>🎁</span>
+                <div>
+                  <div style={{ color: 'white', fontWeight: 700, fontSize: 14 }}>
+                    {profile.referral_reward_months} mois offert{profile.referral_reward_months! > 1 ? 's' : ''} grâce à vos parrainages
+                  </div>
+                  <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>
+                    Votre abonnement est étendu automatiquement
+                  </div>
+                </div>
+              </div>
+            )}
             <button
               onClick={shareReferral}
               style={{

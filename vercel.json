@@ -9,7 +9,8 @@
     "api/stripe-retention.js": { "maxDuration": 30 },
     "api/send-push.js": { "maxDuration": 30 },
     "api/push-triggers.js": { "maxDuration": 60 },
-    "api/scan-followup.js": { "maxDuration": 30 }
+    "api/scan-followup.js": { "maxDuration": 30 },
+    "api/stripe-webhook.js": { "maxDuration": 30 }
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },

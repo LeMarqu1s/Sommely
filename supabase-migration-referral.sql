@@ -12,7 +12,16 @@ CREATE TABLE IF NOT EXISTS referrals (
   UNIQUE(referred_id)
 );
 
+-- Chaque code ne peut être utilisé qu'une seule fois au total
+ALTER TABLE referrals DROP CONSTRAINT IF EXISTS referrals_code_unique;
+ALTER TABLE referrals ADD CONSTRAINT referrals_code_unique UNIQUE (referral_code);
+
 -- Colonne pour savoir si l'user a utilisé un code
 ALTER TABLE profiles
 ADD COLUMN IF NOT EXISTS referred_by TEXT,
 ADD COLUMN IF NOT EXISTS referral_reward_given BOOLEAN DEFAULT false;
+
+-- Colonnes pour récompenses parrainage (mois offerts, extension abo)
+ALTER TABLE profiles
+ADD COLUMN IF NOT EXISTS referral_reward_months INT DEFAULT 0,
+ADD COLUMN IF NOT EXISTS subscription_extended_until TIMESTAMPTZ;

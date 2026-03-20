@@ -34,6 +34,8 @@ export interface Profile {
   last_scan_at?: string | null;
   total_scans?: number;
   push_enabled?: boolean;
+  referral_reward_months?: number;
+  subscription_extended_until?: string | null;
 }
 
 export interface Subscription {
@@ -224,16 +226,25 @@ export async function getUserScans(userId: string, limit = 20) {
 export async function applyReferralCode(userId: string, code: string): Promise<{ success?: boolean; error?: string }> {
   const { data: referrer } = await supabase
     .from('profiles')
-    .select('id, referral_code')
+    .select('id, referral_code, first_name')
     .eq('referral_code', code.toUpperCase())
     .single();
 
   if (!referrer) return { error: 'Code invalide' };
   if (referrer.id === userId) return { error: 'Vous ne pouvez pas utiliser votre propre code' };
 
+  // Vérification CRITIQUE : ce code a-t-il déjà été utilisé par quelqu'un ?
+  const { data: existingReferral } = await supabase
+    .from('referrals')
+    .select('id, referred_id')
+    .eq('referral_code', code.toUpperCase())
+    .maybeSingle();
+
+  if (existingReferral) return { error: 'Ce code a déjà été utilisé.' };
+
   const { data: profile } = await supabase
     .from('profiles')
-    .select('referred_by, created_at')
+    .select('referred_by, created_at, first_name')
     .eq('id', userId)
     .single();
 
@@ -245,12 +256,14 @@ export async function applyReferralCode(userId: string, code: string): Promise<{
 
   await supabase.from('profiles').update({ referred_by: code.toUpperCase() }).eq('id', userId);
 
-  await supabase.from('referrals').insert({
+  const { error: insertErr } = await supabase.from('referrals').insert({
     referrer_id: referrer.id,
     referred_id: userId,
     referral_code: code.toUpperCase(),
     status: 'pending',
   });
+
+  if (insertErr) return { error: 'Ce code a déjà été utilisé.' };
 
   const { data: sub } = await supabase
     .from('subscriptions')
@@ -267,6 +280,23 @@ export async function applyReferralCode(userId: string, code: string): Promise<{
       .from('subscriptions')
       .update({ trial_ends_at: currentEnd.toISOString() })
       .eq('id', sub.id);
+  }
+
+  // Notif 1 : parrain notifié dès que son code est utilisé (avant paiement)
+  const filleulFirstName = (profile as { first_name?: string })?.first_name || "Quelqu'un";
+  try {
+    await fetch('/api/send-push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: referrer.id,
+        title: '🔔 Sommely',
+        body: `${filleulFirstName} a utilisé votre code de parrainage ! Si il s'abonne, vous gagnez 1 mois gratuit. 🍷`,
+        url: '/profile',
+      }),
+    });
+  } catch {
+    // Ignorer les erreurs de notification
   }
 
   return { success: true };
