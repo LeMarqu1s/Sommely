@@ -64,8 +64,8 @@ export function Premium() {
   if (isPro && !isTrial) {
     return (
       <div className="min-h-screen bg-cream font-body flex flex-col items-center justify-center px-6">
-        <div className="w-20 h-20 rounded-full bg-gold flex items-center justify-center mb-4">
-          <Star size={40} color="#2C1810" fill="#2C1810" />
+        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ background: '#722F37' }}>
+          <Star size={40} color="#D4AF37" fill="#D4AF37" />
         </div>
         <h1 className="font-display text-2xl font-bold text-black-wine mb-2">Vous êtes déjà Pro !</h1>
         <p className="text-gray-dark text-sm text-center mb-6">Profitez de toutes les fonctionnalités.</p>
@@ -111,8 +111,8 @@ export function Premium() {
 
         {/* Hero */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-          <div className="w-20 h-20 rounded-full bg-gold flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <Star size={40} color="#2C1810" fill="#2C1810" />
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg" style={{ background: '#722F37' }}>
+            <Star size={40} color="#D4AF37" fill="#D4AF37" />
           </div>
           <h1 className="font-display text-3xl font-bold text-black-wine mb-2">Devenez un expert du vin</h1>
           <p className="text-gray-dark text-sm leading-relaxed">
@@ -204,7 +204,7 @@ export function Premium() {
                   <p className={`font-semibold text-black-wine ${plan.highlight ? 'text-base' : 'text-sm'}`}>{plan.label}</p>
                   <p className={`text-xs mt-0.5 ${plan.sublineGreen ? 'text-green-700 font-medium' : 'text-gray-dark'}`}>{plan.subline}</p>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px', flexShrink: 0 }}>
                   <span style={{ fontSize: plan.highlight ? '28px' : '24px', fontWeight: 900, color: '#722F37' }}>{plan.price}</span>
                   <span style={{ fontSize: '14px', color: '#6B5D56' }}>{plan.period}</span>
                 </div>

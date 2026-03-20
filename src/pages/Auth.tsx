@@ -108,7 +108,7 @@ export function Auth() {
           {/* Logo */}
           <div className="flex items-center justify-center gap-2.5 mb-10">
             <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #722F37, #5a1e24)', boxShadow: '0 8px 24px rgba(114,47,55,0.35)' }}>
+              style={{ background: '#722F37', boxShadow: '0 8px 24px rgba(114,47,55,0.35)' }}>
               <span className="text-white font-black text-base">S</span>
             </div>
             <span className="font-display font-bold text-xl" style={{ color: '#1a0508', letterSpacing: '-0.02em' }}>Sommely</span>
