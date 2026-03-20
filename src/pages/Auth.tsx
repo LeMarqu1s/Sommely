@@ -9,7 +9,8 @@ type AuthMode = 'signin' | 'signup' | 'magic';
 export function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const referralCode = searchParams.get('referral')?.trim().toUpperCase() || undefined;
+  const referralCode = searchParams.get('referral')?.trim().toUpperCase()
+    || (typeof localStorage !== 'undefined' ? localStorage.getItem('pending_referral') : null) || undefined;
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, signInWithMagicLink, isAuthenticated, isLoading: authLoading } = useAuth();
   const [mode, setMode] = useState<AuthMode>(referralCode ? 'signup' : 'signin');
   const [email, setEmail] = useState('');

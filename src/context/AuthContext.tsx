@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
-import { supabase, getProfile, getSubscription, getScansCountThisMonth, upsertProfile } from '../lib/supabase';
+import { supabase, getProfile, getSubscription, getScansCountThisMonth, upsertProfile, applyReferralCode } from '../lib/supabase';
 import type { Profile, Subscription } from '../lib/supabase';
 
 export interface SubscriptionState {
@@ -173,6 +173,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(p ?? null);
           if (p?.onboarding_completed) {
             localStorage.setItem('sommely_onboarding_done', 'true');
+          }
+
+          const pendingRef = localStorage.getItem('pending_referral');
+          if (pendingRef && p && !p.referred_by) {
+            const res = await applyReferralCode(session.user.id, pendingRef);
+            if (res.success) {
+              localStorage.removeItem('pending_referral');
+              const { data: refreshed } = await getProfile(session.user.id);
+              setProfile(refreshed ?? null);
+            }
           }
 
           let { data: s } = await getSubscription(session.user.id);

@@ -28,6 +28,7 @@ import { GlobalLogoHeader } from './components/GlobalLogoHeader';
 import { Privacy } from './pages/Privacy';
 import { ShareResult } from './pages/ShareResult';
 import { WineLanding } from './pages/wines/WineLanding';
+import { InstallPrompt } from './components/InstallPrompt';
 
 const Cave = lazy(() => import('./pages/Cave').then(m => ({ default: m.Cave })));
 const WineResult = lazy(() => import('./pages/WineResult').then(m => ({ default: m.WineResult })));
@@ -50,10 +51,16 @@ function PushAutoSubscribe() {
 }
 
 function AppContent({ onReady }: { onReady?: () => void }) {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   useEffect(() => {
     onReady?.();
   }, [onReady]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const ref = params.get('ref')?.trim().toUpperCase() || params.get('referral')?.trim().toUpperCase();
+    if (ref) localStorage.setItem('pending_referral', ref);
+  }, [search]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -94,6 +101,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
       </div>
       <BottomNav />
       <SommelierButton />
+      <InstallPrompt />
     </div>
   );
 }

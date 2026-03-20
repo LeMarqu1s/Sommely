@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Wine,
@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme, CURRENCIES } from '../context/ThemeContext';
-import { getUserScans, getScansCountTotal } from '../lib/supabase';
+import { getUserScans, getScansCountTotal, applyReferralCode, getReferralStats } from '../lib/supabase';
 import { SaveFlowModal } from '../components/SaveFlow';
 
 const BADGES = [
@@ -43,7 +43,8 @@ const SUBSCRIPTION_LABELS: Record<string, { label: string; color: string; bg: st
 
 export function Profile() {
   const navigate = useNavigate();
-  const { user, profile, subscription, subscriptionState, signOut, isAuthenticated, refreshSubscription } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { user, profile, subscription, subscriptionState, signOut, isAuthenticated, refreshSubscription, refreshProfile } = useAuth();
   const { theme, toggleTheme, currency, setCurrency, formatPrice } = useTheme();
   const [recentScans, setRecentScans] = useState<any[]>([]);
   const [scanCountTotal, setScanCountTotal] = useState(0);
@@ -52,6 +53,12 @@ export function Profile() {
   const [showSaveFlow, setShowSaveFlow] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [referralInput, setReferralInput] = useState('');
+  const [referralLoading, setReferralLoading] = useState(false);
+  const [referralMessage, setReferralMessage] = useState('');
+  const [referralSuccess, setReferralSuccess] = useState(false);
+  const [referralStats, setReferralStats] = useState({ total: 0, rewarded: 0, pending: 0 });
+  const [copied, setCopied] = useState(false);
 
   const tasteProfile = (profile?.taste_profile as Record<string, unknown>) || {};
   const localProfile = { ...tasteProfile };
@@ -100,9 +107,61 @@ export function Profile() {
     return () => { mounted = false; };
   }, [user?.id]);
 
+  useEffect(() => {
+    if (user?.id) getReferralStats(user.id).then(setReferralStats);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (searchParams.get('referral_applied') === '1') {
+      setReferralSuccess(true);
+      setReferralMessage('✅ Code appliqué ! 1 mois offert ajouté à votre compte.');
+      window.history.replaceState(null, '', '/profile');
+    }
+  }, [searchParams]);
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/', { replace: true });
+  };
+
+  const accountAgeMs = profile?.created_at ? Date.now() - new Date(profile.created_at).getTime() : 0;
+  const accountUnder7Days = accountAgeMs < 7 * 24 * 60 * 60 * 1000;
+  const showUseReferralSection = !profile?.referred_by && accountUnder7Days && user?.id;
+
+  const handleApplyReferral = async () => {
+    if (!user?.id) return;
+    setReferralLoading(true);
+    const result = await applyReferralCode(user.id, referralInput);
+    setReferralLoading(false);
+    if (result.error) {
+      setReferralSuccess(false);
+      setReferralMessage('❌ ' + result.error);
+    } else {
+      setReferralSuccess(true);
+      setReferralMessage('✅ Code appliqué ! 1 mois offert ajouté à votre compte.');
+      setReferralInput('');
+      refreshProfile?.();
+    }
+  };
+
+  const copyReferralCode = async () => {
+    if (profile?.referral_code) {
+      await navigator.clipboard.writeText(profile.referral_code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const shareReferral = () => {
+    if (profile?.referral_code && navigator.share) {
+      navigator.share({
+        title: 'Sommely — Le Yuka du vin',
+        text: `Rejoins-moi sur Sommely avec mon code ${profile.referral_code} et obtiens 1 mois offert ! 🍷`,
+        url: `https://sommely.shop?ref=${profile.referral_code}`,
+      });
+    } else if (profile?.referral_code) {
+      copyReferralCode();
+    }
   };
 
   return (
@@ -418,34 +477,100 @@ export function Profile() {
           </motion.div>
         )}
 
+        {showUseReferralSection && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.17 }}
+            style={{ background: 'white', borderRadius: 16, padding: 20, marginBottom: 16, border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+          >
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#2C1810', marginBottom: 4 }}>🎁 Code de parrainage</h3>
+            <p style={{ fontSize: 13, color: '#9E9E9E', marginBottom: 12 }}>
+              Un ami vous a recommandé Sommely ? Entrez son code pour obtenir 1 mois offert.
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                value={referralInput}
+                onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
+                placeholder="Ex: JEAN2024"
+                maxLength={12}
+                style={{
+                  flex: 1, padding: '10px 14px', borderRadius: 10,
+                  border: '1.5px solid #E8E0D8', fontSize: 14,
+                  fontFamily: 'monospace', letterSpacing: 2,
+                  textTransform: 'uppercase', outline: 'none',
+                }}
+              />
+              <button
+                onClick={handleApplyReferral}
+                disabled={referralInput.length < 4 || referralLoading}
+                style={{
+                  background: '#722F37', color: 'white', border: 'none',
+                  borderRadius: 10, padding: '10px 18px', fontSize: 14,
+                  fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+                }}
+              >
+                {referralLoading ? '...' : 'Appliquer'}
+              </button>
+            </div>
+            {referralMessage && (
+              <p style={{ marginTop: 8, fontSize: 13, color: referralSuccess ? '#2E7D32' : '#C62828' }}>
+                {referralMessage}
+              </p>
+            )}
+          </motion.div>
+        )}
+
         {profile?.referral_code && (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18 }}
-            className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+            style={{ background: 'white', borderRadius: 16, padding: 20, marginBottom: 16, border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
           >
-            <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
-              <h2 className="font-display text-base font-bold text-black-wine">Parrainer des amis</h2>
-              <Share2 size={16} color="#722F37" />
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#2C1810', marginBottom: 4 }}>🍷 Parrainez vos amis</h3>
+            <p style={{ fontSize: 13, color: '#9E9E9E', marginBottom: 12 }}>
+              Chaque ami qui s&apos;inscrit avec votre code vous offre 1 mois gratuit.
+              {referralStats.total > 0 && ` Vous avez déjà parrainé ${referralStats.total} ami${referralStats.total > 1 ? 's' : ''}.`}
+            </p>
+            <div
+              onClick={copyReferralCode}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && copyReferralCode()}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: '#F5F0E8', borderRadius: 12, padding: '12px 16px',
+                cursor: 'pointer', border: '1.5px dashed #722F37',
+              }}
+            >
+              <span style={{ fontFamily: 'monospace', fontSize: 18, fontWeight: 700, color: '#722F37', letterSpacing: 3 }}>
+                {profile.referral_code}
+              </span>
+              <span style={{ fontSize: 12, color: '#9E9E9E' }}>{copied ? '✓ Copié !' : 'Appuyer pour copier'}</span>
             </div>
-            <div className="px-6 py-4">
-              <p className="text-xs text-gray-dark mb-2">Partagez votre code : 14 jours de trial pour vos amis, 1 mois offert pour vous s'ils passent Pro !</p>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 py-2.5 px-3 bg-cream rounded-xl font-mono text-sm font-bold text-burgundy-dark">
-                  {profile.referral_code}
-                </code>
-                <button
-                  onClick={() => {
-                    const url = `${window.location.origin}/invite/${profile.referral_code}`;
-                    navigator.clipboard?.writeText(url);
-                  }}
-                  className="p-2.5 bg-burgundy-dark text-white rounded-xl border-none cursor-pointer"
-                >
-                  <Copy size={18} />
-                </button>
+            {referralStats.total > 0 && (
+              <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                <div style={{ flex: 1, background: '#F5F0E8', borderRadius: 10, padding: 12, textAlign: 'center' }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: '#722F37' }}>{referralStats.total}</div>
+                  <div style={{ fontSize: 11, color: '#9E9E9E' }}>Amis parrainés</div>
+                </div>
+                <div style={{ flex: 1, background: '#F5F0E8', borderRadius: 10, padding: 12, textAlign: 'center' }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: '#2E7D32' }}>{referralStats.rewarded}</div>
+                  <div style={{ fontSize: 11, color: '#9E9E9E' }}>Mois offerts</div>
+                </div>
               </div>
-            </div>
+            )}
+            <button
+              onClick={shareReferral}
+              style={{
+                width: '100%', marginTop: 12, padding: '12px',
+                background: '#722F37', color: 'white', border: 'none',
+                borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              🔗 Partager mon code
+            </button>
           </motion.div>
         )}
 

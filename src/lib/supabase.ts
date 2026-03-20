@@ -27,6 +27,8 @@ export interface Profile {
   referral_code: string | null;
   discount_used?: boolean;
   created_at: string;
+  referred_by?: string | null;
+  referral_reward_given?: boolean;
   first_name?: string | null;
   birthday?: string | null;
   last_scan_at?: string | null;
@@ -217,6 +219,72 @@ export async function getUserScans(userId: string, limit = 20) {
 }
 
 // ─── REFERRALS ────────────────────────────────────────────
+
+/** Appliquer un code de parrainage (nouveau compte < 7 jours, pas déjà utilisé) */
+export async function applyReferralCode(userId: string, code: string): Promise<{ success?: boolean; error?: string }> {
+  const { data: referrer } = await supabase
+    .from('profiles')
+    .select('id, referral_code')
+    .eq('referral_code', code.toUpperCase())
+    .single();
+
+  if (!referrer) return { error: 'Code invalide' };
+  if (referrer.id === userId) return { error: 'Vous ne pouvez pas utiliser votre propre code' };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('referred_by, created_at')
+    .eq('id', userId)
+    .single();
+
+  if (profile?.referred_by) return { error: 'Vous avez déjà utilisé un code de parrainage' };
+
+  const accountAge = Date.now() - new Date(profile?.created_at || 0).getTime();
+  const sevenDays = 7 * 24 * 60 * 60 * 1000;
+  if (accountAge > sevenDays) return { error: 'Le code de parrainage est réservé aux nouveaux comptes (7 jours)' };
+
+  await supabase.from('profiles').update({ referred_by: code.toUpperCase() }).eq('id', userId);
+
+  await supabase.from('referrals').insert({
+    referrer_id: referrer.id,
+    referred_id: userId,
+    referral_code: code.toUpperCase(),
+    status: 'pending',
+  });
+
+  const { data: sub } = await supabase
+    .from('subscriptions')
+    .select('id, trial_ends_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (sub?.trial_ends_at) {
+    const currentEnd = new Date(sub.trial_ends_at);
+    currentEnd.setDate(currentEnd.getDate() + 30);
+    await supabase
+      .from('subscriptions')
+      .update({ trial_ends_at: currentEnd.toISOString() })
+      .eq('id', sub.id);
+  }
+
+  return { success: true };
+}
+
+/** Stats de parrainage d'un user (nombre parrainés, rewarded, pending) */
+export async function getReferralStats(userId: string) {
+  const { data } = await supabase
+    .from('referrals')
+    .select('status, created_at')
+    .eq('referrer_id', userId);
+
+  return {
+    total: data?.length || 0,
+    rewarded: data?.filter((r) => r.status === 'rewarded').length || 0,
+    pending: data?.filter((r) => r.status === 'pending').length || 0,
+  };
+}
 
 export async function getProfileByReferralCode(code: string) {
   const { data, error } = await supabase
