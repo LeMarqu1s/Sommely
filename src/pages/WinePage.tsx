@@ -45,14 +45,44 @@ export function WinePage() {
     };
   }, [wine]);
 
+  const pageStyle = {
+    minHeight: '100vh',
+    background: '#FAF9F6',
+    color: '#2C1810',
+    fontFamily: 'Inter, sans-serif',
+    paddingBottom: 100,
+  };
+
   if (!wine) {
     return (
-      <div className="min-h-screen font-body flex flex-col items-center justify-center px-6" style={{ background: 'var(--bg-app)' }}>
-        <h1 className="font-display text-2xl font-bold text-black-wine mb-4">Vin non trouvé</h1>
-        <p className="text-gray-dark text-center mb-6">Cette page n'existe pas.</p>
+      <div
+        style={{
+          ...pageStyle,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+        }}
+      >
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#2C1810', marginBottom: 16 }}>
+          Vin non trouvé
+        </h1>
+        <p style={{ color: '#6B5D56', textAlign: 'center', marginBottom: 24 }}>
+          Cette page n'existe pas.
+        </p>
         <button
           onClick={() => navigate('/')}
-          className="bg-burgundy-dark text-white px-6 py-3 rounded-full font-semibold text-sm border-none cursor-pointer"
+          style={{
+            background: '#722F37',
+            color: 'white',
+            padding: '12px 24px',
+            borderRadius: 9999,
+            fontWeight: 600,
+            fontSize: 14,
+            border: 'none',
+            cursor: 'pointer',
+          }}
         >
           Retour à l'accueil
         </button>
@@ -61,35 +91,86 @@ export function WinePage() {
   }
 
   return (
-    <div className="min-h-screen font-body" style={{ background: 'var(--bg-app)' }}>
-      <article className="max-w-2xl mx-auto px-5 py-8">
-        <header className="mb-8">
-          <h1 className="font-display text-3xl md:text-4xl font-bold text-black-wine leading-tight">
+    <div style={pageStyle}>
+      <article style={{ maxWidth: 672, margin: '0 auto', padding: '32px 20px' }}>
+        <header style={{ marginBottom: 32 }}>
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/');
+            }}
+            style={{
+              display: 'inline-block',
+              fontSize: 18,
+              fontWeight: 700,
+              color: '#722F37',
+              textDecoration: 'none',
+              marginBottom: 24,
+            }}
+          >
+            Sommely
+          </a>
+          <h1 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.25rem)', fontWeight: 700, color: '#2C1810', lineHeight: 1.2 }}>
             Scanner {wine.name} avec Sommely
           </h1>
         </header>
 
-        <div className="rounded-2xl border border-burgundy-dark/20 p-6 mb-6" style={{ background: 'var(--bg-card)' }}>
-          <p className="text-gray-dark text-sm mb-6">
+        <div
+          style={{
+            borderRadius: 16,
+            border: '1px solid rgba(114,47,55,0.2)',
+            padding: 24,
+            marginBottom: 24,
+            background: '#FFFFFF',
+          }}
+        >
+          <p style={{ color: '#6B5D56', fontSize: 14, marginBottom: 24, lineHeight: 1.5 }}>
             Scannez l'étiquette de votre bouteille de {wine.name} et recevez en 3 secondes votre score personnalisé,
             les accords mets & vins et des conseils de dégustation.
           </p>
           <button
             onClick={() => navigate('/scan', { state: { fromWine: wine.slug } })}
-            className="w-full py-4 bg-burgundy-dark text-white rounded-xl font-semibold text-base border-none cursor-pointer flex items-center justify-center gap-3 hover:bg-burgundy-medium transition-colors shadow-md mb-3"
+            style={{
+              width: '100%',
+              padding: '16px',
+              background: '#722F37',
+              color: 'white',
+              borderRadius: 12,
+              fontWeight: 600,
+              fontSize: 16,
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 12,
+              marginBottom: 12,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            }}
           >
             <Camera size={22} />
             Scanner ce vin
           </button>
           <button
             onClick={() => navigate('/premium')}
-            className="w-full py-3 border-2 border-burgundy-dark text-burgundy-dark rounded-xl font-semibold text-sm bg-transparent cursor-pointer hover:bg-burgundy-dark/5 transition-colors"
+            style={{
+              width: '100%',
+              padding: 12,
+              border: '2px solid #722F37',
+              color: '#722F37',
+              borderRadius: 12,
+              fontWeight: 600,
+              fontSize: 14,
+              background: 'transparent',
+              cursor: 'pointer',
+            }}
           >
             Essai gratuit 7 jours
           </button>
         </div>
 
-        <footer className="text-xs text-gray-dark">
+        <footer style={{ fontSize: 12, color: '#6B5D56' }}>
           <p>Sommely — Votre sommelier IA. Scannez, dégustez, partagez.</p>
         </footer>
       </article>
