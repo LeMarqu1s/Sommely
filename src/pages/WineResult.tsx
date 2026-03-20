@@ -351,6 +351,65 @@ export function WineResult() {
         </motion.div>
 
         <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.05 }}
+          className="rounded-2xl border border-burgundy-dark/15 overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, rgba(114,47,55,0.06) 0%, rgba(212,175,55,0.06) 100%)' }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              if (score >= 85) {
+                navigate('/cave', {
+                  state: {
+                    prefill: {
+                      name: wine.name || '',
+                      year: wine.year ?? new Date().getFullYear() - 2,
+                      region: wine.region || '',
+                      type: wine.type || 'Rouge',
+                      appellation: wine.appellation || '',
+                      grapes:
+                        typeof wine.grapes === 'string'
+                          ? wine.grapes
+                          : Array.isArray(wine.grapes)
+                            ? wine.grapes.join(', ')
+                            : '',
+                      quantity: '1',
+                      purchasePrice: '',
+                      notes: '',
+                      location: '',
+                    },
+                  },
+                });
+              } else if (score >= 60) {
+                navigate('/scan', { state: { scanHint: 'Scannez une autre bouteille' } });
+              } else {
+                navigate('/scan');
+              }
+            }}
+            className="w-full text-left px-5 py-4 border-none cursor-pointer bg-transparent hover:bg-white/40 transition-colors"
+          >
+            {score >= 85 && (
+              <p className="text-sm font-semibold text-black-wine">
+                Vous avez l&apos;œil. 🍷 Ajoutez-le à votre cave.
+              </p>
+            )}
+            {score >= 60 && score < 85 && (
+              <p className="text-sm font-semibold text-black-wine">
+                Pas mal. Mais on peut faire mieux pour vous.
+              </p>
+            )}
+            {score < 60 && (
+              <p className="text-sm font-semibold text-black-wine">
+                Honnêtement ? Remettez-le en rayon.
+              </p>
+            )}
+            <p className="text-xs text-gray-dark mt-1">Appuyez pour continuer →</p>
+          </button>
+        </motion.div>
+
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}

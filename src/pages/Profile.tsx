@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Wine,
   Settings,
@@ -18,9 +18,10 @@ import {
   User,
   Share2,
   Copy,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
+import { supabase, updateProfile } from '../lib/supabase';
 import { useTheme, CURRENCIES } from '../context/ThemeContext';
 import { getUserScans, getScansCountTotal, applyReferralCode, getReferralStats } from '../lib/supabase';
 import { SaveFlowModal } from '../components/SaveFlow';
@@ -33,6 +34,38 @@ const BADGES = [
   { id: 'expert', label: 'Expert', icon: '👑', threshold: 50, description: '50 bouteilles scannées' },
   { id: 'sommelier', label: 'Sommelier', icon: '🌟', threshold: 100, description: '100 bouteilles scannées' },
 ];
+
+/** Aligné sur Onboarding — mapping types → matchScore */
+const TYPE_TO_MATCHSCORE: Record<string, string> = {
+  rouge_puissant: 'red_bold',
+  rouge_elegants: 'red_light',
+  blanc_sec: 'white_dry',
+  blanc_riche: 'white_dry',
+  champagne: 'champagne',
+  rose: 'rose',
+  naturel: 'red_light',
+  liquoreux: 'white_sweet',
+};
+
+const TASTE_STYLE_OPTIONS = [
+  { label: 'Rouge', favoriteTypes: ['rouge_puissant', 'rouge_elegants'] as const },
+  { label: 'Blanc', favoriteTypes: ['blanc_sec', 'blanc_riche'] as const },
+  { label: 'Rosé', favoriteTypes: ['rose'] as const },
+  { label: 'Bulles', favoriteTypes: ['champagne'] as const },
+];
+
+const BUDGET_IDS = ['low', 'medium', 'high', 'premium'] as const;
+const BUDGET_LABELS = ['Moins de 10 €', '10–20 €', '20–45 €', '45 € et plus'];
+const EXPERIENCE_IDS = ['debutant', 'amateur', 'passionne', 'expert'] as const;
+const EXPERIENCE_LABELS = ['Curieux', 'Amateur', 'Passionné', 'Expert'];
+
+function deriveStyleIndex(favoriteTypes: string[] | undefined): number {
+  if (!favoriteTypes?.length) return 0;
+  for (let i = 0; i < TASTE_STYLE_OPTIONS.length; i++) {
+    if (TASTE_STYLE_OPTIONS[i].favoriteTypes.some((id) => favoriteTypes.includes(id))) return i;
+  }
+  return 0;
+}
 
 const SUBSCRIPTION_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   free: { label: 'Gratuit', color: '#6B5D56', bg: 'bg-gray-light/30' },
@@ -59,6 +92,12 @@ export function Profile() {
   const [referralSuccess, setReferralSuccess] = useState(false);
   const [referralStats, setReferralStats] = useState({ total: 0, rewarded: 0, pending: 0 });
   const [copied, setCopied] = useState(false);
+  const [showTasteModal, setShowTasteModal] = useState(false);
+  const [prefStyle, setPrefStyle] = useState(0);
+  const [prefBudget, setPrefBudget] = useState(1);
+  const [prefExperience, setPrefExperience] = useState(0);
+  const [savingTaste, setSavingTaste] = useState(false);
+  const [prefsToast, setPrefsToast] = useState(false);
 
   const tasteProfile = (profile?.taste_profile as Record<string, unknown>) || {};
   const localProfile = { ...tasteProfile };
@@ -139,6 +178,51 @@ export function Profile() {
     }
   };
 
+  const openTasteModal = () => {
+    const ft = (localProfile.favoriteTypes as string[] | undefined) || [];
+    setPrefStyle(deriveStyleIndex(ft));
+    const b = (localProfile.budget as string) || 'medium';
+    const bi = BUDGET_IDS.indexOf(b as (typeof BUDGET_IDS)[number]);
+    setPrefBudget(bi >= 0 ? bi : 1);
+    const ex = (localProfile.experience as string) || 'debutant';
+    const ei = EXPERIENCE_IDS.indexOf(ex as (typeof EXPERIENCE_IDS)[number]);
+    setPrefExperience(ei >= 0 ? ei : 0);
+    setShowTasteModal(true);
+  };
+
+  const saveTastePreferences = async () => {
+    const fav = TASTE_STYLE_OPTIONS[prefStyle].favoriteTypes;
+    const typesForScore = [...new Set(fav.map((t) => TYPE_TO_MATCHSCORE[t]).filter(Boolean))];
+    const exp = EXPERIENCE_IDS[prefExperience];
+    const expertiseForScore = exp === 'debutant' ? 'beginner' : exp === 'expert' ? 'expert' : exp;
+
+    const merged: Record<string, unknown> = {
+      ...tasteProfile,
+      favoriteTypes: [...fav],
+      types: typesForScore,
+      budget: BUDGET_IDS[prefBudget],
+      experience: exp,
+      expertise: expertiseForScore,
+    };
+
+    setSavingTaste(true);
+    try {
+      if (user?.id) {
+        const { error } = await updateProfile(user.id, { taste_profile: merged });
+        if (error) throw error;
+        await refreshProfile?.();
+      }
+      localStorage.setItem('sommely_profile', JSON.stringify({ ...localProfile, ...merged }));
+      setShowTasteModal(false);
+      setPrefsToast(true);
+      setTimeout(() => setPrefsToast(false), 3200);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingTaste(false);
+    }
+  };
+
   const copyReferralCode = async () => {
     if (profile?.referral_code) {
       await navigator.clipboard.writeText(profile.referral_code);
@@ -197,11 +281,12 @@ export function Profile() {
                 </span>
               </div>
               <button
-                onClick={() => navigate('/onboarding')}
+                type="button"
+                onClick={openTasteModal}
                 className="flex items-center gap-1.5 bg-cream border border-gray-light rounded-full px-3 py-1.5 text-xs text-gray-dark hover:text-burgundy-dark transition-colors cursor-pointer"
               >
                 <Edit3 size={12} />
-                Modifier mon profil
+                Modifier mes goûts
               </button>
             </div>
 
@@ -369,7 +454,8 @@ export function Profile() {
             ))}
             {!localProfile.budget && !localProfile.expertise && (
               <button
-                onClick={() => navigate('/onboarding')}
+                type="button"
+                onClick={openTasteModal}
                 className="w-full py-3 border-2 border-dashed border-gray-light rounded-xl text-sm text-gray-dark hover:border-burgundy-dark hover:text-burgundy-dark transition-colors bg-transparent cursor-pointer"
               >
                 + Compléter mon profil pour de meilleures recommandations
@@ -688,10 +774,11 @@ export function Profile() {
                 </div>
                 {subscriptionTier !== 'lifetime' && (
                   <button
-                    onClick={() => setShowSaveFlow(true)}
-                    className="text-xs text-gray-dark hover:text-danger transition-colors bg-transparent border-none cursor-pointer underline"
+                    type="button"
+                    onClick={() => navigate('/premium')}
+                    className="text-xs text-gray-dark hover:text-burgundy-dark transition-colors bg-transparent border-none cursor-pointer underline"
                   >
-                    Gérer ou annuler mon abonnement
+                    Gérer mon abonnement
                   </button>
                 )}
               </div>
@@ -788,6 +875,112 @@ export function Profile() {
             </motion.div>
           </motion.div>
         )}
+
+        {showTasteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black/60 flex items-end justify-center z-[70] px-4 pb-safe pb-8"
+            style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
+            onClick={() => !savingTaste && setShowTasteModal(false)}
+          >
+            <motion.div
+              initial={{ y: 120 }}
+              animate={{ y: 0 }}
+              className="rounded-3xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl"
+              style={{ background: 'var(--bg-card)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display text-lg font-bold text-black-wine">Mes goûts</h3>
+                <button
+                  type="button"
+                  onClick={() => !savingTaste && setShowTasteModal(false)}
+                  className="p-2 rounded-full hover:bg-gray-light/30 border-none bg-transparent cursor-pointer"
+                  aria-label="Fermer"
+                >
+                  <X size={20} color="#6B5D56" />
+                </button>
+              </div>
+              <p className="text-xs text-gray-dark mb-5">Trois réglages, zéro prise de tête.</p>
+
+              <div className="space-y-5 mb-6">
+                <div>
+                  <div className="flex justify-between text-sm font-semibold text-black-wine mb-2">
+                    <span>Préférence</span>
+                    <span>{TASTE_STYLE_OPTIONS[prefStyle].label}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={3}
+                    step={1}
+                    value={prefStyle}
+                    onChange={(e) => setPrefStyle(Number(e.target.value))}
+                    className="w-full accent-burgundy-dark"
+                  />
+                  <p className="text-xs text-gray-dark mt-1">Rouge → Blanc → Rosé → Bulles</p>
+                </div>
+                <div>
+                  <div className="flex justify-between text-sm font-semibold text-black-wine mb-2">
+                    <span>Budget habituel</span>
+                    <span>{BUDGET_LABELS[prefBudget]}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={3}
+                    step={1}
+                    value={prefBudget}
+                    onChange={(e) => setPrefBudget(Number(e.target.value))}
+                    className="w-full accent-burgundy-dark"
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between text-sm font-semibold text-black-wine mb-2">
+                    <span>Niveau</span>
+                    <span>{EXPERIENCE_LABELS[prefExperience]}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={3}
+                    step={1}
+                    value={prefExperience}
+                    onChange={(e) => setPrefExperience(Number(e.target.value))}
+                    className="w-full accent-burgundy-dark"
+                  />
+                  <p className="text-xs text-gray-dark mt-1">Débutant → Expert</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={savingTaste}
+                onClick={saveTastePreferences}
+                className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white border-none cursor-pointer disabled:opacity-60"
+                style={{ background: 'linear-gradient(135deg, #722F37, #5a1e24)' }}
+              >
+                {savingTaste ? 'Enregistrement…' : 'Enregistrer'}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+
+        <AnimatePresence>
+          {prefsToast && (
+            <motion.div
+              key="prefs-toast"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[80] px-5 py-3 rounded-2xl shadow-lg text-sm font-semibold text-white"
+              style={{ background: '#2E7D32' }}
+            >
+              Préférences mises à jour ✅
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {showSettings && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/60 flex items-end justify-center z-[60] px-6 pb-24" onClick={() => setShowSettings(false)}>

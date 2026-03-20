@@ -40,6 +40,14 @@ import { useAuth } from '../context/AuthContext';
 import { getCaveBottles, getScansCountTotal } from '../lib/supabase';
 import { useTheme } from '../context/ThemeContext';
 
+const HOOKS = [
+  'Votre beau-père choisit toujours le vin ? Plus pour longtemps.',
+  "85% des gens ne savent pas ce qu'ils boivent. Vous, si.",
+  'Ce resto vous fait payer ce vin 300% plus cher. On vous dit lequel.',
+  "Vivino vous donne le score de 2 millions d'inconnus. Nous, le vôtre.",
+  'Scannez avant de commander. Ou continuez à dire "je prends le même".',
+];
+
 export function Home() {
   const navigate = useNavigate();
   const { search } = useLocation();
@@ -76,6 +84,7 @@ export function Home() {
   const [recentWine, setRecentWine] = useState<{ name: string; year?: number; region?: string } | null>(null);
   const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * WINE_TIPS.length));
   const tipIndexRef = useRef(tipIndex);
+  const [hookIndex, setHookIndex] = useState(0);
 
   const firstName = (profile?.taste_profile as any)?.firstName || profile?.name?.split(' ')[0] || '';
   const isPremium = subscriptionState.isPro || subscriptionState.isTrial;
@@ -99,6 +108,13 @@ export function Home() {
     const interval = setInterval(() => {
       setTipIndex(i => (i + 1) % WINE_TIPS.length);
     }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHookIndex(i => (i + 1) % HOOKS.length);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
@@ -338,6 +354,22 @@ export function Home() {
             </div>
           </div>
         </motion.button>
+
+        <div className="relative min-h-[40px] flex items-center justify-center px-2">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={hookIndex}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}
+              className="text-center"
+              style={{ fontStyle: 'italic', color: '#722F37', fontSize: 13, lineHeight: 1.35 }}
+            >
+              {HOOKS[hookIndex]}
+            </motion.p>
+          </AnimatePresence>
+        </div>
 
         {/* STATS */}
         {(scanCount > 0 || caveBottles > 0) && (

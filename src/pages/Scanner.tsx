@@ -37,6 +37,7 @@ export function Scanner() {
   const [manualQuery, setManualQuery] = useState('');
   const [currentTip, setCurrentTip] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [scanToast, setScanToast] = useState('');
 
   const tips = [
     "Assurez-vous que l'étiquette est bien éclairée",
@@ -60,6 +61,16 @@ export function Scanner() {
     }
     return () => stopCamera();
   }, [profile?.taste_profile]);
+
+  useEffect(() => {
+    const hint = (location.state as { scanHint?: string })?.scanHint;
+    if (hint) {
+      setScanToast(hint);
+      const t = setTimeout(() => setScanToast(''), 4500);
+      navigate(location.pathname, { replace: true, state: {} });
+      return () => clearTimeout(t);
+    }
+  }, [location.state, location.pathname, navigate]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -265,7 +276,12 @@ export function Scanner() {
 
       // Score personnalisé selon profil utilisateur
       const scoreBreakdown = calculatePersonalizedScore(wineAnalysis, enrichedData, userProfile);
-      const explanation = generateDetailedExplanation(wineAnalysis, scoreBreakdown, userProfile);
+      const explanation = generateDetailedExplanation(
+        wineAnalysis,
+        scoreBreakdown,
+        userProfile,
+        enrichedData.avgPrice as number | undefined
+      );
 
       // Accords mets-vins : structure { perfect, good, avoid } pour WineResult
       const foodPairingsObj = wineAnalysis.foodPairings
@@ -589,6 +605,12 @@ export function Scanner() {
       {!isPremium && scansRemaining === 1 && scanState === 'idle' && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-warning/10 border-b border-warning/30 px-6 py-2.5 text-center">
           <p className="text-warning text-xs font-semibold">⚠️ Il vous reste 1 scan gratuit ce mois-ci</p>
+        </motion.div>
+      )}
+
+      {scanToast && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="bg-burgundy-dark border-b border-white/10 px-6 py-2.5 text-center z-30">
+          <p className="text-white text-xs font-semibold">{scanToast}</p>
         </motion.div>
       )}
 

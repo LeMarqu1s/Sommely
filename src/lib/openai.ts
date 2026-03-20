@@ -216,7 +216,17 @@ ALCOOL - Règles strictes :
   * Vin de pays léger : 11.5-12.5
 - Si visible sur étiquette, utiliser la valeur exacte de l'étiquette
 
-Si pas une étiquette de vin : {"error": "not_wine", "confidence": 0}`;
+Si pas une étiquette de vin : {"error": "not_wine", "confidence": 0}
+
+NOTE — Score & « pourquoi ce score » (hors de ce JSON) :
+L'application calcule le score personnalisé après analyse, puis génère une explication courte (2–3 phrases max).
+Style attendu pour ce texte côté app : honnête, un peu sarcastique, jamais condescendant.
+Exemples de ton :
+- Score élevé : « Ce vin correspond exactement à ce que vous aimez. Acheté en cave à 18€, servi à 85€ au resto. Vous méritez de savoir. »
+- Score moyen-bas : « Techniquement potable. Mais pour votre profil, c'est comme mettre du ketchup sur du foie gras. »
+- Score intermédiaire : « Un bon vin. Juste pas votre vin. La différence est importante. »
+Toujours mentionner un élément concret : prix, profil, ou caractéristique. Jamais de jargon oenologique sans explication.`;
+
 
 // ─── PROMPT CARTE DES VINS ─────────────────────────────────
 

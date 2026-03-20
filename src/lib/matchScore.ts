@@ -152,24 +152,56 @@ export function calculatePersonalizedScore(
   return { total, typeMatch, budgetMatch, intensityMatch, aromaMatch, sweetnessMatch, regionBonus, explanation };
 }
 
+/**
+ * Texte « Pourquoi ce score » — ton Sommely : honnête, un peu sarcastique, jamais condescendant.
+ * Toujours un élément concret (prix, profil, caractéristique du vin). Pas de jargon oenologique obscur.
+ */
 export function generateDetailedExplanation(
-  _wine: WineAnalysis,
+  wine: WineAnalysis,
   score: ScoreBreakdown,
-  profile: UserProfile | null
+  profile: UserProfile | null,
+  avgPrice?: number
 ): string {
-  if (!profile) return 'Complétez votre profil pour une explication personnalisée.';
-
-  const parts = [...score.explanation];
-
-  if (score.total >= 85) {
-    parts.unshift('Excellent choix pour vous !');
-  } else if (score.total >= 70) {
-    parts.unshift('Ce vin devrait vous plaire.');
-  } else if (score.total >= 50) {
-    parts.unshift('Ce vin peut vous convenir, mais n\'est pas votre style habituel.');
-  } else {
-    parts.unshift('Ce vin ne correspond pas vraiment à vos préférences.');
+  if (!profile) {
+    return 'Sans profil, on note le vin ; avec vous, on le note pour vous. Complétez vos goûts — promis, on ne juge pas.';
   }
 
-  return parts.slice(0, 3).join(' ');
+  const total = score.total;
+  const type = (wine.type || 'vin').toLowerCase();
+  const region = wine.region?.trim() || '';
+  const price = typeof avgPrice === 'number' && avgPrice > 0 ? Math.round(avgPrice) : null;
+  const budgetLabel =
+    profile.budget === 'low'
+      ? 'moins de 10€'
+      : profile.budget === 'medium'
+        ? '10–20€'
+        : profile.budget === 'high'
+          ? '20–45€'
+          : profile.budget === 'premium'
+            ? '45€ et plus'
+            : '';
+
+  const priceBit =
+    price != null
+      ? ` À environ ${price}€, c'est ${total >= 70 ? 'cohérent' : 'discutable'} avec votre budget${budgetLabel ? ` (${budgetLabel})` : ''}.`
+      : '';
+
+  const regionBit = region ? ` ${region} — on sait pourquoi ça vous parle (ou pas).` : '';
+
+  let hook = '';
+  if (total >= 85) {
+    hook = `Ce ${type} colle à votre profil comme un bouchon dans une bonne bouteille.${priceBit}${regionBit} Acheté en boutique, servi trois fois le prix au resto — vous méritez de savoir.`;
+  } else if (total >= 60) {
+    hook = `Techniquement buvable. Pour votre profil, c'est plutôt « presque » — un bon vin, pas forcément votre vin.${priceBit}${regionBit}`;
+  } else {
+    hook = `Soyons honnêtes : pour ce que vous aimez, là on est sur du décalage.${priceBit}${regionBit} Pas la cata, mais vous pouvez mieux faire — et votre cave le saura.`;
+  }
+
+  const extra = score.explanation[0]
+    ? ` ${score.explanation[0]}`
+    : '';
+
+  const out = (hook + extra).replace(/\s+/g, ' ').trim();
+  if (out.length > 420) return `${out.slice(0, 417)}…`;
+  return out;
 }

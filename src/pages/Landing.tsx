@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, useScroll, useTransform, useSpring, useInView, animate } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 import { ArrowRight, Star, CheckCircle2, Camera, MessageCircle, TrendingUp, Wine, Zap } from 'lucide-react';
+import { redirectToCheckout } from '../utils/stripe';
 
 // ── Animated counter ──────────────────────────────────────
 function Counter({ to, suffix = '', duration = 2 }: { to: number; suffix?: string; duration?: number }) {
@@ -124,6 +125,9 @@ function FeatureRow({ icon, tag, title, desc, stat, statLabel, reverse, delay, d
 // ── Main ──────────────────────────────────────────────────
 export function Landing() {
   const navigate = useNavigate();
+  const handleTryFree = () => {
+    navigate('/premium');
+  };
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const smooth = useSpring(scrollYProgress, { stiffness: 80, damping: 25 });
@@ -149,7 +153,7 @@ export function Landing() {
             ))}
           </div>
           <motion.button whileHover={{ opacity: 0.8 }} whileTap={{ scale: 0.97 }}
-            onClick={() => navigate('/auth')}
+            onClick={handleTryFree}
             className="text-xs font-semibold px-4 py-1.5 rounded-full text-white border-none cursor-pointer"
             style={{ background: '#1d1d1f' }}>
             Essayer
@@ -200,7 +204,7 @@ export function Landing() {
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
             className="flex flex-col sm:flex-row items-center gap-3 mb-8 justify-center lg:justify-start">
             <motion.button whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}
-              onClick={() => navigate('/auth')}
+              onClick={handleTryFree}
               className="flex items-center gap-2 px-7 py-3.5 rounded-full font-semibold text-sm text-white border-none cursor-pointer"
               style={{ background: 'linear-gradient(145deg, #8B4049, #722F37)', boxShadow: '0 4px 20px rgba(114,47,55,0.3), inset 0 1px 0 rgba(255,255,255,0.12)' }}>
               Essayer gratuitement <ArrowRight size={14}/>
@@ -373,7 +377,7 @@ export function Landing() {
                   ))}
                 </div>
                 <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-                  onClick={() => navigate('/auth')}
+                  onClick={() => redirectToCheckout('monthly')}
                   className="w-full py-2.5 rounded-2xl font-semibold text-sm cursor-pointer"
                   style={{ color: 'white', border: '1px solid rgba(255,255,255,0.18)', background: 'transparent' }}>
                   Commencer →
@@ -414,7 +418,7 @@ export function Landing() {
                     ))}
                   </div>
                   <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-                    onClick={() => navigate('/auth')}
+                    onClick={() => redirectToCheckout('annual')}
                     className="w-full py-2.5 rounded-2xl font-bold text-sm cursor-pointer border-none"
                     style={{ background: 'linear-gradient(135deg, #D4AF37, #c9a227)', color: '#1d1d1f' }}>
                     Commencer →
@@ -500,7 +504,7 @@ export function Landing() {
               Rejoignez +2 400 amateurs qui ne choisissent plus au hasard.
             </p>
             <motion.button whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}
-              onClick={() => navigate('/auth')}
+              onClick={handleTryFree}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-bold text-sm border-none cursor-pointer"
               style={{ background: 'linear-gradient(135deg, #D4AF37, #c9a227)', color: '#1d1d1f', boxShadow: '0 8px 32px rgba(212,175,55,0.2)' }}>
               Essayer gratuitement <ArrowRight size={14}/>
