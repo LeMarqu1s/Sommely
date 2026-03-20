@@ -208,14 +208,14 @@ export function MenuScanner() {
 
       if (wines.length === 0) {
         setScanState('error');
-        setErrorMessage("Aucun vin détecté — essayez de photographier la carte plus près et plus droite");
+        setErrorMessage("Aucun vin détecté — photographiez la carte plus près et bien droite");
         return;
       }
 
       const parsed = winesToMenuAnalysis(wines);
       if (!parsed.bestValue) {
         setScanState('error');
-        setErrorMessage("Aucun vin détecté — essayez de photographier la carte plus près et plus droite");
+        setErrorMessage("Aucun vin détecté — photographiez la carte plus près et bien droite");
         return;
       }
 

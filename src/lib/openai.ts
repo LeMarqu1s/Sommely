@@ -227,22 +227,19 @@ Format exact requis : tableau JSON d'objets vin.`;
 
 const MENU_USER = `Analyse cette carte des vins. Pour chaque vin visible :
 {
-  "name": string (nom complet du vin),
-  "appellation": string (ex: Bordeaux, Bourgogne, Champagne),
-  "vintage": number | null (millésime si visible),
-  "restaurant_price": number (prix restaurant si visible, sinon 0),
-  "estimated_market_price": number (prix estimé en cave/supermarché),
-  "margin_percent": number (marge approximative du restaurant en %),
-  "score": number (1-100 basé sur réputation, appellation, millésime),
-  "recommendation": "excellent" | "good" | "skip",
-  "reason": string (1 phrase max pourquoi recommandé ou non)
+  name: string,
+  appellation: string,
+  vintage: number | null,
+  restaurant_price: number,
+  estimated_market_price: number,
+  margin_percent: number,
+  score: number (1-100),
+  recommendation: 'excellent' | 'good' | 'skip',
+  reason: string (1 phrase max)
 }
-
 Si tu ne peux pas lire clairement un élément, mets null.
 Si la photo n'est pas une carte des vins, retourne [].
-Analyse TOUS les vins visibles sur la carte.
-
-Réponds avec un objet JSON : {"wines": [ tableau des vins ]}. Si pas une carte des vins, {"wines": []}.`;
+Analyse TOUS les vins visibles.`;
 
 export interface MenuWineItem {
   name: string;
@@ -289,6 +286,7 @@ export async function analyzeWineMenu(imageBase64: string): Promise<MenuWineItem
     return [];
   }
 
+  // Accepte tableau direct ou { wines: [...] }
   const arr = Array.isArray(parsed) ? parsed : parsed?.wines;
   if (!Array.isArray(arr)) return [];
   return arr.filter((w): w is MenuWineItem => w && typeof w.name === 'string');
