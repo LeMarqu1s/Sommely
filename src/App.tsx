@@ -34,7 +34,7 @@ const Cave = lazy(() => import('./pages/Cave').then(m => ({ default: m.Cave })))
 const WineResult = lazy(() => import('./pages/WineResult').then(m => ({ default: m.WineResult })));
 const Sommelier = lazy(() => import('./pages/Sommelier').then(m => ({ default: m.Sommelier })));
 
-const NAV_HIDDEN = ['/', '/onboarding', '/privacy', '/result', '/share', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/success', '/cave-meal', '/shop', '/vin'];
+const NAV_HIDDEN = ['/', '/onboarding', '/privacy', '/result', '/share', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/auth/confirm', '/success', '/cave-meal', '/shop', '/vin'];
 
 function PushAutoSubscribe() {
   const { user, profile } = useAuth();
@@ -79,6 +79,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
           <Route path="/" element={<Landing />} />
           <Route path="/home" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/confirm" element={<Auth />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/invite/:code" element={<Invite />} />
           <Route path="/onboarding" element={<Onboarding />} />

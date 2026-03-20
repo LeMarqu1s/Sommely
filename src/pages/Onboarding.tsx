@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Star, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { updateProfile } from '../lib/supabase';
+import { updateProfile, supabase } from '../lib/supabase';
 
 // ─── TYPES ────────────────────────────────────────────────
 
@@ -159,6 +159,13 @@ export function Onboarding() {
       await updateProfile(user.id, { name: firstName, taste_profile: tasteProfile, onboarding_completed: true });
       localStorage.setItem('sommely_onboarding_done', 'true');
       await refreshProfile();
+      setIsOnboardingInProgress(false);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
     } else {
       localStorage.setItem('sommely_profile', JSON.stringify(tasteProfile));
       localStorage.setItem('sommely_onboarding_done', 'true');

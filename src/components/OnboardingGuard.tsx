@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const PUBLIC_ROUTES = ['/onboarding', '/auth', '/success', '/privacy', '/', '/share', '/invite'];
+const PUBLIC_ROUTES = ['/onboarding', '/auth', '/auth/confirm', '/success', '/privacy', '/', '/share', '/invite'];
+const ONBOARDING_ROUTES = ['/onboarding'];
 
 export function OnboardingGuard() {
   const navigate = useNavigate();
@@ -13,7 +14,10 @@ export function OnboardingGuard() {
     // Routes publiques — pas de vérification
     if (PUBLIC_ROUTES.some(p => pathname === p || pathname.startsWith(p + '/'))) return;
 
-    // OAuth en cours — ne pas interrompre
+    // Onboarding : bypass guard mais session requise pour le contenu
+    if (ONBOARDING_ROUTES.some(p => pathname === p || pathname.startsWith(p + '/'))) return;
+
+    // OAuth / magic link en cours — ne pas interrompre
     if (search.includes('code=') || window.location.hash.includes('access_token')) return;
 
     // Attendre fin du chargement

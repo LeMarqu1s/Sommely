@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase, getProfile, getSubscription, getScansCountThisMonth, upsertProfile, applyReferralCode } from '../lib/supabase';
 import type { Profile, Subscription } from '../lib/supabase';
@@ -20,6 +20,8 @@ interface AuthContextType {
   subscription: Subscription | null;
   subscriptionState: SubscriptionState;
   isLoading: boolean;
+  isOnboardingInProgress: boolean;
+  setIsOnboardingInProgress: (v: boolean) => void;
   refreshProfile: () => Promise<void>;
   refreshSubscription: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -49,6 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [subscriptionState, setSubscriptionState] = useState<SubscriptionState>(defaultSubscriptionState);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOnboardingInProgress, setIsOnboardingInProgress] = useState(false);
+  const isOnboardingRef = useRef(false);
+  isOnboardingRef.current = isOnboardingInProgress;
 
   const refreshProfile = useCallback(async () => {
     if (!user?.id) return;
@@ -153,7 +158,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription: sub },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT' && isOnboardingRef.current) return;
+
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -173,6 +180,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(p ?? null);
           if (p?.onboarding_completed) {
             localStorage.setItem('sommely_onboarding_done', 'true');
+          } else if (event === 'SIGNED_IN') {
+            window.location.href = '/onboarding';
+            return;
           }
 
           const pendingRef = localStorage.getItem('pending_referral');
@@ -262,7 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/home`,
+        emailRedirectTo: `${window.location.origin}/auth`,
       },
     });
     return { error };
@@ -320,6 +330,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         subscription,
         subscriptionState,
         isLoading,
+        isOnboardingInProgress,
+        setIsOnboardingInProgress,
         refreshProfile,
         refreshSubscription,
         signInWithGoogle,
