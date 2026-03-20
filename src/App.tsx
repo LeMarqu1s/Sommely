@@ -27,14 +27,14 @@ import { BottomNav } from './components/BottomNav';
 import { GlobalLogoHeader } from './components/GlobalLogoHeader';
 import { Privacy } from './pages/Privacy';
 import { ShareResult } from './pages/ShareResult';
-import { WinePage } from './pages/WinePage';
+import WinePage from './pages/WinePage';
 import { InstallPrompt } from './components/InstallPrompt';
 
 const Cave = lazy(() => import('./pages/Cave').then(m => ({ default: m.Cave })));
 const WineResult = lazy(() => import('./pages/WineResult').then(m => ({ default: m.WineResult })));
 const Sommelier = lazy(() => import('./pages/Sommelier').then(m => ({ default: m.Sommelier })));
 
-const NAV_HIDDEN = ['/', '/onboarding', '/privacy', '/result', '/share', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/auth/confirm', '/success', '/cave-meal', '/shop'];
+const NAV_HIDDEN = ['/', '/onboarding', '/privacy', '/result', '/share', '/sommelier', '/menu', '/food-pairing', '/investment', '/auth', '/auth/callback', '/auth/confirm', '/success', '/cave-meal', '/shop', '/vin'];
 
 function PushAutoSubscribe() {
   const { user, profile } = useAuth();
