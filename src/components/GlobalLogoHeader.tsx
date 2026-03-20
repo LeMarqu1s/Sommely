@@ -35,7 +35,7 @@ export function GlobalLogoHeader() {
           gap: '6px',
           margin: '8px 14px',
           padding: '8px 10px',
-          background: 'rgba(44, 24, 16, 0.82)',
+          background: '#722F37',
           borderRadius: '999px',
           border: '1px solid rgba(255,255,255,0.18)',
           cursor: 'pointer',

@@ -29,10 +29,11 @@ export function Premium() {
     {
       id: 'annual' as Plan,
       label: 'Annuel',
-      badge: '⭐ Meilleure valeur',
+      badge: 'Meilleure valeur',
       price: formatPrice(47.99),
       period: '/an',
-      subline: `Soit ${formatPrice(4)} /mois · Économisez ${formatPrice(60)}`,
+      subline: `Soit ${formatPrice(4)}/mois · Économisez ${formatPrice(60)}`,
+      sublineGreen: true,
       highlight: true,
       cta: 'Commencer maintenant →',
     },
@@ -43,6 +44,7 @@ export function Premium() {
       price: formatPrice(8.99),
       period: '/mois',
       subline: 'Sans engagement · Résiliable à tout moment',
+      sublineGreen: false,
       highlight: false,
       cta: 'Essayer un mois',
     },
@@ -184,8 +186,8 @@ export function Premium() {
               whileTap={{ scale: 0.98 }}
               className={`w-full text-left rounded-2xl border-2 transition-all relative bg-white ${
                 plan.highlight
-                  ? 'p-5 shadow-md cursor-pointer'
-                  : 'p-4 cursor-pointer'
+                  ? 'p-5 shadow-md cursor-pointer min-h-[88px]'
+                  : 'p-5 cursor-pointer min-h-[88px]'
               } ${
                 selectedPlan === plan.id
                   ? plan.highlight ? 'border-burgundy-dark shadow-lg' : 'border-burgundy-dark shadow-md'
@@ -193,14 +195,14 @@ export function Premium() {
               }`}
             >
               {plan.badge && (
-                <span className="absolute -top-3 left-4 text-xs font-bold px-3 py-1 rounded-full bg-burgundy-dark text-white">
+                <span className="absolute -top-3 left-4 text-xs font-bold px-3 py-1 rounded-full bg-gold text-black-wine">
                   {plan.badge}
                 </span>
               )}
-              <div className={`flex items-center justify-between ${plan.highlight ? 'pr-8' : 'pr-6'}`}>
+              <div className={`flex items-center justify-between ${plan.highlight ? 'pr-8' : 'pr-6'} min-h-[72px]`}>
                 <div>
                   <p className={`font-semibold text-black-wine ${plan.highlight ? 'text-base' : 'text-sm'}`}>{plan.label}</p>
-                  <p className={`text-xs mt-0.5 ${plan.highlight ? 'text-green-700 font-medium' : 'text-gray-dark'}`}>{plan.subline}</p>
+                  <p className={`text-xs mt-0.5 ${plan.sublineGreen ? 'text-green-700 font-medium' : 'text-gray-dark'}`}>{plan.subline}</p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
                   <span style={{ fontSize: plan.highlight ? '28px' : '24px', fontWeight: 900, color: '#722F37' }}>{plan.price}</span>
