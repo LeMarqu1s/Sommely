@@ -643,6 +643,7 @@ export function WineResult() {
             Scanner une autre bouteille
           </button>
 
+          {/* BOUTIQUE EN STANDBY — réactiver après lancement
           <button
             onClick={() => setShowPriceSheet(true)}
             className="w-full py-4 bg-gold text-black-wine rounded-2xl font-semibold text-base flex items-center justify-center gap-3 hover:bg-gold-light active:scale-95 transition-all duration-200 shadow-md border-none cursor-pointer"
@@ -650,6 +651,7 @@ export function WineResult() {
             <ShoppingBag size={20} />
             Acheter ce vin 🛒
           </button>
+          */}
 
           <button
             onClick={handleFavorite}

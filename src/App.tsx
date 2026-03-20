@@ -92,7 +92,7 @@ function AppContent({ onReady }: { onReady?: () => void }) {
           <Route path="/premium" element={<Premium />} />
           <Route path="/sommelier" element={<Sommelier />} />
           <Route path="/cave-meal" element={<CaveMeal />} />
-          <Route path="/shop" element={<WineShop />} />
+          {/* <Route path="/shop" element={<WineShop />} /> */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/success" element={<Success />} />
           <Route path="/privacy" element={<Privacy />} />

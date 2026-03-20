@@ -178,6 +178,7 @@ export function Home() {
       tag: 'Nouveau',
       tagColor: 'bg-orange-100 text-orange-700',
     },
+    /* BOUTIQUE EN STANDBY — réactiver après lancement
     {
       id: 'shop',
       emoji: '🛒',
@@ -189,6 +190,7 @@ export function Home() {
       tag: 'Offres',
       tagColor: 'bg-purple-100 text-purple-700',
     },
+    */
   ];
 
   if (showLoader) {

@@ -36,7 +36,7 @@ export function Success() {
     '📋 Scan menu restaurant',
     '📈 IA prédictive investissement',
     '👨‍🍳 Ce soir je cuisine...',
-    '🛒 Boutique & Parrainage',
+    // '🛒 Boutique & Parrainage', // STANDBY
   ];
 
   return (

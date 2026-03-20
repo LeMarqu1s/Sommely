@@ -58,7 +58,7 @@ export function Premium() {
     { icon: <Check size={18} />, title: 'Scan menu restaurant', desc: 'Meilleur rapport qualité-prix sur toute carte' },
     { icon: <Check size={18} />, title: 'Accords mets-vins', desc: 'Suggestions personnalisées pour chaque plat' },
     { icon: <Check size={18} />, title: 'Ce soir je cuisine...', desc: 'Quelle bouteille ouvrir de votre cave ?' },
-    { icon: <Check size={18} />, title: 'Boutique & Parrainage', desc: 'Offres exclusives + invitez vos amis' },
+    // { icon: <Check size={18} />, title: 'Boutique & Parrainage', desc: 'Offres exclusives + invitez vos amis' }, // STANDBY
   ];
 
   if (isPro && !isTrial) {
