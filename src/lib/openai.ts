@@ -343,6 +343,73 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
   return enriched;
 }
 
+// ─── ANALYSE AVEC VIN DÉJÀ CONNU (code-barres) ─────────────
+
+export interface BarcodeProduct {
+  name: string;
+  vintage: string | null;
+  producer: string | null;
+}
+
+const KNOWN_WINE_PROMPT = (product: BarcodeProduct) => `Tu es un expert sommelier. Le vin scanné est identifié par code-barres :
+- Nom : ${product.name}
+${product.producer ? `- Producteur : ${product.producer}` : ''}
+${product.vintage ? `- Millésime/Info : ${product.vintage}` : ''}
+
+Utilise ces informations pour donner un score et une analyse PRÉCISES. L'image de l'étiquette confirme l'identification.
+Réponds UNIQUEMENT en JSON valide, sans markdown. Utilise le même schéma que pour l'analyse d'étiquette standard.`;
+
+/** Analyse l'image avec le nom du vin déjà connu (depuis code-barres). Plus fiable. */
+export async function analyzeWithKnownWine(
+  imageBase64: string,
+  product: BarcodeProduct
+): Promise<WineAnalysis> {
+  const optimized = await optimizeImageForAI(imageBase64, 480, 0.7);
+  const systemPrompt = 'Expert sommelier. Réponds UNIQUEMENT en JSON valide.';
+  const userPrompt = KNOWN_WINE_PROMPT(product) + '\n\n' + WINE_EXPERT_PROMPT;
+
+  const response = await fetchOpenAI({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      {
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${optimized}`, detail: 'auto' } },
+          { type: 'text', text: userPrompt }
+        ]
+      }
+    ],
+    max_tokens: 600,
+    temperature: 0.2,
+    response_format: { type: 'json_object' }
+  });
+
+  let data: Record<string, any>;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(`Réponse invalide du serveur (HTTP ${response.status}). Réessayez.`);
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error?.message || `Erreur ${response.status}`);
+  }
+
+  const content = data.choices?.[0]?.message?.content || '{}';
+  let parsed = JSON.parse(content) as WineAnalysis & { error?: string };
+  if (parsed.error === 'not_wine') {
+    return parsed;
+  }
+  if (parsed.grapes != null && typeof parsed.grapes === 'string') {
+    parsed.grapes = (parsed.grapes as string).split(/[,;]/).map((s: string) => s.trim()).filter(Boolean);
+  }
+  parsed.name = parsed.name || product.name;
+  parsed.producer = parsed.producer || product.producer || undefined;
+  const enriched = enrichMissingData(parsed);
+  return enriched;
+}
+
 // ─── ENRICHISSEMENT DONNÉES MANQUANTES ────────────────────
 
 function enrichMissingData(wine: WineAnalysis): WineAnalysis {

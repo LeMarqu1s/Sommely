@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, Search, Zap, AlertCircle, X, RotateCcw, ChevronRight } from 'lucide-react';
-import { analyzeWineLabel, enrichWineData } from '../lib/openai';
+import { BrowserBarcodeReader } from '@zxing/library';
+import { analyzeWineLabel, analyzeWithKnownWine, enrichWineData, type BarcodeProduct } from '../lib/openai';
 import { calculatePersonalizedScore, generateDetailedExplanation } from '../lib/matchScore';
 import { canScan } from '../utils/subscription';
 import { PaywallModal } from '../components/PaywallModal';
@@ -17,6 +18,39 @@ const ANALYSIS_STEPS = [
   { label: "🍷 Calcul de votre score...", emoji: '🍷' },
   { label: "✨ Finalisation...", emoji: '✨' },
 ];
+
+async function tryBarcodeFirst(imageDataUrl: string): Promise<string | null> {
+  try {
+    const reader = new BrowserBarcodeReader();
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = imageDataUrl;
+    await new Promise<void>(r => { img.onload = () => r(); });
+    const result = await reader.decodeFromImageElement(img);
+    return result?.getText() || null;
+  } catch {
+    return null;
+  }
+}
+
+async function lookupBarcode(ean: string): Promise<BarcodeProduct | null> {
+  try {
+    const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${ean}.json`);
+    const data = await res.json();
+    if (data.status === 1 && data.product?.product_name) {
+      const labels = data.product.labels;
+      const vintage = labels
+        ? (Array.isArray(labels) ? labels.join(', ') : String(labels))
+        : null;
+      return {
+        name: data.product.product_name,
+        vintage: vintage || null,
+        producer: data.product.brands || null,
+      };
+    }
+  } catch { /* ignore */ }
+  return null;
+}
 
 export function Scanner() {
   const navigate = useNavigate();
@@ -37,6 +71,7 @@ export function Scanner() {
   const [manualQuery, setManualQuery] = useState('');
   const [currentTip, setCurrentTip] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [analysisMessage, setAnalysisMessage] = useState<string | null>(null);
 
   const tips = [
     "Assurez-vous que l'étiquette est bien éclairée",
@@ -217,6 +252,7 @@ export function Scanner() {
     setScanState('analyzing');
     setAnalysisStep(0);
     setAnalysisProgress(0);
+    setAnalysisMessage('Lecture du code-barres...');
 
     // Feedback progressif : 0-2s, 2-5s, 5-8s, 8-12s — rend l'attente perçue plus courte
     const stepTimes = [0, 2, 5, 8, 12];
@@ -239,14 +275,28 @@ export function Scanner() {
     }, 20000);
 
     try {
-      console.log('🔍 Envoi de l\'image à OpenAI GPT-4o Vision...');
+      const dataUrl = `data:image/jpeg;base64,${base64}`;
 
-      // ═══════════════════════════════════════════════════════
-      // APPEL OPENAI VISION AVEC LA VRAIE IMAGE BASE64
-      // analyzeWineLabel() dans src/lib/openai.ts
-      // En prod Vercel : doit passer par /api/openai-proxy, pas VITE_OPENAI_API_KEY
-      // ═══════════════════════════════════════════════════════
-      const wineAnalysis = await analyzeWineLabel(base64);
+      // 1. Tenter code-barres d'abord
+      const ean = await tryBarcodeFirst(dataUrl);
+
+      let wineAnalysis;
+      if (ean) {
+        setAnalysisMessage('Code-barres detecte - identification rapide');
+        const product = await lookupBarcode(ean);
+
+        if (product) {
+          setAnalysisMessage('Calcul de votre score...');
+          setAnalysisStep(2);
+          wineAnalysis = await analyzeWithKnownWine(base64, product);
+        } else {
+          setAnalysisMessage("Analyse de l'etiquette en cours...");
+          wineAnalysis = await analyzeWineLabel(base64);
+        }
+      } else {
+        setAnalysisMessage("Analyse de l'etiquette en cours...");
+        wineAnalysis = await analyzeWineLabel(base64);
+      }
 
       setAnalysisStep(ANALYSIS_STEPS.length - 1);
       setAnalysisProgress(100);
@@ -384,6 +434,7 @@ export function Scanner() {
       setScanState('error');
     } finally {
       // Nettoyage garanti dans TOUS les cas (succès, erreur, timeout)
+      setAnalysisMessage(null);
       clearInterval(progressInterval);
       clearTimeout(analysisTimeout);
     }
@@ -427,6 +478,7 @@ export function Scanner() {
     setCameraError('');
     setAnalysisStep(0);
     setAnalysisProgress(0);
+    setAnalysisMessage(null);
     stopCamera();
   };
 
@@ -726,7 +778,7 @@ export function Scanner() {
                 </div>
               </div>
               <h2 className="font-display text-2xl font-bold text-white mb-2">Analyse IA en cours</h2>
-              <p className="text-white/40 text-xs mb-6">GPT-4o Vision lit votre étiquette...</p>
+              <p className="text-white/40 text-xs mb-6">{analysisMessage || ANALYSIS_STEPS[analysisStep]?.label || 'GPT-4o Vision lit votre étiquette...'}</p>
               <div className="w-full bg-white/10 rounded-full h-1.5 mb-6 overflow-hidden">
                 <motion.div className="h-full bg-gradient-to-r from-burgundy-dark to-gold rounded-full" animate={{ width: `${analysisProgress}%` }} transition={{ duration: 0.5 }} />
               </div>
@@ -736,7 +788,9 @@ export function Scanner() {
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${i < analysisStep ? 'bg-success' : i === analysisStep ? 'bg-gold' : 'bg-white/10'}`}>
                       {i < analysisStep ? <span className="text-white text-xs font-bold">✓</span> : i === analysisStep ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-3 h-3 rounded-full border-2 border-black-wine border-t-transparent" /> : <div className="w-2 h-2 rounded-full bg-white/30" />}
                     </div>
-                    <span className={`text-sm font-medium ${i <= analysisStep ? 'text-white' : 'text-white/25'}`}>{step.label}</span>
+                    <span className={`text-sm font-medium ${i <= analysisStep ? 'text-white' : 'text-white/25'}`}>
+                      {i === analysisStep && analysisMessage ? analysisMessage : step.label}
+                    </span>
                   </motion.div>
                 ))}
               </div>
