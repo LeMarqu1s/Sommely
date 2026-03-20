@@ -1,10 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Copy, ExternalLink, Gift, Star } from 'lucide-react';
+import { ArrowLeft, Copy, Gift, Star } from 'lucide-react';
 import { canAccessFeature } from '../utils/subscription';
 import { useAuth } from '../context/AuthContext';
 
+const COMING_SOON_CARD = (
+  <div style={{
+    background: 'white',
+    borderRadius: 16,
+    padding: 32,
+    textAlign: 'center',
+    border: '2px dashed #E8E0D8',
+  }}>
+    <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
+    <h3 style={{ color: '#2C1810', fontWeight: 700, marginBottom: 8 }}>
+      Bientôt disponible
+    </h3>
+    <p style={{ color: '#9E9E9E', fontSize: 14 }}>
+      Partenaires exclusifs, promotions et offres spéciales arrivent très bientôt.
+    </p>
+  </div>
+);
+
+/* STANDBY — contenu caché, card À venir affichée à la place
 const PARTNERS = [
   {
     id: 'idealwine',
@@ -58,35 +77,19 @@ const PROMOS = [
   { name: 'Domaine Laroche Chablis', region: 'Chablis', priceNormal: 18, pricePromo: 14, discount: 22, link: '#' },
   { name: 'Champagne Pierre Peters', region: 'Champagne', priceNormal: 52, pricePromo: 42, discount: 19, link: '#' },
 ];
-
-function generateReferralCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = 'SOMMELY-';
-  for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-  code += '-';
-  for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-  return code;
-}
+*/
 
 export function WineShop() {
   const navigate = useNavigate();
-  const { subscriptionState } = useAuth();
+  const { profile, subscriptionState } = useAuth();
   const [activeTab, setActiveTab] = useState<'partners' | 'promos' | 'referral'>('partners');
-  const [referralCode, setReferralCode] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
+  const code = profile?.referral_code || '';
 
-  useEffect(() => {
-    if (!canAccessFeature(subscriptionState, 'shop')) {
-      navigate('/premium');
-      return;
-    }
-    let code = localStorage.getItem('sommely_referral_code');
-    if (!code) {
-      code = generateReferralCode();
-      localStorage.setItem('sommely_referral_code', code);
-    }
-    setReferralCode(code);
-  }, [navigate, subscriptionState]);
+  if (!canAccessFeature(subscriptionState, 'shop')) {
+    navigate('/premium');
+    return null;
+  }
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -94,7 +97,7 @@ export function WineShop() {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const shareMessage = `Découvre Sommely, ton sommelier IA personnel ! 🍷 Scanne n'importe quel vin, obtiens un score personnalisé et des conseils d'expert. Utilise mon code ${referralCode} pour un mois Pro offert !`;
+  const shareMessage = code ? `Découvre Sommely, ton sommelier IA personnel ! 🍷 Scanne n'importe quel vin, obtiens un score personnalisé et des conseils d'expert. Utilise mon code ${code} pour un mois Pro offert !` : '';
 
   return (
     <div className="min-h-screen bg-cream font-body">
@@ -126,79 +129,14 @@ export function WineShop() {
         </div>
 
         {activeTab === 'partners' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-            <p className="text-sm text-gray-dark mb-4">
-              Nos partenaires vous offrent des réductions exclusives avec le code Sommely.
-            </p>
-            {PARTNERS.map((p) => (
-              <div
-                key={p.id}
-                className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-4 hover:shadow-md transition-all"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-burgundy-dark/5 flex items-center justify-center text-2xl">
-                    {p.logo}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-display font-bold text-black-wine">{p.name}</h3>
-                    <p className="text-xs text-gray-dark mb-2">{p.description}</p>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className="flex items-center gap-1.5 bg-gold/10 rounded-lg px-2 py-1">
-                        <span className="text-xs font-bold text-black-wine">{p.code}</span>
-                        <button
-                          onClick={() => copyToClipboard(p.code, `code-${p.id}`)}
-                          className="p-0.5 rounded hover:bg-gold/20 cursor-pointer"
-                        >
-                          <Copy size={12} color="#6B5D56" />
-                        </button>
-                      </div>
-                      <span className="text-xs font-semibold text-green-700">{p.discount}</span>
-                    </div>
-                  </div>
-                  <a
-                    href={p.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-9 h-9 rounded-full bg-burgundy-dark flex items-center justify-center flex-shrink-0 hover:bg-burgundy-medium transition-colors"
-                  >
-                    <ExternalLink size={16} color="white" />
-                  </a>
-                </div>
-              </div>
-            ))}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {COMING_SOON_CARD}
           </motion.div>
         )}
 
         {activeTab === 'promos' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-            <p className="text-sm text-gray-dark mb-4">Vins en promotion du moment chez nos partenaires.</p>
-            {PROMOS.map((promo, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-4 flex items-center gap-4"
-              >
-                <div className="w-14 h-14 rounded-xl bg-burgundy-dark/5 flex items-center justify-center text-2xl">
-                  🍷
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-black-wine">{promo.name}</p>
-                  <p className="text-xs text-gray-dark">{promo.region}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm text-gray-dark line-through">{promo.priceNormal}€</span>
-                    <span className="font-bold text-burgundy-dark">{promo.pricePromo}€</span>
-                    <span className="text-xs font-bold text-green-700">-{promo.discount}%</span>
-                  </div>
-                </div>
-                <a
-                  href={promo.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="py-2 px-4 bg-burgundy-dark text-white rounded-xl text-xs font-semibold hover:bg-burgundy-medium transition-colors"
-                >
-                  Commander
-                </a>
-              </div>
-            ))}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {COMING_SOON_CARD}
           </motion.div>
         )}
 
@@ -228,9 +166,9 @@ export function WineShop() {
                 <h3 className="font-display font-bold text-black-wine">Votre code de parrainage</h3>
               </div>
               <div className="flex items-center gap-2 bg-cream rounded-xl p-4 mb-3">
-                <span className="font-mono font-bold text-xl text-burgundy-dark flex-1">{referralCode}</span>
+                <span className="font-mono font-bold text-xl text-burgundy-dark flex-1">{code || '—'}</span>
                 <button
-                  onClick={() => copyToClipboard(referralCode, 'ref')}
+                  onClick={() => code && copyToClipboard(code, 'ref')}
                   className="flex items-center gap-1.5 px-3 py-2 bg-burgundy-dark text-white rounded-lg text-sm font-semibold border-none cursor-pointer hover:bg-burgundy-medium"
                 >
                   <Copy size={14} />
@@ -238,8 +176,9 @@ export function WineShop() {
                 </button>
               </div>
               <button
-                onClick={() => copyToClipboard(shareMessage, 'msg')}
-                className="w-full py-3 bg-gold/20 text-black-wine rounded-xl font-semibold text-sm border border-gold/40 cursor-pointer hover:bg-gold/30 transition-colors flex items-center justify-center gap-2"
+                onClick={() => shareMessage && copyToClipboard(shareMessage, 'msg')}
+                disabled={!shareMessage}
+                className="w-full py-3 bg-gold/20 text-black-wine rounded-xl font-semibold text-sm border border-gold/40 cursor-pointer hover:bg-gold/30 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Copy size={16} />
                 {copied === 'msg' ? 'Message copié !' : 'Copier le message à envoyer'}

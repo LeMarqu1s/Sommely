@@ -12,6 +12,7 @@ export const supabase = createClient(
       autoRefreshToken: true,
       detectSessionInUrl: true,
       storageKey: 'sommely-auth',
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     },
   }
 );

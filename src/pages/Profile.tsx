@@ -21,6 +21,7 @@ import {
   Copy,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import { useTheme, CURRENCIES } from '../context/ThemeContext';
 import { getUserScans, getScansCountTotal, applyReferralCode, getReferralStats } from '../lib/supabase';
 import { SaveFlowModal } from '../components/SaveFlow';
@@ -44,7 +45,7 @@ const SUBSCRIPTION_LABELS: Record<string, { label: string; color: string; bg: st
 export function Profile() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, profile, subscription, subscriptionState, signOut, isAuthenticated, refreshSubscription, refreshProfile } = useAuth();
+  const { user, profile, subscription, subscriptionState, isAuthenticated, refreshSubscription, refreshProfile } = useAuth();
   const { theme, toggleTheme, currency, setCurrency, formatPrice } = useTheme();
   const [recentScans, setRecentScans] = useState<any[]>([]);
   const [scanCountTotal, setScanCountTotal] = useState(0);
@@ -120,8 +121,8 @@ export function Profile() {
   }, [searchParams]);
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/', { replace: true });
+    await supabase.auth.signOut();
+    window.location.href = '/auth';
   };
 
   const accountAgeMs = profile?.created_at ? Date.now() - new Date(profile.created_at).getTime() : 0;
