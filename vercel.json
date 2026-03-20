@@ -1,7 +1,7 @@
 {
   "crons": [
     { "path": "/api/push-triggers", "schedule": "0 9 * * *" },
-    { "path": "/api/scan-followup", "schedule": "*/15 * * * *" }
+    { "path": "/api/scan-followup", "schedule": "0 9 * * *" }
   ],
   "functions": {
     "api/openai-proxy.js": { "maxDuration": 30 },
