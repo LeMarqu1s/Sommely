@@ -530,9 +530,26 @@ export function Profile() {
           >
             <h3 style={{ fontSize: 16, fontWeight: 700, color: '#2C1810', marginBottom: 4 }}>🍷 Parrainez vos amis</h3>
             <p style={{ fontSize: 13, color: '#9E9E9E', marginBottom: 12 }}>
-              Chaque ami qui s&apos;inscrit avec votre code vous offre 1 mois gratuit.
+              Jusqu&apos;à 3 amis peuvent utiliser votre code. Chaque ami qui s&apos;abonne vous offre 1 mois gratuit.
               {referralStats.total > 0 && ` Vous avez déjà parrainé ${referralStats.total} ami${referralStats.total > 1 ? 's' : ''}.`}
             </p>
+            {(() => {
+              const usagesLeft = 3 - referralStats.total;
+              return (
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: usagesLeft > 0 ? '#2E7D32' : '#C62828',
+                    marginTop: 6,
+                    fontWeight: 600,
+                  }}
+                >
+                  {usagesLeft > 0
+                    ? `✓ ${usagesLeft} utilisation${usagesLeft > 1 ? 's' : ''} restante${usagesLeft > 1 ? 's' : ''}`
+                    : '✗ Code épuisé — 3/3 utilisations atteintes'}
+                </div>
+              );
+            })()}
             <div
               onClick={copyReferralCode}
               role="button"

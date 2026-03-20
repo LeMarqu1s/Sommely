@@ -12,9 +12,10 @@ CREATE TABLE IF NOT EXISTS referrals (
   UNIQUE(referred_id)
 );
 
--- Chaque code ne peut être utilisé qu'une seule fois au total
+-- Pas de UNIQUE sur referral_code : un code peut être utilisé jusqu'à 3 fois
+-- Si la contrainte a été appliquée précédemment, la supprimer :
 ALTER TABLE referrals DROP CONSTRAINT IF EXISTS referrals_code_unique;
-ALTER TABLE referrals ADD CONSTRAINT referrals_code_unique UNIQUE (referral_code);
+-- La contrainte UNIQUE(referred_id) reste : un filleul ne peut être parrainé qu'une fois
 
 -- Colonne pour savoir si l'user a utilisé un code
 ALTER TABLE profiles

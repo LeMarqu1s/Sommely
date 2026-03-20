@@ -233,14 +233,23 @@ export async function applyReferralCode(userId: string, code: string): Promise<{
   if (!referrer) return { error: 'Code invalide' };
   if (referrer.id === userId) return { error: 'Vous ne pouvez pas utiliser votre propre code' };
 
-  // Vérification CRITIQUE : ce code a-t-il déjà été utilisé par quelqu'un ?
-  const { data: existingReferral } = await supabase
+  // Compter combien de fois ce code a déjà été utilisé
+  const { count } = await supabase
     .from('referrals')
-    .select('id, referred_id')
+    .select('id', { count: 'exact', head: true })
+    .eq('referral_code', code.toUpperCase());
+
+  if ((count ?? 0) >= 3) return { error: 'Ce code de parrainage a déjà été utilisé 3 fois.' };
+
+  // Vérifier que cet utilisateur précis n'a pas déjà utilisé CE code
+  const { data: alreadyUsed } = await supabase
+    .from('referrals')
+    .select('id')
     .eq('referral_code', code.toUpperCase())
+    .eq('referred_id', userId)
     .maybeSingle();
 
-  if (existingReferral) return { error: 'Ce code a déjà été utilisé.' };
+  if (alreadyUsed) return { error: 'Vous avez déjà utilisé ce code.' };
 
   const { data: profile } = await supabase
     .from('profiles')
