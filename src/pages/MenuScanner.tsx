@@ -4,8 +4,7 @@ import { canAccessFeature } from '../utils/subscription';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, ArrowLeft, Star, AlertCircle, RotateCcw, Wine } from 'lucide-react';
-import { optimizeImageForAI } from '../lib/imageOptimize';
-import { fetchOpenAI } from '../lib/openai';
+import { analyzeWineMenu, type MenuWineItem } from '../lib/openai';
 
 // ─── TYPES ────────────────────────────────────────────────
 
@@ -46,100 +45,46 @@ const ANALYSIS_STEPS = [
   { label: 'Sélection du meilleur choix...', emoji: '🏆' },
 ];
 
-// ─── PROMPT ANALYSE MENU ──────────────────────────────────
-
-const MENU_ANALYSIS_PROMPT = `Tu es un sommelier expert et un analyste du marché du vin.
-Tu analyses la carte des vins d'un restaurant pour identifier le meilleur rapport qualité-prix.
-
-CONTEXTE : Les restaurants majorent généralement les vins de 200 à 400% par rapport au prix de détail.
-Un bon rapport qualité-prix = un vin majoré moins que la moyenne ET de bonne qualité.
-
-⚠️ RÈGLE ABSOLUE : Tu DOIS lire et lister CHAQUE référence vin ET champagne visible sur la carte, sans exception, sans sélection partielle. Balayage complet ligne par ligne. Si 30 vins sont visibles, tu retournes 30 vins dans allWines.
-
-INSTRUCTIONS :
-1. Balayage COMPLET de l'image : lis TOUTES les lignes de la carte (vins rouges, blancs, rosés, champagnes, vins doux)
-2. Pour CHAQUE référence visible, crée une entrée dans "allWines" avec son prix carte et son estimation marché
-3. Calcule le taux de majoration pour chaque vin
-4. Identifie le meilleur choix absolu (bestValue), les bons choix (topPicks) et les plus surévalués (overpriced)
-
-Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.
-
-Format JSON attendu :
-{
-  "restaurantStyle": "Brasserie parisienne / Restaurant gastronomique / Bistrot...",
-  "totalWinesFound": 12,
-  "allWines": [
-    {
-      "name": "Nom EXACT de chaque vin tel qu'écrit sur la carte",
-      "year": 2020,
-      "region": "Bordeaux",
-      "type": "Rouge",
-      "priceMenu": 45,
-      "estimatedRetailPrice": 18,
-      "markupPercent": 150,
-      "score": 85,
-      "valueScore": 80,
-      "recommendation": "excellent",
-      "reason": "Raison courte (1 phrase)",
-      "grapes": "Cabernet Sauvignon, Merlot",
-      "appellation": "AOC Bordeaux Supérieur"
-    }
-  ],
-  "bestValue": {
-    "name": "Nom exact du meilleur choix",
-    "year": 2020,
-    "region": "Bordeaux",
-    "type": "Rouge",
-    "priceMenu": 45,
-    "estimatedRetailPrice": 18,
-    "markupPercent": 150,
-    "score": 88,
-    "valueScore": 95,
-    "recommendation": "excellent",
-    "reason": "Ce Bordeaux est vendu 45€ sur la carte alors qu'il vaut 18€ en cave. Majoré seulement 150% vs 250% en moyenne.",
-    "grapes": "Cabernet Sauvignon, Merlot",
-    "appellation": "AOC Bordeaux Supérieur"
-  },
-  "topPicks": [
-    {
-      "name": "Deuxième meilleur choix",
-      "year": 2021,
-      "region": "Rhône",
-      "type": "Rouge",
-      "priceMenu": 38,
-      "estimatedRetailPrice": 14,
-      "markupPercent": 171,
-      "score": 85,
-      "valueScore": 90,
-      "recommendation": "excellent",
-      "reason": "Très bon rapport qualité-prix pour ce Côtes du Rhône.",
-      "grapes": "Grenache, Syrah",
-      "appellation": "AOC Côtes du Rhône"
-    }
-  ],
-  "overpriced": [
-    {
-      "name": "Vin surévalué",
-      "year": 2018,
-      "region": "Bourgogne",
-      "type": "Rouge",
-      "priceMenu": 180,
-      "estimatedRetailPrice": 35,
-      "markupPercent": 414,
-      "score": 87,
-      "valueScore": 20,
-      "recommendation": "avoid",
-      "reason": "Majoré à 414% alors que la moyenne est 250%.",
-      "grapes": "Pinot Noir",
-      "appellation": "AOC Gevrey-Chambertin"
-    }
-  ],
-  "sommelierAdvice": "Cette carte propose quelques pépites cachées. Le meilleur choix est clairement le Bordeaux Supérieur.",
-  "budgetRecommendation": "Pour un dîner à 2, je recommande le premier choix à 45€."
+function toMenuWine(w: MenuWineItem): MenuWine {
+  const valueScore = Math.max(0, Math.min(100, w.score - Math.round(w.margin_percent / 5)));
+  return {
+    name: w.name,
+    year: w.vintage ?? undefined,
+    region: w.appellation || undefined,
+    appellation: w.appellation || undefined,
+    priceMenu: w.restaurant_price ?? 0,
+    estimatedRetailPrice: w.estimated_market_price ?? 0,
+    markupPercent: w.margin_percent ?? 0,
+    score: w.score ?? 0,
+    valueScore,
+    recommendation: w.recommendation === 'skip' ? 'avoid' : w.recommendation,
+    reason: w.reason || '',
+  };
 }
 
-Si l'image n'est pas une carte des vins ou menu, retourne :
-{"error": "not_menu", "message": "Aucune carte des vins détectée"}`;
+function winesToMenuAnalysis(wines: MenuWineItem[]): MenuAnalysis {
+  const all = wines.map(toMenuWine);
+  const excellent = all.filter(w => w.recommendation === 'excellent');
+  const good = all.filter(w => w.recommendation === 'good');
+  const skip = all.filter(w => w.recommendation === 'avoid');
+  const bestValue = excellent[0] ?? good[0] ?? all[0];
+  const topPicks = [...excellent.slice(1), ...good].filter(w => w !== bestValue);
+  const sommelierAdvice = bestValue
+    ? `Le meilleur rapport qualité-prix : ${bestValue.name} à ${bestValue.priceMenu}€ (majoré ${bestValue.markupPercent}%). ${bestValue.reason}`
+    : 'Aucun vin n\'a pu être clairement identifié sur cette carte.';
+  const budgetRecommendation = bestValue
+    ? `Pour un dîner à 2, je recommande ${bestValue.name} à ${bestValue.priceMenu}€.`
+    : 'Rephotographiez la carte en cadrant toute la page.';
+  return {
+    totalWinesFound: all.length,
+    bestValue: bestValue!,
+    topPicks,
+    overpriced: skip,
+    allWines: all,
+    sommelierAdvice,
+    budgetRecommendation,
+  };
+}
 
 // ─── COMPOSANT PRINCIPAL ──────────────────────────────────
 
@@ -251,44 +196,26 @@ export function MenuScanner() {
     }, 1400);
 
     try {
-      const optimized = await optimizeImageForAI(base64, 1536, 0.82);
-
-      const response = await fetchOpenAI({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'Tu es un sommelier expert et analyste prix du marché du vin. Tu réponds UNIQUEMENT en JSON valide.',
-          },
-          {
-            role: 'user',
-            content: [
-              { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${optimized}`, detail: 'high' } },
-              { type: 'text', text: MENU_ANALYSIS_PROMPT },
-            ],
-          },
-        ],
-        max_tokens: 3500,
-        temperature: 0.1,
-        response_format: { type: 'json_object' },
-      });
+      let wines = await analyzeWineMenu(base64);
+      if (wines.length === 0) {
+        clearInterval(stepInterval);
+        wines = await analyzeWineMenu(base64);
+      }
 
       clearInterval(stepInterval);
       setAnalysisStep(ANALYSIS_STEPS.length - 1);
       setAnalysisProgress(100);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || `Erreur ${response.status}`);
+      if (wines.length === 0) {
+        setScanState('error');
+        setErrorMessage("Aucun vin détecté — essayez de photographier la carte plus près et plus droite");
+        return;
       }
 
-      const content = data.choices?.[0]?.message?.content || '{}';
-      const parsed = JSON.parse(content) as MenuAnalysis & { error?: string };
-
-      if (parsed.error === 'not_menu') {
+      const parsed = winesToMenuAnalysis(wines);
+      if (!parsed.bestValue) {
         setScanState('error');
-        setErrorMessage("Aucune carte des vins détectée. Photographiez la page vins du menu.");
+        setErrorMessage("Aucun vin détecté — essayez de photographier la carte plus près et plus droite");
         return;
       }
 
@@ -350,7 +277,7 @@ export function MenuScanner() {
                 <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'repeating-linear-gradient(0deg, #722F37, #722F37 1px, transparent 1px, transparent 20px)' }} />
                 <span className="text-5xl mb-3">📋</span>
                 <p className="text-sm font-semibold text-burgundy-dark">Carte des vins</p>
-                <p className="text-xs text-gray-dark mt-1">Photographiez la page vins</p>
+                <p className="text-xs text-gray-dark mt-1">Analysez une page entière de la carte</p>
                 <motion.div animate={{ y: [-30, 30, -30] }} transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }} className="absolute left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent" />
               </div>
 
@@ -358,7 +285,7 @@ export function MenuScanner() {
                 Meilleur rapport<br />qualité-prix du menu
               </h1>
               <p className="text-gray-dark text-sm leading-relaxed mb-8 max-w-xs">
-                Photographiez la carte des vins. Notre IA analyse les prix du marché et vous dit exactement quelle bouteille choisir pour en avoir le plus pour votre argent.
+                Analysez une page entière de la carte des vins. Notre IA compare les prix du marché et vous dit exactement quelle bouteille choisir pour en avoir le plus pour votre argent.
               </p>
 
               {/* Stats */}
@@ -406,7 +333,7 @@ export function MenuScanner() {
               <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
 
               <p className="text-xs text-gray-dark mt-4 text-center leading-relaxed">
-                💡 Astuce : cadrez toute la page vins pour une analyse complète
+                💡 Astuce : analysez une page entière de la carte pour une analyse complète
               </p>
             </motion.div>
           )}
@@ -421,7 +348,7 @@ export function MenuScanner() {
                   <div className="border-2 border-gold/60 rounded-xl" style={{ width: '80%', height: '70%' }} />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-5">
-                  <p className="text-white/60 text-xs text-center mb-3">Cadrez toute la page des vins</p>
+                  <p className="text-white/60 text-xs text-center mb-3">Analysez une page entière de la carte</p>
                   <button onClick={captureFromCamera} className="w-full py-4 bg-gold text-black-wine rounded-2xl font-bold border-none cursor-pointer">
                     📸 Analyser cette carte
                   </button>

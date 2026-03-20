@@ -12,17 +12,16 @@ import { insertScan, updateProfile, getProfile } from '../lib/supabase';
 type ScanState = 'idle' | 'camera_active' | 'capturing' | 'analyzing' | 'error';
 
 const ANALYSIS_STEPS = [
-  { label: "Lecture de l'étiquette...", emoji: '📸' },
-  { label: 'Identification du vin...', emoji: '🔍' },
-  { label: 'Recherche dans notre base...', emoji: '🗃️' },
-  { label: 'Calcul de votre score personnalisé...', emoji: '⭐' },
-  { label: 'Préparation des conseils sommelier...', emoji: '🍷' },
+  { label: "📸 Image reçue...", emoji: '📸' },
+  { label: "🔍 Identification du vin...", emoji: '🔍' },
+  { label: "🍷 Calcul de votre score...", emoji: '🍷' },
+  { label: "✨ Finalisation...", emoji: '✨' },
 ];
 
 export function Scanner() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, subscriptionState, refreshSubscription } = useAuth();
+  const { user, profile, subscriptionState, refreshSubscription, refreshProfile } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -219,19 +218,25 @@ export function Scanner() {
     setAnalysisStep(0);
     setAnalysisProgress(0);
 
-    // Animation des étapes pendant que l'IA travaille
-    let step = 0;
-    const stepInterval = setInterval(() => {
-      step = Math.min(step + 1, ANALYSIS_STEPS.length - 1);
-      setAnalysisStep(step);
-      setAnalysisProgress(Math.round((step / (ANALYSIS_STEPS.length - 1)) * 100));
-    }, 1200);
+    // Feedback progressif : 0-2s, 2-5s, 5-8s, 8-12s — rend l'attente perçue plus courte
+    const stepTimes = [0, 2, 5, 8, 12];
+    const stepStart = Date.now();
+    const updateStepFromTime = () => {
+      const elapsedSec = (Date.now() - stepStart) / 1000;
+      let idx = 0;
+      for (let i = 0; i < stepTimes.length; i++) {
+        if (elapsedSec >= stepTimes[i]) idx = i;
+      }
+      setAnalysisStep(Math.min(idx, ANALYSIS_STEPS.length - 1));
+      setAnalysisProgress(Math.min(100, Math.round((idx / (ANALYSIS_STEPS.length - 1)) * 100)));
+    };
+    const progressInterval = setInterval(updateStepFromTime, 500);
 
-    // Timeout de sécurité : 25s max pour éviter le chargement infini
+    // Timeout de sécurité : 20s max pour éviter le chargement infini
     const analysisTimeout = setTimeout(() => {
       setErrorMessage("L'analyse a pris trop de temps. Vérifiez votre connexion et réessayez.");
       setScanState('error');
-    }, 25000);
+    }, 20000);
 
     try {
       console.log('🔍 Envoi de l\'image à OpenAI GPT-4o Vision...');
@@ -327,6 +332,7 @@ export function Scanner() {
           total_scans: (prof?.total_scans ?? 0) + 1,
         });
         refreshSubscription();
+        refreshProfile();
       }
 
       // Si on vient de la cave : aller sur /cave avec prefill pour ajouter la bouteille
@@ -378,7 +384,7 @@ export function Scanner() {
       setScanState('error');
     } finally {
       // Nettoyage garanti dans TOUS les cas (succès, erreur, timeout)
-      clearInterval(stepInterval);
+      clearInterval(progressInterval);
       clearTimeout(analysisTimeout);
     }
   };

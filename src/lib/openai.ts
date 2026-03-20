@@ -81,9 +81,9 @@ export async function fetchOpenAI(body: Record<string, unknown>): Promise<Respon
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (!isProd) headers['Authorization'] = `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`;
 
-  // Timeout 25s pour scan rapide : réseau lent → erreur propre, pas blocage
+  // Timeout 20s pour scan rapide : réseau lent → erreur propre, pas blocage
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
 
   try {
     const response = await fetch(url, {
@@ -218,6 +218,82 @@ ALCOOL - Règles strictes :
 
 Si pas une étiquette de vin : {"error": "not_wine", "confidence": 0}`;
 
+// ─── PROMPT CARTE DES VINS ─────────────────────────────────
+
+const MENU_SYSTEM = `Tu es un expert en vins et cartes de restaurant.
+Tu analyses des photos de cartes des vins.
+Réponds UNIQUEMENT en JSON valide, sans markdown, sans texte avant ou après.
+Format exact requis : tableau JSON d'objets vin.`;
+
+const MENU_USER = `Analyse cette carte des vins. Pour chaque vin visible :
+{
+  "name": string (nom complet du vin),
+  "appellation": string (ex: Bordeaux, Bourgogne, Champagne),
+  "vintage": number | null (millésime si visible),
+  "restaurant_price": number (prix restaurant si visible, sinon 0),
+  "estimated_market_price": number (prix estimé en cave/supermarché),
+  "margin_percent": number (marge approximative du restaurant en %),
+  "score": number (1-100 basé sur réputation, appellation, millésime),
+  "recommendation": "excellent" | "good" | "skip",
+  "reason": string (1 phrase max pourquoi recommandé ou non)
+}
+
+Si tu ne peux pas lire clairement un élément, mets null.
+Si la photo n'est pas une carte des vins, retourne [].
+Analyse TOUS les vins visibles sur la carte.
+
+Réponds avec un objet JSON : {"wines": [ tableau des vins ]}. Si pas une carte des vins, {"wines": []}.`;
+
+export interface MenuWineItem {
+  name: string;
+  appellation: string;
+  vintage: number | null;
+  restaurant_price: number;
+  estimated_market_price: number;
+  margin_percent: number;
+  score: number;
+  recommendation: 'excellent' | 'good' | 'skip';
+  reason: string;
+}
+
+/** Analyse une photo de carte des vins. Retourne le tableau de vins ou [] si invalide. */
+export async function analyzeWineMenu(imageBase64: string): Promise<MenuWineItem[]> {
+  const optimized = await optimizeImageForAI(imageBase64, 1536, 0.82);
+  const response = await fetchOpenAI({
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: MENU_SYSTEM },
+      {
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${optimized}`, detail: 'high' } },
+          { type: 'text', text: MENU_USER },
+        ],
+      },
+    ],
+    max_tokens: 2500,
+    temperature: 0.1,
+    response_format: { type: 'json_object' },
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error?.message || `Erreur ${response.status}`);
+  }
+
+  const content = data.choices?.[0]?.message?.content || '{}';
+  let parsed: { wines?: MenuWineItem[] } | MenuWineItem[];
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    return [];
+  }
+
+  const arr = Array.isArray(parsed) ? parsed : parsed?.wines;
+  if (!Array.isArray(arr)) return [];
+  return arr.filter((w): w is MenuWineItem => w && typeof w.name === 'string');
+}
+
 // ─── ANALYSE PRINCIPALE ───────────────────────────────────
 
 export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysis> {
@@ -226,7 +302,7 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
     return analysisCache.get(cacheKey)!;
   }
 
-  const optimized = await optimizeImageForAI(imageBase64);
+  const optimized = await optimizeImageForAI(imageBase64, 480, 0.7);
   const response = await fetchOpenAI({
     model: 'gpt-4o-mini',
     messages: [
