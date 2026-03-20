@@ -5,7 +5,7 @@ export function SommelierButton() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const hiddenPaths = ['/sommelier', '/onboarding', '/auth', '/', '/privacy', '/profile', '/scan'];
+  const hiddenPaths = ['/sommelier', '/onboarding', '/auth', '/', '/privacy', '/profile', '/scan', '/home', '/cave'];
   if (hiddenPaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'))) return null;
 
   return (

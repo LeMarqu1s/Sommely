@@ -81,9 +81,9 @@ export async function fetchOpenAI(body: Record<string, unknown>): Promise<Respon
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (!isProd) headers['Authorization'] = `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`;
 
-  // Timeout 20s pour scan rapide : réseau lent → erreur propre, pas blocage
+  // Timeout 15s — aligné sur Scanner ; proxy Vercel en prod (/api/openai-proxy)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 20000);
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
 
   try {
     const response = await fetch(url, {
@@ -97,7 +97,7 @@ export async function fetchOpenAI(body: Record<string, unknown>): Promise<Respon
   } catch (err) {
     clearTimeout(timeoutId);
     if ((err as Error).name === 'AbortError') {
-      throw new Error("L'analyse a pris trop de temps. Vérifiez votre connexion et réessayez.");
+      throw new Error("Ce vin résiste à l'analyse. 😏 Réessayez en vous rapprochant de l'étiquette.");
     }
     throw err;
   }
@@ -310,7 +310,7 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
     return analysisCache.get(cacheKey)!;
   }
 
-  const optimized = await optimizeImageForAI(imageBase64, 480, 0.7);
+  const optimized = await optimizeImageForAI(imageBase64, 400, 0.65);
   const response = await fetchOpenAI({
     model: 'gpt-4o-mini',
     messages: [
@@ -323,8 +323,8 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
         ]
       }
     ],
-    max_tokens: 600,
-    temperature: 0.2,
+    max_tokens: 500,
+    temperature: 0,
     response_format: { type: 'json_object' }
   });
 

@@ -11,6 +11,8 @@ import { insertScan, updateProfile, getProfile } from '../lib/supabase';
 
 type ScanState = 'idle' | 'camera_active' | 'capturing' | 'analyzing' | 'error';
 
+const TIMEOUT_MS = 15000;
+
 const ANALYSIS_STEPS = [
   { label: "📸 Image reçue...", emoji: '📸' },
   { label: "🔍 Identification du vin...", emoji: '🔍' },
@@ -186,8 +188,8 @@ export function Scanner() {
     reader.onload = async (event) => {
       const img = new Image();
       img.onload = async () => {
-        // Redimensionner si nécessaire (max 1920px)
-        const maxSize = 1920;
+        // Compression rapide : max 400px côté long
+        const maxSize = 400;
         let { width, height } = img;
         if (width > maxSize || height > maxSize) {
           if (width > height) { height = (height * maxSize) / width; width = maxSize; }
@@ -203,7 +205,7 @@ export function Scanner() {
         // ═══════════════════════════════════════════════════
         // BASE64 DE LA VRAIE IMAGE IMPORTÉE
         // ═══════════════════════════════════════════════════
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.90);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
         const base64 = dataUrl.split(',')[1];
         console.log('📁 Image importée, taille base64:', base64.length, 'chars');
         await analyzeImage(base64);
@@ -243,11 +245,10 @@ export function Scanner() {
     };
     const progressInterval = setInterval(updateStepFromTime, 500);
 
-    // Timeout de sécurité : 20s max pour éviter le chargement infini
     const analysisTimeout = setTimeout(() => {
-      setErrorMessage("L'analyse a pris trop de temps. Vérifiez votre connexion et réessayez.");
+      setErrorMessage("Ce vin résiste à l'analyse. 😏 Réessayez en vous rapprochant de l'étiquette.");
       setScanState('error');
-    }, 20000);
+    }, TIMEOUT_MS);
 
     try {
       const wineAnalysis = await analyzeWineLabel(base64);
@@ -386,6 +387,12 @@ export function Scanner() {
         setErrorMessage('Erreur réseau. Vérifiez votre connexion internet.');
       } else if (error?.status === 400) {
         setErrorMessage("Image non reconnue par l'IA. Réessayez avec une photo plus nette.");
+      } else if (
+        (error as Error)?.name === 'AbortError' ||
+        String(error?.message || '').includes("résiste à l'analyse") ||
+        String(error?.message || '').includes('trop de temps')
+      ) {
+        setErrorMessage("Ce vin résiste à l'analyse. 😏 Réessayez en vous rapprochant de l'étiquette.");
       } else {
         const msg = error?.message || String(error);
         setErrorMessage(msg.length > 120 ? `${msg.slice(0, 120)}...` : msg || "Erreur lors de l'analyse.");
