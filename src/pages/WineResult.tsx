@@ -18,6 +18,13 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import type { WineAnalysis } from '../lib/openai';
+import {
+  calculatePersonalizedScore,
+  generateDetailedExplanation,
+  type ScoreBreakdown,
+  type UserProfile,
+} from '../lib/matchScore';
 
 const FOOD_PAIRINGS: Record<string, { emoji: string; label: string }[]> = {
   Rouge: [
@@ -80,36 +87,6 @@ function getScoreInfo(score: number) {
   return { color: '#C62828', bg: 'bg-danger/10', text: 'Pas idéal pour vous', emoji: '⚠️' };
 }
 
-function generateExplanation(wine: any, score: number, profile: any): string {
-  if (!profile) return 'Ce vin correspond à votre profil de débutant. Un excellent choix pour explorer cette région.';
-
-  const explanations: string[] = [];
-
-  if (score >= 85) {
-    explanations.push('Ce vin correspond parfaitement à vos préférences.');
-  } else if (score >= 70) {
-    explanations.push('Ce vin correspond bien à vos goûts.');
-  } else {
-    explanations.push('Ce vin ne correspond pas totalement à vos préférences habituelles.');
-  }
-
-  if (profile.types && profile.types.includes('red_bold') && wine.type?.includes('Rouge')) {
-    explanations.push('Vous aimez les vins rouges, et ce vin est dans votre registre.');
-  }
-
-  if (profile.budget === 'premium' && wine.avgPrice > 40) {
-    explanations.push('Son prix correspond à votre budget habituel.');
-  } else if (profile.budget === 'medium' && wine.avgPrice >= 10 && wine.avgPrice <= 25) {
-    explanations.push('Il rentre dans votre budget.');
-  }
-
-  if (wine.region?.includes('Bordeaux') && profile.regions && profile.regions.includes('bordeaux')) {
-    explanations.push('Vous connaissez déjà Bordeaux, vous apprécierez ses caractéristiques.');
-  }
-
-  return explanations.join(' ');
-}
-
 /** Extrait le premier nombre d'un prix potentiellement sous forme de range ("30-50", "30€-50€") ou number. */
 function extractNumber(p: number | string | null | undefined): number {
   if (p == null) return 0;
@@ -136,6 +113,8 @@ export function WineResult() {
   const score = location.state?.score || 75;
   const { formatPrice } = useTheme();
 
+  const stateNav = location.state as { scoreBreakdown?: ScoreBreakdown; score?: number } | null;
+
   useEffect(() => {
     const profile = localStorage.getItem('sommely_profile');
     if (profile) setUserProfile(JSON.parse(profile));
@@ -151,7 +130,31 @@ export function WineResult() {
 
   const scoreInfo = getScoreInfo(score);
   const pairings = (wine.type && FOOD_PAIRINGS[wine.type]) || DEFAULT_PAIRINGS;
-  const explanation = (location.state as { explanation?: string })?.explanation ?? generateExplanation(wine, score, userProfile);
+
+  const tasteProfile = (userProfile || null) as UserProfile | null;
+  const avgForScore = extractNumber(wine.avgPrice);
+  const scoreBreakdown: ScoreBreakdown =
+    stateNav?.scoreBreakdown ??
+    (tasteProfile
+      ? calculatePersonalizedScore(wine as WineAnalysis, { avgPrice: avgForScore }, tasteProfile)
+      : {
+          total: score,
+          typeMatch: 0,
+          budgetMatch: 0,
+          intensityMatch: 0,
+          aromaMatch: 0,
+          sweetnessMatch: 0,
+          regionBonus: 0,
+          explanation: [],
+        });
+
+  const explanation = generateDetailedExplanation(
+    wine as WineAnalysis,
+    scoreBreakdown,
+    tasteProfile,
+    avgForScore || undefined,
+    {}
+  );
   const firstName = userProfile?.firstName || '';
 
   const isChampagne = ['Champagne', 'Pétillant', 'Mousseux'].includes(wine.type || '');

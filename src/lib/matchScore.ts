@@ -24,7 +24,7 @@ export interface ExplanationOptions {
   marketPrice?: number;
 }
 
-interface ScoreBreakdown {
+export interface ScoreBreakdown {
   total: number;
   typeMatch: number;
   budgetMatch: number;
@@ -270,15 +270,79 @@ function restaurantMarkup(options: ExplanationOptions | undefined): boolean {
   return rp != null && mp != null && mp > 0 && rp > 2 * mp;
 }
 
-/**
- * « Pourquoi ce score » — 2 phrases max, technique + touche d'humour, sans répétition ni phrase générique parasite.
- */
-export function generateDetailedExplanation(
+const TYPE_PREF_LABELS_FR: Record<string, string> = {
+  red_bold: 'rouges corsés',
+  red_light: 'rouges légers et fruités',
+  white_dry: 'blancs secs',
+  white_sweet: 'blancs doux ou liquoreux',
+  rose: 'rosés',
+  champagne: 'bulles',
+};
+
+const REGION_PREF_LABELS_FR: Record<string, string> = {
+  bordeaux: 'Bordeaux',
+  bourgogne: 'Bourgogne',
+  champagne: 'Champagne',
+  rhone: 'Vallée du Rhône',
+  loire: 'Loire',
+};
+
+/** Préférences profil en une phrase lisible (cépages via types, régions, tanins, occasions). */
+function profilePreferencesFr(profile: UserProfile): string {
+  const parts: string[] = [];
+  if (profile.types?.length) {
+    parts.push(profile.types.map((t) => TYPE_PREF_LABELS_FR[t] || t).join(', '));
+  }
+  if (profile.regions?.length) {
+    parts.push(profile.regions.map((r) => REGION_PREF_LABELS_FR[r] || r).join(', '));
+  }
+  if (profile.body != null) {
+    parts.push(`sensation en bouche visée ~${profile.body}/10`);
+  }
+  if (profile.occasions?.length) {
+    parts.push(`occasions : ${profile.occasions.join(', ')}`);
+  }
+  return parts.length ? parts.join(' · ') : 'vos préférences enregistrées';
+}
+
+/** Structure / tanins / acidité à partir de l’IA ou repli selon le type. */
+function wineSensoryBrief(wine: WineAnalysis): string {
+  const st = wine.tastingNotes?.structure?.trim();
+  if (st && st.length > 5) return st.slice(0, 220);
+  const pal = wine.tastingNotes?.palate?.filter(Boolean).slice(0, 2).join(' ; ');
+  if (pal) return pal.slice(0, 220);
+  const nose = wine.tastingNotes?.nose?.[0];
+  if (nose) return nose.slice(0, 160);
+  if (isChampagneOrBubbles(wine)) return 'bulles, finesse et longueur';
+  if (isWhiteWine(wine)) return 'acidité et fraîcheur';
+  if (isRedWine(wine)) return 'tanins et structure';
+  return 'profil aromatique cohérent avec le type';
+}
+
+/** Les 1–2 leviers qui expliquent le mieux les points (différencie 68 vs 72). */
+function scoreDriversFragment(sb: ScoreBreakdown): string {
+  const rows: { label: string; v: number }[] = [
+    { label: 'style de vin', v: sb.typeMatch },
+    { label: 'budget', v: sb.budgetMatch },
+    { label: 'intensité / corps', v: sb.intensityMatch },
+    { label: 'arômes', v: sb.aromaMatch },
+    { label: 'sucrosité', v: sb.sweetnessMatch },
+    { label: 'région', v: sb.regionBonus },
+  ]
+    .filter((x) => x.v > 0)
+    .sort((a, b) => b.v - a.v);
+  if (rows.length === 0) return 'les critères ne s’alignent qu’en partie avec votre profil.';
+  if (rows.length === 1) return `les points viennent surtout du ${rows[0].label} (+${rows[0].v}).`;
+  return `les points viennent surtout du ${rows[0].label} (+${rows[0].v}) et du ${rows[1].label} (+${rows[1].v}).`;
+}
+
+/** Une phrase de clôture selon le palier + contexte prix (ton Sommely). */
+function bandClosingLine(
   wine: WineAnalysis,
   score: ScoreBreakdown,
-  profile: UserProfile | null,
-  avgPrice?: number,
-  options?: ExplanationOptions
+  profile: UserProfile,
+  avgPrice: number | undefined,
+  options: ExplanationOptions | undefined
 ): string {
   const nom = getNom(wine);
   const region = getRegionLabel(wine);
@@ -289,112 +353,110 @@ export function generateDetailedExplanation(
   const ctx = options?.scanContext ?? 'retail';
   const band = scoreBand(score.total);
   const markup = restaurantMarkup(options);
+  const typeOk = wineTypeMatchesUser(wine, profile);
+  const regionOk = userRegionMatchesWine(wine, profile);
+
+  if (band === 'top') {
+    if (isChampagneOrBubbles(wine)) {
+      return `La finesse en bouche colle à vos bulles préférées — pas de hasard, juste du goût.`;
+    }
+    if (isWhiteWine(wine) && isLoireWine(wine)) {
+      return `Minéralité qui vous va comme un gant — ${accord} vous attend.`;
+    }
+    if (isRedWine(wine) && isBordeauxWine(wine)) {
+      return prix != null
+        ? `À ${prix}€, le rapport tient la route (chut au sommelier).`
+        : `Le rapport tient la route pour ce ${appellation}.`;
+    }
+    return prix != null
+      ? `Prix cohérent à ${prix}€ — la seule question, c’est l’occasion.`
+      : `${region} et ${getDominantGrapeForGeneric(wine)} : vous êtes sur la bonne ligne.`;
+  }
+  if (band === 'high') {
+    if (markup || (ctx === 'restaurant' && prix != null && prix > 40)) {
+      const px = prix != null ? `${prix}€` : 'ce tarif';
+      return `Bon vin, mais à ${px} ici on paie aussi la salle — regardez un voisin sur la carte.`;
+    }
+    if (prix != null && prix > 40) {
+      return `À ${prix}€, l’addition pèse un peu pour ce que le verre raconte.`;
+    }
+    if (score.typeMatch === 0 && score.regionBonus > 0) {
+      return `${nom} parle surtout terroir (${region}), moins votre style — bonne bouteille, pas forcément votre crush.`;
+    }
+    const px = prix != null ? `${prix}€` : 'ce prix';
+    return `Solide pour ${px} — ${region} sait faire, même si ce n’est pas votre légende personnelle.`;
+  }
+  if (band === 'mid') {
+    if (!typeOk) {
+      const px = prix != null ? ` pour ${prix}€` : '';
+      return `Le profil de ${cépage} ici ne mord pas vos habitudes — potable${px}, vous valez mieux.`;
+    }
+    if (profile.regions?.length && !regionOk) {
+      return `${region} brille souvent — pas sur votre case aujourd’hui.`;
+    }
+    if (prix != null && prix > 40) {
+      return `À ${prix}€, vous espériez un cran au-dessus — il est un cran à côté de vous.`;
+    }
+    return `Correct, mais pas votre signature en bouche.`;
+  }
+  if (ctx === 'restaurant' && prix != null) {
+    return `${nom} à ${prix}€ : la nappe coûte cher pour votre profil — passez votre chemin.`;
+  }
+  if (ctx === 'retail') {
+    return `Dans cette gamme, ${nom} traîne sous ce que votre budget mérite.`;
+  }
+  if (!typeOk && !regionOk) {
+    return `Là vous cumulez tout ce que vous évitez d’habitude — presque un talent.`;
+  }
+  return `Ça se boit ; pour vous, c’est le plafond du compliment.`;
+}
+
+/**
+ * « Pourquoi ce score » — 2–3 phrases : identité du vin + score exact + profil + leviers + ton Sommely.
+ */
+export function generateDetailedExplanation(
+  wine: WineAnalysis,
+  score: ScoreBreakdown,
+  profile: UserProfile | null,
+  avgPrice?: number,
+  options?: ExplanationOptions
+): string {
+  const nom = getNom(wine);
+  const appellation = getAppellationLabel(wine);
+  const yearStr = wine.year != null ? String(wine.year) : '';
+  const identity = yearStr ? `${nom} (${appellation}, ${yearStr})` : `${nom} (${appellation})`;
+  const prix = effectivePrice(avgPrice, options);
 
   if (!profile) {
     return (
-      `Complétez votre profil goûts pour affiner le score. ` +
-      `En attendant, ${nom} (${region}) est évalué sur des critères généraux.`
+      `${identity} — score ${score.total}/100. ` +
+      `Complétez votre profil goûts (cépages, régions, tanins) pour un vrai match personnalisé.`
     ).replace(/\s+/g, ' ');
   }
 
   const typeOk = wineTypeMatchesUser(wine, profile);
   const regionOk = userRegionMatchesWine(wine, profile);
+  const prefs = profilePreferencesFr(profile);
+  const sensory = wineSensoryBrief(wine);
+  const drivers = scoreDriversFragment(score);
 
-  let text = '';
+  const align =
+    typeOk && regionOk
+      ? 'Ça coche style et terroir pour vous.'
+      : typeOk
+        ? 'Le style vous va ; le terroir moins que d’habitude.'
+        : regionOk
+          ? 'Le terroir vous parle ; le style moins.'
+          : 'Le style et le terroir tirent chacun leur épingle du jeu par rapport à vos habitudes.';
 
-  // ─── 90–100 ───
-  if (band === 'top') {
-    if (isChampagneOrBubbles(wine)) {
-      text =
-        `La finesse de bulle et la longueur en bouche de ${nom} correspondent à vos préférences. ` +
-        `Ce n'est pas du hasard, c'est Sommely.`;
-    } else if (isWhiteWine(wine) && isLoireWine(wine)) {
-      text =
-        `${nom} a la minéralité et la fraîcheur qui collent à votre profil. ` +
-        `Accord parfait avec ${accord} — vous avez l'œil.`;
-    } else if (isRedWine(wine) && isBordeauxWine(wine)) {
-      const p2 =
-        prix != null
-          ? `À ${prix}€, le rapport est honnête — surtout ne le dites pas au sommelier.`
-          : `Le rapport est honnête — surtout ne le dites pas au sommelier.`;
-      text = `${nom} est un ${appellation} avec la structure tannique que vous appréciez. ${p2}`;
-    } else {
-      const dom = getDominantGrapeForGeneric(wine);
-      const p2 =
-        prix != null
-          ? `Prix cohérent à ${prix}€. La seule question : pour quelle occasion ?`
-          : `La seule question : pour quelle occasion ?`;
-      text = `${nom} coche vos cases : ${region}, ${dom} dominant. ${p2}`;
-    }
+  const s1 = `${identity} : ${score.total}/100 — ${drivers}`;
+  const s2 = `Vous visez plutôt ${prefs}. Ici : ${sensory}. ${align}`;
+  let s3 = bandClosingLine(wine, score, profile, avgPrice, options);
+  if (prix != null && !s3.includes('€') && scoreBand(score.total) !== 'low') {
+    s3 = `${s3} (prix ref. ~${prix}€)`;
   }
 
-  // ─── 75–89 ───
-  else if (band === 'high') {
-    if (markup || (ctx === 'restaurant' && prix != null && prix > 40)) {
-      const px = prix != null ? `${prix}€` : 'ce tarif';
-      text =
-        `Techniquement bon, mais à ${px} sur cette carte on vous demande de payer le décor. ` +
-        `Cherchez le voisin sur la liste.`;
-    } else if (prix != null && prix > 40) {
-      text =
-        `Techniquement bon, mais à ${prix}€ l'addition pèse pour ce que le vin délivre. ` +
-        `Un cran en dessous sur l'étiquette ferait plus de sens pour vous.`;
-    } else if (score.typeMatch === 0 && score.regionBonus > 0) {
-      text =
-        `${nom} vous parle surtout par le terroir (${region}), moins par le style en bouche. ` +
-        `Bonne pioche, sans être le coup de cœur.`;
-    } else {
-      const px = prix != null ? `${prix}€` : 'ce prix';
-      text =
-        `${nom} est solide pour ${px} — ${region} sait faire ça bien. ` +
-        `Pas le vin de votre vie, mais une soirée réussie est garantie.`;
-    }
-  }
-
-  // ─── 55–74 ───
-  else if (band === 'mid') {
-    if (!typeOk) {
-      const px = prix != null ? ` pour ${prix}€` : '';
-      text =
-        `Le ${cépage} de ${nom} ne colle pas vraiment à ce que vous aimez en bouche. ` +
-        `Potable${px}, mais vous méritez mieux.`;
-    } else if (profile.regions?.length && !regionOk) {
-      text =
-        `${region} produit d'excellents vins — juste pas pour votre profil. ` +
-        `Celui-ci en est un bon exemple.`;
-    } else if (prix != null && prix > 40) {
-      text =
-        `À ${prix}€, vous attendez plus que ce que ${nom} peut offrir à votre palais. ` +
-        `Il y a mieux sur cette carte ou au rayon.`;
-    } else {
-      text =
-        `${nom} fait ce qu'on lui demande. ` +
-        `Ce qu'on lui demande ne correspond pas vraiment à ce que vous aimez.`;
-    }
-  }
-
-  // ─── 0–54 ───
-  else {
-    if (ctx === 'restaurant' && prix != null) {
-      text =
-        `${nom} à ${prix}€ sur cette carte — le prix paye surtout la nappe blanche. ` +
-        `Pour votre profil, passez votre chemin.`;
-    } else if (ctx === 'retail') {
-      text =
-        `Dans sa gamme de prix, ${nom} est dans la moyenne basse. ` +
-        `Votre budget mérite un meilleur voisin de rayon.`;
-    } else if (!typeOk && !regionOk) {
-      text =
-        `${nom} rassemble tout ce que vous évitez d'habitude en verre. ` +
-        `Honnêtement, c'est presque du talent.`;
-    } else {
-      text =
-        `Ça se boit. ` +
-        `C'est probablement le meilleur compliment qu'on puisse faire à ${nom}.`;
-    }
-  }
-
-  text = text.replace(/\s+/g, ' ').trim();
-  if (text.length > 420) return `${text.slice(0, 417)}…`;
+  const text = [s1, s2, s3].join(' ').replace(/\s+/g, ' ').trim();
+  if (text.length > 520) return `${text.slice(0, 517)}…`;
   return text;
 }
