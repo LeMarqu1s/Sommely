@@ -97,7 +97,7 @@ export async function fetchOpenAI(body: Record<string, unknown>): Promise<Respon
   } catch (err) {
     clearTimeout(timeoutId);
     if ((err as Error).name === 'AbortError') {
-      throw new Error("Ce vin résiste à l'analyse. 😏 Réessayez en vous rapprochant de l'étiquette.");
+      throw new Error("L'analyse a pris trop de temps. Réessayez en vous rapprochant de l'étiquette.");
     }
     throw err;
   }
@@ -310,7 +310,7 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
     return analysisCache.get(cacheKey)!;
   }
 
-  const optimized = await optimizeImageForAI(imageBase64, 400, 0.65);
+  const optimized = await optimizeImageForAI(imageBase64, 400, 0.6);
   const response = await fetchOpenAI({
     model: 'gpt-4o-mini',
     messages: [
@@ -323,7 +323,7 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
         ]
       }
     ],
-    max_tokens: 500,
+    max_tokens: 400,
     temperature: 0,
     response_format: { type: 'json_object' }
   });

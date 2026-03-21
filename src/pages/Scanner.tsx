@@ -172,7 +172,7 @@ export function Scanner() {
     // ═══════════════════════════════════════════════════════
     // CONVERSION EN BASE64 — image réelle de la caméra
     // ═══════════════════════════════════════════════════════
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
     const base64 = dataUrl.split(',')[1];
 
     stopCamera();
@@ -216,7 +216,7 @@ export function Scanner() {
         // ═══════════════════════════════════════════════════
         // BASE64 DE LA VRAIE IMAGE IMPORTÉE
         // ═══════════════════════════════════════════════════
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
         const base64 = dataUrl.split(',')[1];
         console.log('📁 Image importée, taille base64:', base64.length, 'chars');
         await analyzeImage(base64);
@@ -257,7 +257,7 @@ export function Scanner() {
     const progressInterval = setInterval(updateStepFromTime, 500);
 
     const analysisTimeout = setTimeout(() => {
-      setErrorMessage("Ce vin résiste à l'analyse. 😏 Réessayez en vous rapprochant de l'étiquette.");
+      setErrorMessage("L'analyse a pris trop de temps. Réessayez en vous rapprochant de l'étiquette.");
       setScanState('error');
     }, TIMEOUT_MS);
 
@@ -413,9 +413,10 @@ export function Scanner() {
       } else if (
         (error as Error)?.name === 'AbortError' ||
         String(error?.message || '').includes("résiste à l'analyse") ||
-        String(error?.message || '').includes('trop de temps')
+        String(error?.message || '').includes('trop de temps') ||
+        String(error?.message || '').includes("L'analyse a pris trop de temps")
       ) {
-        setErrorMessage("Ce vin résiste à l'analyse. 😏 Réessayez en vous rapprochant de l'étiquette.");
+        setErrorMessage("L'analyse a pris trop de temps. Réessayez en vous rapprochant de l'étiquette.");
       } else {
         const msg = error?.message || String(error);
         setErrorMessage(msg.length > 120 ? `${msg.slice(0, 120)}...` : msg || "Erreur lors de l'analyse.");
@@ -474,7 +475,7 @@ export function Scanner() {
 
   if (scanState === 'camera_active' || scanState === 'capturing') {
     return (
-      <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 50, overflow: 'hidden', fontFamily: 'DM Sans, sans-serif' }}>
+      <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 120, overflow: 'hidden', fontFamily: 'DM Sans, sans-serif' }}>
 
         {/* Vidéo plein écran — toujours montée pour que captureFromCamera puisse lire les frames */}
         <video
