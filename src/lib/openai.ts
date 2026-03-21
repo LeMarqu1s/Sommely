@@ -323,7 +323,7 @@ export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysi
         ]
       }
     ],
-    max_tokens: 400,
+    max_tokens: 800,
     temperature: 0,
     response_format: { type: 'json_object' }
   });
