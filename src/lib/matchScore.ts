@@ -270,6 +270,49 @@ function restaurantMarkup(options: ExplanationOptions | undefined): boolean {
   return rp != null && mp != null && mp > 0 && rp > 2 * mp;
 }
 
+/** Aligné sur l’onboarding : ids → clés TYPE_MAPPING */
+const FAVORITE_TYPE_TO_MATCHSCORE: Record<string, string> = {
+  rouge_puissant: 'red_bold',
+  rouge_elegants: 'red_light',
+  blanc_sec: 'white_dry',
+  blanc_riche: 'white_dry',
+  champagne: 'champagne',
+  rose: 'rose',
+  naturel: 'red_light',
+  liquoreux: 'white_sweet',
+};
+
+type UserProfileExtended = UserProfile & { favoriteTypes?: string[]; wineTypes?: string[] };
+
+/** Fusionne types, favoriteTypes et wineTypes pour le même format que matchScore. */
+function normalizeUserProfileForExplanation(p: UserProfile | null): UserProfile | null {
+  if (!p) return null;
+  const ext = p as UserProfileExtended;
+  const fromFavorite = (ext.favoriteTypes ?? [])
+    .map((id) => FAVORITE_TYPE_TO_MATCHSCORE[id])
+    .filter(Boolean) as string[];
+  const fromWineTypes = (ext.wineTypes ?? []).filter(Boolean);
+  const merged = [...new Set([...(p.types ?? []), ...fromFavorite, ...fromWineTypes])];
+  if (merged.length === 0) return { ...p };
+  return { ...p, types: merged };
+}
+
+/** Faux « profil vide » : au moins un levier de goût renseigné → on génère le texte. */
+function hasAnyTastePreference(p: UserProfile | null): boolean {
+  if (!p) return false;
+  if (p.types?.length) return true;
+  if (p.regions?.length) return true;
+  if (p.body !== undefined && p.body !== null) return true;
+  if (p.occasions?.length) return true;
+  if (p.budget) return true;
+  if (p.aroma !== undefined && p.aroma !== null) return true;
+  if (p.sweetness !== undefined && p.sweetness !== null) return true;
+  const ext = p as UserProfileExtended;
+  if (ext.favoriteTypes?.length) return true;
+  if (ext.wineTypes?.length) return true;
+  return false;
+}
+
 const TYPE_PREF_LABELS_FR: Record<string, string> = {
   red_bold: 'rouges corsés',
   red_light: 'rouges légers et fruités',
@@ -301,6 +344,9 @@ function profilePreferencesFr(profile: UserProfile): string {
   }
   if (profile.occasions?.length) {
     parts.push(`occasions : ${profile.occasions.join(', ')}`);
+  }
+  if (profile.budget) {
+    parts.push(`budget : ${profile.budget}`);
   }
   return parts.length ? parts.join(' · ') : 'vos préférences enregistrées';
 }
@@ -427,16 +473,17 @@ export function generateDetailedExplanation(
   const identity = yearStr ? `${nom} (${appellation}, ${yearStr})` : `${nom} (${appellation})`;
   const prix = effectivePrice(avgPrice, options);
 
-  if (!profile) {
+  const normalizedProfile = normalizeUserProfileForExplanation(profile);
+  if (!normalizedProfile || !hasAnyTastePreference(normalizedProfile)) {
     return (
       `${identity} — score ${score.total}/100. ` +
       `Complétez votre profil goûts (cépages, régions, tanins) pour un vrai match personnalisé.`
     ).replace(/\s+/g, ' ');
   }
 
-  const typeOk = wineTypeMatchesUser(wine, profile);
-  const regionOk = userRegionMatchesWine(wine, profile);
-  const prefs = profilePreferencesFr(profile);
+  const typeOk = wineTypeMatchesUser(wine, normalizedProfile);
+  const regionOk = userRegionMatchesWine(wine, normalizedProfile);
+  const prefs = profilePreferencesFr(normalizedProfile);
   const sensory = wineSensoryBrief(wine);
   const drivers = scoreDriversFragment(score);
 
@@ -451,7 +498,7 @@ export function generateDetailedExplanation(
 
   const s1 = `${identity} : ${score.total}/100 — ${drivers}`;
   const s2 = `Vous visez plutôt ${prefs}. Ici : ${sensory}. ${align}`;
-  let s3 = bandClosingLine(wine, score, profile, avgPrice, options);
+  let s3 = bandClosingLine(wine, score, normalizedProfile, avgPrice, options);
   if (prix != null && !s3.includes('€') && scoreBand(score.total) !== 'low') {
     s3 = `${s3} (prix ref. ~${prix}€)`;
   }

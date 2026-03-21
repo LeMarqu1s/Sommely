@@ -58,6 +58,16 @@ const defaultSubscriptionState: SubscriptionState = {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
+/** Garde `sommely_profile` aligné sur Supabase (WineResult / matchScore lisent le localStorage). */
+function syncTasteProfileLocalStorage(profileRow: Profile | null) {
+  if (!profileRow?.taste_profile || typeof profileRow.taste_profile !== 'object') return;
+  try {
+    localStorage.setItem('sommely_profile', JSON.stringify(profileRow.taste_profile));
+  } catch {
+    /* quota / private mode */
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -71,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user?.id) return;
     const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
     setProfile(data ?? null);
+    syncTasteProfileLocalStorage(data ?? null);
   }, [user?.id]);
 
   const refreshSubscription = useCallback(async (overrideUserId?: string) => {
@@ -138,7 +149,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (ok.success) {
       localStorage.removeItem('pending_referral');
       const { data: refreshed } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
-      if (refreshed) setProfile(refreshed);
+      if (refreshed) {
+        setProfile(refreshed);
+        syncTasteProfileLocalStorage(refreshed);
+      }
     }
   }, []);
 
@@ -167,6 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data) {
         setProfile(data);
+        syncTasteProfileLocalStorage(data);
         if (data.onboarding_completed) localStorage.setItem('sommely_onboarding_done', 'true');
       }
     },
@@ -287,6 +302,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq('id', activeSession.user.id)
           .maybeSingle();
         setProfile(profileData ?? null);
+        syncTasteProfileLocalStorage(profileData ?? null);
 
         await refreshSubscription(activeSession.user.id);
       } catch (err) {
