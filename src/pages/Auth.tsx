@@ -14,7 +14,6 @@ export function Auth() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState('');
   const [magicSent, setMagicSent] = useState(false);
 
@@ -25,23 +24,15 @@ export function Auth() {
     }
   }, [isAuthenticated, authLoading, navigate]);
 
+  /* Apple Sign In — réactiver quand le compte Apple Developer est prêt :
   const handleAppleSignIn = async () => {
-    setAppleLoading(true);
-    setError('');
-    try {
-      const { error: err } = await supabase.auth.signInWithOAuth({
-        provider: 'apple',
-        options: {
-          redirectTo: 'https://sommely.shop',
-        },
-      });
-      if (err) console.error('Apple error:', err);
-    } catch {
-      setError('Erreur avec Apple. Réessayez.');
-    } finally {
-      setAppleLoading(false);
-    }
+    const { error: err } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: { redirectTo: 'https://sommely.shop' },
+    });
+    if (err) console.error('Apple error:', err);
   };
+  */
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
@@ -158,29 +149,7 @@ export function Auth() {
                   transition={{ duration: 0.3 }}
                   className="space-y-3"
                 >
-                  <button
-                    type="button"
-                    onClick={handleAppleSignIn}
-                    disabled={appleLoading}
-                    style={{
-                      width: '100%',
-                      padding: '14px',
-                      background: '#000000',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: 12,
-                      fontSize: 15,
-                      fontWeight: 600,
-                      cursor: appleLoading ? 'wait' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 8,
-                      marginBottom: 12,
-                    }}
-                  >
-                    {appleLoading ? <Loader size={18} className="animate-spin" /> : '🍎 Continuer avec Apple'}
-                  </button>
+                  {/* Apple Sign In — masqué temporairement (pas de compte Apple Developer). Réactiver au besoin. */}
 
                   <motion.button
                     whileHover={{ scale: 1.01, y: -1 }}
