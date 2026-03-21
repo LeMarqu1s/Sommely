@@ -111,9 +111,11 @@ export function Profile() {
   const email = user?.email || profile?.email || '';
   const subInfo = SUBSCRIPTION_LABELS[subscriptionTier] || SUBSCRIPTION_LABELS.free;
 
-  const scansRemaining = subscriptionState.isPro || subscriptionState.isTrial
+  const scansRemaining = subscriptionState.isPro
     ? 999
-    : Math.max(0, 3 - subscriptionState.scansThisMonth);
+    : subscriptionState.isTrial
+      ? subscriptionState.trialScansRemaining
+      : 0;
   const expiry = subscription?.current_period_end || subscriptionState.trialEndsAt;
 
   const earnedBadges = BADGES.filter((b) => scanCountTotal >= b.threshold);

@@ -47,6 +47,10 @@ export interface Subscription {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   created_at: string;
+  /** Compteur de scans pendant l’essai (max `scans_limit`, souvent 3) */
+  scans_used?: number | null;
+  /** Plafond de scans en période d’essai (défaut 3) */
+  scans_limit?: number | null;
 }
 
 export interface CaveBottleRow {
@@ -125,6 +129,24 @@ export async function getSubscription(userId: string) {
     .limit(1)
     .maybeSingle();
   return { data: data as Subscription | null, error };
+}
+
+/** +1 scan sur l’abonnement trial (après un scan réussi). Ignoré si déjà Pro. */
+export async function incrementSubscriptionTrialScan(userId: string, subscriptionId: string) {
+  const { data: row } = await supabase
+    .from('subscriptions')
+    .select('scans_used, status')
+    .eq('id', subscriptionId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (!row || row.status !== 'trial') return { error: null };
+  const next = (row.scans_used ?? 0) + 1;
+  const { error } = await supabase
+    .from('subscriptions')
+    .update({ scans_used: next })
+    .eq('id', subscriptionId)
+    .eq('user_id', userId);
+  return { error };
 }
 
 // ─── CAVE_BOTTLES ─────────────────────────────────────────

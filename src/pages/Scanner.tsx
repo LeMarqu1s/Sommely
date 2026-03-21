@@ -11,7 +11,7 @@ import {
 import { canScan } from '../utils/subscription';
 import { PaywallModal } from '../components/PaywallModal';
 import { useAuth } from '../context/AuthContext';
-import { insertScan, updateProfile, getProfile } from '../lib/supabase';
+import { insertScan, updateProfile, getProfile, incrementSubscriptionTrialScan } from '../lib/supabase';
 
 type ScanState = 'idle' | 'camera_active' | 'capturing' | 'analyzing' | 'error';
 
@@ -27,7 +27,7 @@ const ANALYSIS_STEPS = [
 export function Scanner() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, subscriptionState, refreshSubscription, refreshProfile } = useAuth();
+  const { user, profile, subscription, subscriptionState, refreshSubscription, refreshProfile } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,9 +52,9 @@ export function Scanner() {
     'Évitez les reflets sur la bouteille',
     'Rapprochez-vous si le texte est petit',
   ];
-  const scanCheck = canScan(subscriptionState);
-  const isPremium = subscriptionState.isPro || subscriptionState.isTrial;
-  const scansRemaining = scanCheck.allowed ? (scanCheck.remaining ?? 999) : 0;
+  const scanCheck = canScan(subscription);
+  const isPro = subscriptionState.isPro;
+  const scansRemaining = isPro ? 999 : (scanCheck.allowed ? (scanCheck.remaining ?? 0) : 0);
 
   useEffect(() => {
     const pf = profile?.taste_profile as Record<string, unknown> | undefined;
@@ -232,7 +232,7 @@ export function Scanner() {
   // PAS DE VIN ALÉATOIRE ICI
 
   const analyzeImage = async (base64: string) => {
-    const scanCheck = canScan(subscriptionState);
+    const scanCheck = canScan(subscription);
     if (!scanCheck.allowed) {
       setShowPaywall(true);
       return;
@@ -361,6 +361,9 @@ export function Scanner() {
           last_scan_at: new Date().toISOString(),
           total_scans: (prof?.total_scans ?? 0) + 1,
         });
+        if (subscription?.status === 'trial' && subscription.id) {
+          await incrementSubscriptionTrialScan(user.id, subscription.id);
+        }
         refreshSubscription();
         refreshProfile();
       }
@@ -540,9 +543,9 @@ export function Scanner() {
               <div style={{ width: 40 }} />
 
               {/* Compteur scans */}
-              <div style={{ background: isPremium ? 'rgba(212,175,55,0.2)' : 'rgba(0,0,0,0.45)', borderRadius: 999, padding: '4px 12px', border: '1px solid rgba(255,255,255,0.12)' }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: isPremium ? '#D4AF37' : scansRemaining > 1 ? 'rgba(255,255,255,0.7)' : scansRemaining === 1 ? '#fb923c' : '#f87171' }}>
-                  {isPremium ? '∞ Illimité' : `${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''}`}
+              <div style={{ background: isPro ? 'rgba(212,175,55,0.2)' : 'rgba(0,0,0,0.45)', borderRadius: 999, padding: '4px 12px', border: '1px solid rgba(255,255,255,0.12)' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: isPro ? '#D4AF37' : scansRemaining > 1 ? 'rgba(255,255,255,0.7)' : scansRemaining === 1 ? '#fb923c' : '#f87171' }}>
+                  {isPro ? '∞ Illimité' : `${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''}`}
                 </span>
               </div>
 
@@ -607,7 +610,7 @@ export function Scanner() {
           isOpen={showPaywall}
           onClose={() => setShowPaywall(false)}
           feature="Scans illimités"
-          description="Vous avez atteint la limite de 3 scans gratuits. Passez à Sommely Pro pour scanner autant de vins que vous voulez."
+          description="Vous avez utilisé vos 3 scans gratuits. Passez Pro pour des scans illimités."
         />
       </div>
     );
@@ -624,14 +627,14 @@ export function Scanner() {
         <div className="w-16" />
         <span className="font-display font-bold text-white text-sm" style={{ letterSpacing: '-0.02em' }}>Scanner</span>
         <div className={`px-3 py-1 rounded-full text-xs font-bold`}
-          style={{ background: isPremium ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.07)', color: isPremium ? '#D4AF37' : scansRemaining > 1 ? 'rgba(255,255,255,0.5)' : scansRemaining === 1 ? '#fb923c' : '#f87171' }}>
-          {isPremium ? '∞ Illimité' : `${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''}`}
+          style={{ background: isPro ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.07)', color: isPro ? '#D4AF37' : scansRemaining > 1 ? 'rgba(255,255,255,0.5)' : scansRemaining === 1 ? '#fb923c' : '#f87171' }}>
+          {isPro ? '∞ Illimité' : `${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''}`}
         </div>
       </div>
 
-      {!isPremium && scansRemaining === 1 && scanState === 'idle' && (
+      {!isPro && subscriptionState.isTrial && scansRemaining === 1 && scanState === 'idle' && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-warning/10 border-b border-warning/30 px-6 py-2.5 text-center">
-          <p className="text-warning text-xs font-semibold">⚠️ Il vous reste 1 scan gratuit ce mois-ci</p>
+          <p className="text-warning text-xs font-semibold">⚠️ Il vous reste 1 scan gratuit pendant votre essai</p>
         </motion.div>
       )}
 
@@ -702,11 +705,11 @@ export function Scanner() {
               </p>
 
               <button
-                onClick={!isPremium && scansRemaining === 0 ? () => navigate('/premium') : startCamera}
-                className={`w-full py-5 rounded-2xl font-bold text-lg mb-4 flex items-center justify-center gap-3 border-none transition-all duration-200 ${isPremium || scansRemaining > 0 ? 'bg-burgundy-dark text-white shadow-[0_8px_32px_rgba(114,47,55,0.5)] hover:bg-burgundy-medium hover:-translate-y-0.5 active:scale-95 cursor-pointer' : 'bg-white/10 text-white/40 cursor-not-allowed'}`}
+                onClick={!isPro && scansRemaining === 0 ? () => navigate('/premium') : startCamera}
+                className={`w-full py-5 rounded-2xl font-bold text-lg mb-4 flex items-center justify-center gap-3 border-none transition-all duration-200 ${isPro || scansRemaining > 0 ? 'bg-burgundy-dark text-white shadow-[0_8px_32px_rgba(114,47,55,0.5)] hover:bg-burgundy-medium hover:-translate-y-0.5 active:scale-95 cursor-pointer' : 'bg-white/10 text-white/40 cursor-not-allowed'}`}
               >
                 <Camera size={22} className="flex-shrink-0" />
-                <span>{!isPremium && scansRemaining === 0 ? 'Passer Premium →' : 'Activer la caméra'}</span>
+                <span>{!isPro && scansRemaining === 0 ? 'Passer Premium →' : 'Activer la caméra'}</span>
               </button>
               <div className="flex gap-3 w-full">
                 <button onClick={() => fileInputRef.current?.click()} className="flex-1 py-3.5 rounded-xl border border-white/20 text-white/70 text-sm font-medium flex items-center justify-center gap-2 hover:bg-white/5 transition-colors bg-transparent cursor-pointer">
@@ -856,7 +859,7 @@ export function Scanner() {
         isOpen={showPaywall}
         onClose={() => setShowPaywall(false)}
         feature="Scans illimités"
-        description="Vous avez atteint la limite de 3 scans gratuits. Passez à Sommely Pro pour scanner autant de vins que vous voulez."
+        description="Vous avez utilisé vos 3 scans gratuits. Passez Pro pour des scans illimités."
       />
     </div>
   );

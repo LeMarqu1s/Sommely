@@ -18,6 +18,10 @@ export interface SubscriptionState {
   scansThisMonth: number;
   trialEndsAt: string | null;
   plan: string;
+  /** Scans restants pendant l’essai (plafond `trialScansLimit` − `trialScansUsed`) */
+  trialScansRemaining: number;
+  trialScansUsed: number;
+  trialScansLimit: number;
 }
 
 interface AuthContextType {
@@ -47,6 +51,9 @@ const defaultSubscriptionState: SubscriptionState = {
   scansThisMonth: 0,
   trialEndsAt: null,
   plan: 'free',
+  trialScansRemaining: 3,
+  trialScansUsed: 0,
+  trialScansLimit: 3,
 };
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -89,6 +96,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ? Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / 86400000))
         : 0;
 
+    const trialScansLimit = sub?.scans_limit ?? 3;
+    const trialScansUsed = sub?.scans_used ?? 0;
+    const trialScansRemaining =
+      isTrial ? Math.max(0, trialScansLimit - trialScansUsed) : 0;
+
     setSubscriptionState({
       isPro,
       isTrial,
@@ -97,6 +109,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       scansThisMonth: scansThisMonth ?? 0,
       trialEndsAt,
       plan: sub?.plan ?? 'free',
+      trialScansRemaining,
+      trialScansUsed,
+      trialScansLimit,
     });
   }, [user?.id]);
 
@@ -110,6 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         plan: 'free',
         status: 'trial',
         trial_ends_at: trialEnd.toISOString(),
+        scans_used: 0,
+        scans_limit: 3,
       });
     }
   }, []);

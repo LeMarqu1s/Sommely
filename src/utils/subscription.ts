@@ -1,35 +1,88 @@
+import type { Subscription } from '../lib/supabase';
 import type { SubscriptionState } from '../context/AuthContext';
 
-const FREE_SCAN_LIMIT = 3;
 const FREE_CAVE_LIMIT = 5;
+const DEFAULT_TRIAL_SCAN_LIMIT = 3;
 
 export function getGatingFromState(state: SubscriptionState | null | undefined) {
   if (!state) {
-    return { isPro: false, isTrial: false, isFree: true, scansThisMonth: 0, scansRemaining: 3, canScanUnlimited: false, caveLimit: 5 };
+    return {
+      isPro: false,
+      isTrial: false,
+      isFree: true,
+      scansThisMonth: 0,
+      scansRemaining: DEFAULT_TRIAL_SCAN_LIMIT,
+      canScanUnlimited: false,
+      caveLimit: FREE_CAVE_LIMIT,
+    };
   }
   const isPro = state.isPro;
   const isTrial = state.isTrial;
   const isFree = state.isFree;
   const scansThisMonth = state.scansThisMonth;
 
+  if (isPro) {
+    return {
+      isPro,
+      isTrial,
+      isFree,
+      scansThisMonth,
+      scansRemaining: 999,
+      canScanUnlimited: true,
+      caveLimit: 999,
+    };
+  }
+  if (isTrial) {
+    const rem = state.trialScansRemaining ?? 0;
+    return {
+      isPro,
+      isTrial,
+      isFree,
+      scansThisMonth,
+      scansRemaining: rem,
+      canScanUnlimited: false,
+      caveLimit: 999,
+    };
+  }
   return {
     isPro,
     isTrial,
     isFree,
     scansThisMonth,
-    scansRemaining: isPro || isTrial ? 999 : Math.max(0, FREE_SCAN_LIMIT - scansThisMonth),
-    canScanUnlimited: isPro || isTrial,
-    caveLimit: isPro || isTrial ? 999 : FREE_CAVE_LIMIT,
+    scansRemaining: 0,
+    canScanUnlimited: false,
+    caveLimit: FREE_CAVE_LIMIT,
   };
 }
 
-export function canScan(state: SubscriptionState | null | undefined) {
-  const { isPro, isTrial, scansThisMonth } = getGatingFromState(state);
-  if (isPro || isTrial) return { allowed: true };
-  if (scansThisMonth >= FREE_SCAN_LIMIT) {
-    return { allowed: false, reason: 'Limite de 3 scans gratuits atteinte ce mois-ci' };
+/**
+ * Règles : pas de ligne en base → trial implicite (ne pas bloquer).
+ * `active` → illimité. `trial` → max `scans_limit` (souvent 3) avec `scans_used`.
+ */
+export function canScan(subscription: Subscription | null | undefined): {
+  allowed: boolean;
+  remaining?: number;
+  reason?: string;
+} {
+  if (!subscription) {
+    return { allowed: true, remaining: DEFAULT_TRIAL_SCAN_LIMIT };
   }
-  return { allowed: true, remaining: FREE_SCAN_LIMIT - scansThisMonth };
+  if (subscription.status === 'active') {
+    return { allowed: true, remaining: 999 };
+  }
+  if (subscription.status === 'trial') {
+    const trialEnd = subscription.trial_ends_at ? new Date(subscription.trial_ends_at) : null;
+    if (trialEnd && trialEnd <= new Date()) {
+      return { allowed: false, reason: "Période d'essai terminée", remaining: 0 };
+    }
+    const scansUsed = subscription.scans_used ?? 0;
+    const scansLimit = subscription.scans_limit ?? DEFAULT_TRIAL_SCAN_LIMIT;
+    if (scansUsed >= scansLimit) {
+      return { allowed: false, reason: 'Limite de scans atteinte', remaining: 0 };
+    }
+    return { allowed: true, remaining: scansLimit - scansUsed };
+  }
+  return { allowed: false, reason: 'Abonnement requis', remaining: 0 };
 }
 
 export function canAddToCave(state: SubscriptionState | null | undefined, currentBottleCount: number) {

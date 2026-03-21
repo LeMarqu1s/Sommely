@@ -88,7 +88,11 @@ export function Home() {
 
   const firstName = (profile?.taste_profile as any)?.firstName || profile?.name?.split(' ')[0] || '';
   const isPremium = subscriptionState.isPro || subscriptionState.isTrial;
-  const scansRemaining = isPremium ? 999 : Math.max(0, 3 - subscriptionState.scansThisMonth);
+  const scansRemaining = subscriptionState.isPro
+    ? 999
+    : subscriptionState.isTrial
+      ? subscriptionState.trialScansRemaining
+      : 0;
 
   const { formatPrice } = useTheme();
 
