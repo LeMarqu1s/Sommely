@@ -1,18 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL ?? '').trim();
-const supabaseAnonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim();
-
 export const supabase = createClient(
-  supabaseUrl || 'https://temp.supabase.co',
-  supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0ZW1wIn0.x',
+  String(import.meta.env.VITE_SUPABASE_URL ?? ''),
+  String(import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''),
   {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      flowType: 'implicit',
       storageKey: 'sommely-auth',
-      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     },
   }
 );

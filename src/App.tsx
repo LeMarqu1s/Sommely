@@ -7,7 +7,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ClarityScript } from './components/analytics/Clarity';
 import { GoogleAnalytics } from './components/analytics/Analytics';
 import { Landing } from './pages/Landing';
-import { OnboardingGuard } from './components/OnboardingGuard';
+import OnboardingGuard from './components/OnboardingGuard';
 import { Home } from './pages/Home';
 import { Auth } from './pages/Auth';
 import { Invite } from './pages/Invite';
