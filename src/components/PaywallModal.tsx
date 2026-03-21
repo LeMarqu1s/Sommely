@@ -1,4 +1,3 @@
-import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, Lock } from 'lucide-react';
 import { redirectToCheckout } from '../utils/stripe';
 import { Logo } from './Logo';
@@ -11,23 +10,20 @@ interface PaywallModalProps {
 }
 
 export function PaywallModal({ isOpen, onClose, feature, description }: PaywallModalProps) {
+  if (!isOpen) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center p-4"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ y: 100 }}
-            animate={{ y: 0 }}
-            exit={{ y: 100 }}
-            className="bg-white rounded-3xl w-full max-w-lg p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
+    <div
+      role="dialog"
+      aria-modal="true"
+      style={{ position: 'fixed', inset: 0, zIndex: 50 }}
+      className="bg-black/60 flex items-end justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-3xl w-full max-w-lg p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center overflow-hidden">
@@ -65,9 +61,7 @@ export function PaywallModal({ isOpen, onClose, feature, description }: PaywallM
             >
               Ou 47,99€/an (4€/mois) · Meilleure valeur 🎯
             </button>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      </div>
+    </div>
   );
 }

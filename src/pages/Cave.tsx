@@ -457,14 +457,32 @@ export function Cave() {
         </div>
       </div>
 
-      {/* MODAL ALERTES */}
-      <AnimatePresence>
-        {showAlerts && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 90px)', paddingLeft: '16px', paddingRight: '16px', paddingTop: '16px' }} onClick={() => setShowAlerts(false)}>
-            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="rounded-3xl w-full max-w-lg p-6 space-y-3" style={{ background: 'var(--bg-card)' }} onClick={e => e.stopPropagation()}>
+      {/* MODAL ALERTES — && uniquement (pas AnimatePresence : évite overlay fixed invisible qui bloque la BottomNav) */}
+      {showAlerts && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cave-alerts-title"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 90px)',
+            paddingLeft: '16px',
+            paddingRight: '16px',
+            paddingTop: '16px',
+          }}
+          className="bg-black/60 flex items-end justify-center"
+          onClick={() => setShowAlerts(false)}
+        >
+          <div
+            className="rounded-3xl w-full max-w-lg p-6 space-y-3"
+            style={{ background: 'var(--bg-card)' }}
+            onClick={e => e.stopPropagation()}
+          >
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-display text-lg font-bold text-black-wine flex items-center gap-2"><Bell size={18} color="#D4AF37" /> Alertes prix</h3>
-                <button onClick={() => setShowAlerts(false)} className="bg-transparent border-none cursor-pointer"><X size={20} color="var(--text-secondary)" /></button>
+                <h3 id="cave-alerts-title" className="font-display text-lg font-bold text-black-wine flex items-center gap-2"><Bell size={18} color="#D4AF37" /> Alertes prix</h3>
+                <button type="button" onClick={() => setShowAlerts(false)} className="bg-transparent border-none cursor-pointer"><X size={20} color="var(--text-secondary)" /></button>
               </div>
               {alerts.map(b => {
                 const gp = Math.round(((b.estimatedCurrentValue - b.purchasePrice) / b.purchasePrice) * 100);
@@ -477,17 +495,16 @@ export function Cave() {
                         <p className="text-xs text-gray-dark mt-0.5">{up ? '📈' : '📉'} {b.priceVariation24h > 0 ? '+' : ''}{b.priceVariation24h.toFixed(1)}% · Stock : {formatPrice(b.estimatedCurrentValue * b.quantity)}</p>
                         <p className="text-xs font-bold mt-1" style={{ color: up ? '#2E7D32' : '#C62828' }}>{gp >= 0 ? '+' : ''}{gp}% depuis l'achat</p>
                       </div>
-                      <button onClick={() => { setShowAlerts(false); simulateSell(b); }} className="flex-shrink-0 bg-burgundy-dark text-white text-xs px-3 py-1.5 rounded-full border-none cursor-pointer font-semibold">
+                      <button type="button" onClick={() => { setShowAlerts(false); simulateSell(b); }} className="flex-shrink-0 bg-burgundy-dark text-white text-xs px-3 py-1.5 rounded-full border-none cursor-pointer font-semibold">
                         Simuler vente
                       </button>
                     </div>
                   </div>
                 );
               })}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-lg mx-auto px-5 py-5">
         {!user && (
@@ -935,7 +952,13 @@ export function Cave() {
 
       {/* Modal ajout — démonté du DOM quand fermé (pas display:none) */}
       {view === 'add' && user && (
-        <div className="fixed inset-0 z-[50] flex flex-col pointer-events-auto" role="dialog" aria-modal="true" aria-labelledby="cave-add-title">
+        <div
+          className="flex flex-col pointer-events-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cave-add-title"
+          style={{ position: 'fixed', inset: 0, zIndex: 50 }}
+        >
           <div
             className="absolute inset-0 bg-black/60"
             onClick={() => setView('overview')}
