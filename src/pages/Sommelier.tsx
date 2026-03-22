@@ -91,7 +91,7 @@ export function Sommelier() {
       {
         id: '0',
         role: 'assistant',
-        content: "Bonjour ! 🍷 Je suis Antoine, votre sommelier personnel. Que vous cherchiez l'accord parfait pour ce soir, un conseil sur votre cave, ou simplement à découvrir un vin exceptionnel — je suis là. Par où commençons-nous ?",
+        content: "Bonjour ! 🍷 Je suis Antoine, votre sommelier personnel. Que vous cherchiez l'accord parfait pour ce soir, un conseil sur votre cave, ou simplement à découvrir un vin exceptionnel, je suis là. Par où commençons-nous ?",
         timestamp: new Date(),
       },
     ]);
@@ -218,7 +218,7 @@ RÈGLE FORMAT : N'utilise JAMAIS de markdown (**gras**, *italique*, ##titres, li
       {
         id: '0',
         role: 'assistant',
-        content: "Bonjour ! 🍷 Je suis Antoine, votre sommelier personnel. Que vous cherchiez l'accord parfait pour ce soir, un conseil sur votre cave, ou simplement à découvrir un vin exceptionnel — je suis là. Par où commençons-nous ?",
+        content: "Bonjour ! 🍷 Je suis Antoine, votre sommelier personnel. Que vous cherchiez l'accord parfait pour ce soir, un conseil sur votre cave, ou simplement à découvrir un vin exceptionnel, je suis là. Par où commençons-nous ?",
         timestamp: new Date(),
       },
     ]);
