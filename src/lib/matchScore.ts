@@ -477,7 +477,7 @@ export function generateDetailedExplanation(
   const normalizedProfile = normalizeUserProfileForExplanation(profile);
   if (!normalizedProfile || !hasAnyTastePreference(normalizedProfile)) {
     return (
-      `${identity} — score ${score.total}/100. ` +
+      `${identity}. Score ${score.total}/100. ` +
       `Complétez votre profil goûts (cépages, régions, tanins) pour un vrai match personnalisé.`
     ).replace(/\s+/g, ' ');
   }
