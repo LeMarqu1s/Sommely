@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Logo } from '../components/Logo';
 import {
@@ -174,21 +174,8 @@ export function WineResult() {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (!wine) {
-      navigate('/scan', { replace: true });
-    }
-  }, [wine, navigate]);
-
   if (!wine) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-cream font-body">
-        <div
-          className="w-8 h-8 rounded-full border-2 border-burgundy-dark border-t-transparent animate-spin"
-          aria-hidden
-        />
-      </div>
-    );
+    return <Navigate to="/scan" replace />;
   }
 
   const scoreInfo = getScoreInfo(score);
@@ -336,7 +323,7 @@ export function WineResult() {
     <div className="min-h-screen bg-cream font-body text-black-wine ">
       <div className="sticky top-0 z-10 bg-cream/95 backdrop-blur-md border-b border-gray-light/30 px-6 py-4 flex items-center justify-between">
         <button
-          onClick={() => (fromProfile ? navigate('/profile') : navigate(-1))}
+          onClick={() => (fromProfile ? navigate('/profile') : navigate('/scan'))}
           className="flex items-center gap-2 bg-transparent border-none cursor-pointer"
           aria-label="Retour"
         >
