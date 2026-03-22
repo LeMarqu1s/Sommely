@@ -36,7 +36,7 @@ function parsePriceRangeFromCache(text) {
 }
 
 async function fetchWinePriceFromCache(supabaseUrl, serviceKey, normalizedName) {
-  const base = supabaseUrl.replace(/\/$/, '');
+  const base = String(supabaseUrl).replace(/\/$/, '');
   const url = `${base}/rest/v1/wine_cache?normalized_name=eq.${encodeURIComponent(normalizedName)}&select=price_range&limit=1`;
   const res = await fetch(url, {
     headers: {
@@ -45,13 +45,19 @@ async function fetchWinePriceFromCache(supabaseUrl, serviceKey, normalizedName) 
     },
   });
   if (!res.ok) return null;
-  const rows = await res.json();
+  let rows;
+  try {
+    rows = await res.json();
+  } catch {
+    return null;
+  }
   if (!Array.isArray(rows) || rows.length === 0) return null;
-  return rows[0].price_range;
+  const row0 = rows[0];
+  return row0 && typeof row0 === 'object' ? row0.price_range : null;
 }
 
 async function insertWinePriceCache(supabaseUrl, serviceKey, normalizedName, originalName, priceRangeObj) {
-  const base = supabaseUrl.replace(/\/$/, '');
+  const base = String(supabaseUrl).replace(/\/$/, '');
   const prText = JSON.stringify({
     min: Number(priceRangeObj.min),
     max: Number(priceRangeObj.max),
@@ -126,7 +132,13 @@ async function applyWinePriceCacheToResponse(data) {
     await insertWinePriceCache(supabaseUrl, serviceKey, normalized, name, gptRange);
   }
 
-  data.choices[0].message.content = JSON.stringify(parsed);
+  const msg = data?.choices?.[0]?.message;
+  if (!msg || typeof msg !== 'object') return data;
+  try {
+    msg.content = JSON.stringify(parsed);
+  } catch (e) {
+    console.warn('wine_cache: stringify message failed', e);
+  }
   return data;
 }
 
@@ -191,11 +203,16 @@ export default async function handler(req, res) {
       return res.status(response.status).json(data);
     }
 
-    const patched = await applyWinePriceCacheToResponse(data);
-    return res.status(200).json(patched);
+    try {
+      const patched = await applyWinePriceCacheToResponse(data);
+      return res.status(200).json(patched);
+    } catch (cacheErr) {
+      console.error('wine_cache apply failed:', cacheErr);
+      return res.status(200).json(data);
+    }
   } catch (err) {
     console.error('OpenAI proxy error:', err);
-    if (err.name === 'AbortError') {
+    if (err && err.name === 'AbortError') {
       return res.status(504).json({ error: { message: "Délai dépassé. L'IA prend trop de temps, réessayez." } });
     }
     return res.status(500).json({ error: { message: err.message || 'Erreur serveur' } });
