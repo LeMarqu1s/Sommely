@@ -404,10 +404,10 @@ function bandClosingLine(
 
   if (band === 'top') {
     if (isChampagneOrBubbles(wine)) {
-      return `La finesse en bouche colle à vos bulles préférées — pas de hasard, juste du goût.`;
+      return `La finesse en bouche colle à vos bulles préférées. Pas de hasard, juste du goût.`;
     }
     if (isWhiteWine(wine) && isLoireWine(wine)) {
-      return `Minéralité qui vous va comme un gant — ${accord} vous attend.`;
+      return `Minéralité qui vous va comme un gant. ${accord} vous attend.`;
     }
     if (isRedWine(wine) && isBordeauxWine(wine)) {
       return prix != null
@@ -415,44 +415,44 @@ function bandClosingLine(
         : `Le rapport tient la route pour ce ${appellation}.`;
     }
     return prix != null
-      ? `Prix cohérent à ${prix}€ — la seule question, c’est l’occasion.`
+      ? `Prix cohérent à ${prix}€. La seule question, c’est l’occasion.`
       : `${region} et ${getDominantGrapeForGeneric(wine)} : vous êtes sur la bonne ligne.`;
   }
   if (band === 'high') {
     if (markup || (ctx === 'restaurant' && prix != null && prix > 40)) {
       const px = prix != null ? `${prix}€` : 'ce tarif';
-      return `Bon vin, mais à ${px} ici on paie aussi la salle — regardez un voisin sur la carte.`;
+      return `Bon vin, mais à ${px} ici on paie aussi la salle. Regardez un voisin sur la carte.`;
     }
     if (prix != null && prix > 40) {
       return `À ${prix}€, l’addition pèse un peu pour ce que le verre raconte.`;
     }
     if (score.typeMatch === 0 && score.regionBonus > 0) {
-      return `${nom} parle surtout terroir (${region}), moins votre style — bonne bouteille, pas forcément votre crush.`;
+      return `${nom} parle surtout terroir (${region}), moins votre style. Bonne bouteille, pas forcément votre crush.`;
     }
     const px = prix != null ? `${prix}€` : 'ce prix';
-    return `Solide pour ${px} — ${region} sait faire, même si ce n’est pas votre légende personnelle.`;
+    return `Solide pour ${px}. ${region} sait faire, même si ce n’est pas votre légende personnelle.`;
   }
   if (band === 'mid') {
     if (!typeOk) {
       const px = prix != null ? ` pour ${prix}€` : '';
-      return `Le profil de ${cépage} ici ne mord pas vos habitudes — potable${px}, vous valez mieux.`;
+      return `Le profil de ${cépage} ici ne mord pas vos habitudes. Potable${px}, vous valez mieux.`;
     }
     if (profile.regions?.length && !regionOk) {
-      return `${region} brille souvent — pas sur votre case aujourd’hui.`;
+      return `${region} brille souvent. Pas sur votre case aujourd’hui.`;
     }
     if (prix != null && prix > 40) {
-      return `À ${prix}€, vous espériez un cran au-dessus — il est un cran à côté de vous.`;
+      return `À ${prix}€, vous espériez un cran au-dessus. Il est un cran à côté de vous.`;
     }
     return `Correct, mais pas votre signature en bouche.`;
   }
   if (ctx === 'restaurant' && prix != null) {
-    return `${nom} à ${prix}€ : la nappe coûte cher pour votre profil — passez votre chemin.`;
+    return `${nom} à ${prix}€ : la nappe coûte cher pour votre profil. Passez votre chemin.`;
   }
   if (ctx === 'retail') {
     return `Dans cette gamme, ${nom} traîne sous ce que votre budget mérite.`;
   }
   if (!typeOk && !regionOk) {
-    return `Là vous cumulez tout ce que vous évitez d’habitude — presque un talent.`;
+    return `Là vous cumulez tout ce que vous évitez d’habitude. Presque un talent.`;
   }
   return `Ça se boit ; pour vous, c’est le plafond du compliment.`;
 }
