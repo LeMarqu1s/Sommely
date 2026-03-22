@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Logo } from '../components/Logo';
 import {
@@ -172,7 +172,7 @@ export function WineResult() {
   }, []);
 
   if (!wine) {
-    return (void (typeof window !== 'undefined' && window.location.replace('/scan')), null);
+    return <Navigate to="/scan" replace />;
   }
 
   const scoreInfo = getScoreInfo(score);
