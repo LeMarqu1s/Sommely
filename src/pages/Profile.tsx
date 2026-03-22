@@ -22,7 +22,9 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { supabase, updateProfile } from '../lib/supabase';
 import { useTheme, CURRENCIES } from '../context/ThemeContext';
-import { getUserScans, getScansCountTotal, applyReferralCode, getReferralStats } from '../lib/supabase';
+import { getScansCountTotal, applyReferralCode, getReferralStats } from '../lib/supabase';
+import type { WineAnalysis } from '../lib/openai';
+import type { ScoreBreakdown } from '../lib/matchScore';
 import { SaveFlowModal } from '../components/SaveFlow';
 
 const BADGES = [
@@ -64,6 +66,31 @@ function deriveStyleIndex(favoriteTypes: string[] | undefined): number {
     if (TASTE_STYLE_OPTIONS[i].favoriteTypes.some((id) => favoriteTypes.includes(id))) return i;
   }
   return 0;
+}
+
+/** Reconstitue l’état /result depuis le JSON Supabase (table scans). */
+function buildResultStateFromScanResult(
+  result: Record<string, unknown> | null | undefined
+): { wine: WineAnalysis; score: number; scoreBreakdown?: ScoreBreakdown } | null {
+  if (!result || typeof result !== 'object') return null;
+  const wine = result.wine as WineAnalysis | undefined;
+  if (!wine || typeof wine.name !== 'string' || !wine.name.trim()) return null;
+  return {
+    wine,
+    score: Number(result.score ?? 75),
+    scoreBreakdown: result.scoreBreakdown as ScoreBreakdown | undefined,
+  };
+}
+
+/** Favoris localStorage : { ...wine, score, savedAt } */
+function buildResultStateFromFavorite(
+  fav: Record<string, unknown>
+): { wine: WineAnalysis; score: number; scoreBreakdown?: ScoreBreakdown } | null {
+  const score = Number(fav.score ?? 75);
+  const { savedAt: _s, ...rest } = fav;
+  const wine = rest as unknown as WineAnalysis;
+  if (typeof wine.name !== 'string' || !wine.name.trim()) return null;
+  return { wine, score };
 }
 
 const SUBSCRIPTION_LABELS: Record<string, { label: string; color: string; bg: string }> = {
@@ -136,11 +163,32 @@ export function Profile() {
     let mounted = true;
     setIsLoadingScans(true);
     Promise.all([
-      getUserScans(user.id, 5),
+      supabase
+        .from('scans')
+        .select('id, result, created_at')
+        .eq('user_id', user.id)
+        .eq('type', 'bottle')
+        .order('created_at', { ascending: false })
+        .limit(5),
       getScansCountTotal(user.id),
-    ]).then(([{ data }, { count }]) => {
+    ]).then(([{ data: scanRows, error: scanErr }, { count }]) => {
       if (!mounted) return;
-      if (data) setRecentScans(data);
+      if (scanErr) console.error(scanErr);
+      const rows = scanRows || [];
+      setRecentScans(
+        rows.map((row: { id: string; result: Record<string, unknown> | null }) => {
+          const r = (row.result || {}) as Record<string, unknown>;
+          const w = (r.wine || {}) as Record<string, unknown>;
+          return {
+            id: row.id,
+            wine_name: String(r.name ?? w.name ?? 'Vin'),
+            wine_region: String(r.region ?? w.region ?? ''),
+            wine_type: String(r.type ?? w.type ?? ''),
+            score: Number(r.score ?? 0),
+            result: r,
+          };
+        })
+      );
       setScanCountTotal(count ?? 0);
       setIsLoadingScans(false);
     });
@@ -545,7 +593,20 @@ export function Profile() {
               recentScans.map((scan) => (
                 <div
                   key={scan.id}
-                  className="flex items-center gap-4 px-6 py-4 border-b border-gray-light/20 last:border-0"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    const s = buildResultStateFromScanResult(scan.result);
+                    if (s) navigate('/result', { state: s });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      const s = buildResultStateFromScanResult(scan.result);
+                      if (s) navigate('/result', { state: s });
+                    }
+                  }}
+                  className="flex items-center gap-4 px-6 py-4 border-b border-gray-light/20 last:border-0 cursor-pointer hover:bg-cream/80 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-xl bg-burgundy-dark/10 flex items-center justify-center flex-shrink-0">
                     <Wine size={18} color="#722F37" />
@@ -598,8 +659,21 @@ export function Profile() {
             <div>
               {favorites.slice(0, 3).map((fav: any, i: number) => (
                 <div
-                  key={i}
-                  className="flex items-center gap-4 px-6 py-4 border-b border-gray-light/20 last:border-0"
+                  key={fav.id ?? `${fav.name}-${i}`}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    const s = buildResultStateFromFavorite(fav as Record<string, unknown>);
+                    if (s) navigate('/result', { state: s });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      const s = buildResultStateFromFavorite(fav as Record<string, unknown>);
+                      if (s) navigate('/result', { state: s });
+                    }
+                  }}
+                  className="flex items-center gap-4 px-6 py-4 border-b border-gray-light/20 last:border-0 cursor-pointer hover:bg-cream/80 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-xl bg-danger/10 flex items-center justify-center flex-shrink-0">
                     <Heart size={18} color="#C62828" fill="#C62828" />

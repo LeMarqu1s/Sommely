@@ -26,6 +26,31 @@ import {
   type UserProfile,
 } from '../lib/matchScore';
 
+type WineResultLocationState = {
+  wine?: WineAnalysis;
+  /** Alias accepté (ex. profil) */
+  wineData?: WineAnalysis;
+  score?: number;
+  scoreBreakdown?: ScoreBreakdown;
+  explanation?: string;
+};
+
+/** Vin affiché : analyse + champs enrichis (Scanner / favoris). */
+type WineDisplay = WineAnalysis & {
+  avgPrice?: number | string;
+  id?: string;
+  description?: string;
+};
+
+function isValidWineForResult(w: unknown): w is WineDisplay {
+  return (
+    !!w &&
+    typeof w === 'object' &&
+    typeof (w as WineAnalysis).name === 'string' &&
+    String((w as WineAnalysis).name).trim().length > 0
+  );
+}
+
 const FOOD_PAIRINGS: Record<string, { emoji: string; label: string }[]> = {
   Rouge: [
     { emoji: '🥩', label: 'Viande rouge' },
@@ -125,11 +150,13 @@ export function WineResult() {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [showCopied, setShowCopied] = useState(false);
 
-  const wine = location.state?.wine;
-  const score = location.state?.score || 75;
+  const state = location.state as WineResultLocationState | null;
+  const wineRaw = state?.wine ?? state?.wineData;
+  const wine: WineDisplay | undefined = isValidWineForResult(wineRaw) ? (wineRaw as WineDisplay) : undefined;
+  const score = state?.score ?? 75;
   const { formatPrice } = useTheme();
 
-  const stateNav = location.state as { scoreBreakdown?: ScoreBreakdown; score?: number } | null;
+  const stateNav = state;
 
   useEffect(() => {
     const profile = localStorage.getItem('sommely_profile');
@@ -202,7 +229,9 @@ export function WineResult() {
     {
       icon: Grape,
       label: isChampagne ? 'Assemblage' : 'Cépages',
-      value: wine.grapes || 'Non spécifié',
+      value: Array.isArray(wine.grapes)
+        ? wine.grapes.join(', ')
+        : String(wine.grapes || 'Non spécifié'),
     },
     ...(isChampagne && wine.dosage
       ? [{ icon: Grape, label: 'Dosage / Sucre', value: wine.dosage }]
@@ -215,12 +244,12 @@ export function WineResult() {
   // Prix de référence 75cl : AI > avgPrice > 0 (robuste aux strings "30-50")
   const ref750 = (() => {
     const n = extractNumber(bp['cl750']);
-    return n > 0 ? n : (wine.avgPrice ?? 0);
+    return n > 0 ? n : extractNumber(wine.avgPrice);
   })();
 
   const showAgingPotentialRow =
     Boolean(wine.agingPotential) &&
-    (ref750 > 15 || maxGardeYearsFromText(wine.agingPotential) > 3);
+    (ref750 > 15 || maxGardeYearsFromText(wine.agingPotential ?? '') > 3);
 
   // Fourchette pour la 75cl uniquement
   const format75cl = (price: number) =>
@@ -287,7 +316,12 @@ export function WineResult() {
     if (!isFavorite) {
       favorites.push({ ...wine, score, savedAt: new Date().toISOString() });
     } else {
-      const index = favorites.findIndex((f: any) => f.id === wine.id);
+      const index = favorites.findIndex(
+        (f: any) =>
+          wine.id != null && f.id != null
+            ? f.id === wine.id
+            : f.name === wine.name && String(f.year ?? '') === String(wine.year ?? '')
+      );
       if (index > -1) favorites.splice(index, 1);
     }
     localStorage.setItem('sommely_favorites', JSON.stringify(favorites));
