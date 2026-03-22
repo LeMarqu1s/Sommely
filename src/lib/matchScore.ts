@@ -458,7 +458,7 @@ function bandClosingLine(
 }
 
 /**
- * « Pourquoi ce score » — 2–3 phrases : identité du vin + score exact + profil + leviers + ton Sommely.
+ * « Pourquoi ce score » — 3 phrases max, ton naturel (pas de liste de préférences).
  */
 export function generateDetailedExplanation(
   wine: WineAnalysis,
@@ -472,6 +472,7 @@ export function generateDetailedExplanation(
   const yearStr = wine.year != null ? String(wine.year) : '';
   const identity = yearStr ? `${nom} (${appellation}, ${yearStr})` : `${nom} (${appellation})`;
   const prix = effectivePrice(avgPrice, options);
+  const regionLabel = getRegionLabel(wine);
 
   const normalizedProfile = normalizeUserProfileForExplanation(profile);
   if (!normalizedProfile || !hasAnyTastePreference(normalizedProfile)) {
@@ -483,27 +484,34 @@ export function generateDetailedExplanation(
 
   const typeOk = wineTypeMatchesUser(wine, normalizedProfile);
   const regionOk = userRegionMatchesWine(wine, normalizedProfile);
-  const prefs = profilePreferencesFr(normalizedProfile);
-  const sensory = wineSensoryBrief(wine);
-  const drivers = scoreDriversFragment(score);
+  let sensory = wineSensoryBrief(wine);
+  if (sensory.length > 90) sensory = `${sensory.slice(0, 87).trim()}…`;
+  const sensLower = sensory.charAt(0).toLowerCase() + sensory.slice(1);
+  const sensPhrase = sensory.charAt(0).toUpperCase() + sensory.slice(1).toLowerCase();
 
-  const align =
-    typeOk && regionOk
-      ? 'Ça coche style et terroir pour vous.'
-      : typeOk
-        ? 'Le style vous va ; le terroir moins que d’habitude.'
-        : regionOk
-          ? 'Le terroir vous parle ; le style moins.'
-          : 'Le style et le terroir tirent chacun leur épingle du jeu par rapport à vos habitudes.';
+  const s1 = `${identity} : ${score.total}/100.`;
 
-  const s1 = `${identity} : ${score.total}/100 — ${drivers}`;
-  const s2 = `Vous visez plutôt ${prefs}. Ici : ${sensory}. ${align}`;
+  let s2 = '';
+  if (typeOk && regionOk) {
+    s2 = `${sensPhrase} colle à ce que vous cherchez en bouteille.`;
+  } else if (typeOk && !regionOk) {
+    s2 = `${sensPhrase} colle à vos préférences, mais ${regionLabel} n’est pas votre terroir de cœur.`;
+  } else if (!typeOk && regionOk) {
+    s2 = `${regionLabel} vous parle, même si le profil en bouche (${sensLower}) s’écarte un peu de vos habitudes.`;
+  } else {
+    s2 = `Ce vin s’écarte un peu de vos goûts habituels, avec un profil plutôt ${sensLower}.`;
+  }
+  if (prix != null && score.budgetMatch > 0) {
+    s2 += ` À ${prix}€, c’est dans votre budget.`;
+  }
+
   let s3 = bandClosingLine(wine, score, normalizedProfile, avgPrice, options);
-  if (prix != null && !s3.includes('€') && scoreBand(score.total) !== 'low') {
-    s3 = `${s3} (prix ref. ~${prix}€)`;
+  const s2HasPrice = prix != null && s2.includes(`${prix}€`);
+  if (prix != null && !s3.includes('€') && scoreBand(score.total) !== 'low' && !s2HasPrice) {
+    s3 = `${s3} À ${prix}€, le rapport reste honnête.`;
   }
 
   const text = [s1, s2, s3].join(' ').replace(/\s+/g, ' ').trim();
-  if (text.length > 520) return `${text.slice(0, 517)}…`;
+  if (text.length > 420) return `${text.slice(0, 417)}…`;
   return text;
 }
