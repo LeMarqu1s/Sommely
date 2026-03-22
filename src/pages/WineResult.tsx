@@ -101,6 +101,22 @@ function sanitizePrice(p: number | string, fmt: (n: number) => string): string {
   return n > 0 ? `~ ${fmt(n)}` : '';
 }
 
+/** Ordre de grandeur en années pour le texte de garde (ex. « 5-10 ans », « 8 ans », années cibles). */
+function maxGardeYearsFromText(text: string): number {
+  const t = text.toLowerCase();
+  const range = t.match(/(\d+)\s*[-–]\s*(\d+)\s*ans/);
+  if (range) return Math.max(parseInt(range[1], 10), parseInt(range[2], 10));
+  const withAns = [...t.matchAll(/(\d+)\s*ans/g)];
+  if (withAns.length) return Math.max(...withAns.map((m) => parseInt(m[1], 10)));
+  const nums = (text.match(/\d+/g) || []).map((s) => parseInt(s, 10));
+  const plausible = nums.filter((n) => n >= 1 && n <= 80);
+  if (plausible.length) return Math.max(...plausible);
+  const cy = new Date().getFullYear();
+  const y4 = (text.match(/\b(20[2-9]\d{2})\b/g) || []).map((s) => parseInt(s, 10));
+  if (y4.length) return Math.max(0, Math.max(...y4) - cy);
+  return 0;
+}
+
 export function WineResult() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -201,6 +217,10 @@ export function WineResult() {
     const n = extractNumber(bp['cl750']);
     return n > 0 ? n : (wine.avgPrice ?? 0);
   })();
+
+  const showAgingPotentialRow =
+    Boolean(wine.agingPotential) &&
+    (ref750 > 15 || maxGardeYearsFromText(wine.agingPotential) > 3);
 
   // Fourchette pour la 75cl uniquement
   const format75cl = (price: number) =>
@@ -614,7 +634,7 @@ export function WineResult() {
           </motion.div>
         )}
 
-        {(wine.servingTemp || wine.decanting || wine.glassType || wine.agingPotential) && (
+        {(wine.servingTemp || wine.decanting || wine.glassType || showAgingPotentialRow) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -654,7 +674,7 @@ export function WineResult() {
                   </div>
                 </div>
               )}
-              {wine.agingPotential && (
+              {showAgingPotentialRow && (
                 <div className="flex items-center gap-4 px-6 py-4">
                   <span className="text-2xl flex-shrink-0">⏳</span>
                   <div>
