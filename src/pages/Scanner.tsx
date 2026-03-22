@@ -532,7 +532,7 @@ export function Scanner() {
               <X size={20} color="white" />
             </motion.button>
 
-            {/* Barre supérieure — compteur + galerie */}
+            {/* Barre supérieure (sans compteur scans) */}
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
               paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
@@ -542,13 +542,6 @@ export function Scanner() {
             }}>
               {/* Spacer gauche pour équilibrer la mise en page */}
               <div style={{ width: 40 }} />
-
-              {/* Compteur scans */}
-              <div style={{ background: isPro ? 'rgba(212,175,55,0.2)' : 'rgba(0,0,0,0.45)', borderRadius: 999, padding: '4px 12px', border: '1px solid rgba(255,255,255,0.12)' }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: isPro ? '#D4AF37' : scansRemaining > 1 ? 'rgba(255,255,255,0.7)' : scansRemaining === 1 ? '#fb923c' : '#f87171' }}>
-                  {isPro ? '∞ Illimité' : `${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''}`}
-                </span>
-              </div>
 
               {/* Spacer droit pour équilibrer la mise en page */}
               <div style={{ width: 40 }} />
@@ -627,10 +620,7 @@ export function Scanner() {
         style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="w-16" />
         <span className="font-display font-bold text-white text-sm" style={{ letterSpacing: '-0.02em' }}>Scanner</span>
-        <div className={`px-3 py-1 rounded-full text-xs font-bold`}
-          style={{ background: isPro ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.07)', color: isPro ? '#D4AF37' : scansRemaining > 1 ? 'rgba(255,255,255,0.5)' : scansRemaining === 1 ? '#fb923c' : '#f87171' }}>
-          {isPro ? '∞ Illimité' : `${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''}`}
-        </div>
+        <div className="w-16" />
       </div>
 
       {!isPro && subscriptionState.isTrial && scansRemaining === 1 && scanState === 'idle' && (
