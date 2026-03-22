@@ -21,6 +21,115 @@ function augmentOpenAIChatBody(body) {
   return { ...out, messages, temperature: 0 };
 }
 
+/** @param {string | null | undefined} text JSON {"min":n,"max":n} */
+function parsePriceRangeFromCache(text) {
+  if (!text || typeof text !== 'string') return null;
+  try {
+    const o = JSON.parse(text);
+    if (o && typeof o.min === 'number' && typeof o.max === 'number') {
+      return { min: o.min, max: o.max };
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+async function fetchWinePriceFromCache(supabaseUrl, serviceKey, normalizedName) {
+  const base = supabaseUrl.replace(/\/$/, '');
+  const url = `${base}/rest/v1/wine_cache?normalized_name=eq.${encodeURIComponent(normalizedName)}&select=price_range&limit=1`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+    },
+  });
+  if (!res.ok) return null;
+  const rows = await res.json();
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  return rows[0].price_range;
+}
+
+async function insertWinePriceCache(supabaseUrl, serviceKey, normalizedName, originalName, priceRangeObj) {
+  const base = supabaseUrl.replace(/\/$/, '');
+  const prText = JSON.stringify({
+    min: Number(priceRangeObj.min),
+    max: Number(priceRangeObj.max),
+  });
+  const res = await fetch(`${base}/rest/v1/wine_cache`, {
+    method: 'POST',
+    headers: {
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({
+      normalized_name: normalizedName,
+      original_name: originalName,
+      price_range: prText,
+    }),
+  });
+  if (!res.ok && res.status !== 409) {
+    const errText = await res.text().catch(() => '');
+    console.warn('wine_cache insert failed', res.status, errText);
+  }
+}
+
+/**
+ * Après réponse OpenAI OK : fige priceRange via wine_cache (Supabase).
+ * Ne s’applique qu’au JSON « une étiquette » (name + priceRange), pas aux cartes / autres.
+ */
+async function applyWinePriceCacheToResponse(data) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) {
+    return data;
+  }
+
+  const content = data?.choices?.[0]?.message?.content;
+  if (!content || typeof content !== 'string') return data;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    return data;
+  }
+
+  if (Array.isArray(parsed) || (parsed.wines && Array.isArray(parsed.wines))) {
+    return data;
+  }
+  if (parsed.error === 'not_wine') return data;
+
+  const name = typeof parsed.name === 'string' ? parsed.name.trim() : '';
+  if (!name) return data;
+
+  const normalized = name.toLowerCase().trim();
+
+  const gptRange = parsed.priceRange || parsed.price_range;
+  const hasValidGptRange =
+    gptRange &&
+    typeof gptRange === 'object' &&
+    typeof gptRange.min === 'number' &&
+    typeof gptRange.max === 'number';
+
+  const cachedText = await fetchWinePriceFromCache(supabaseUrl, serviceKey, normalized);
+
+  if (cachedText) {
+    const cachedRange = parsePriceRangeFromCache(cachedText);
+    if (cachedRange) {
+      parsed.priceRange = cachedRange;
+      if ('price_range' in parsed) delete parsed.price_range;
+    }
+  } else if (hasValidGptRange) {
+    await insertWinePriceCache(supabaseUrl, serviceKey, normalized, name, gptRange);
+  }
+
+  data.choices[0].message.content = JSON.stringify(parsed);
+  return data;
+}
+
 /**
  * Proxy OpenAI API pour Vercel.
  * Le client envoie le body, on ajoute la clé API côté serveur (jamais exposée).
@@ -82,7 +191,8 @@ export default async function handler(req, res) {
       return res.status(response.status).json(data);
     }
 
-    return res.status(200).json(data);
+    const patched = await applyWinePriceCacheToResponse(data);
+    return res.status(200).json(patched);
   } catch (err) {
     console.error('OpenAI proxy error:', err);
     if (err.name === 'AbortError') {
