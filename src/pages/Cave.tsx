@@ -976,13 +976,6 @@ export function Cave() {
               <button
                 type="button"
                 onClick={() => setView('overview')}
-                className="text-sm font-semibold text-burgundy-dark bg-transparent border-none cursor-pointer py-2 px-2"
-              >
-                Fermer
-              </button>
-              <button
-                type="button"
-                onClick={() => setView('overview')}
                 className="p-2 rounded-full hover:bg-gray-light/30 border-none bg-transparent cursor-pointer flex-shrink-0"
                 aria-label="Fermer"
               >
