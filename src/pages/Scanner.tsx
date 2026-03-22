@@ -386,6 +386,7 @@ export function Scanner() {
         navigate('/result', {
           state: {
             wine: wineObject,
+            wineData: wineObject,
             score: scoreBreakdown.total,
             explanation,
             scoreBreakdown,

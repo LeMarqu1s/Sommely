@@ -44,12 +44,9 @@ type WineDisplay = WineAnalysis & {
 };
 
 function isValidWineForResult(w: unknown): w is WineDisplay {
-  return (
-    !!w &&
-    typeof w === 'object' &&
-    typeof (w as WineAnalysis).name === 'string' &&
-    String((w as WineAnalysis).name).trim().length > 0
-  );
+  if (!w || typeof w !== 'object') return false;
+  const name = (w as Record<string, unknown>).name;
+  return String(name ?? '').trim().length > 0;
 }
 
 const FOOD_PAIRINGS: Record<string, { emoji: string; label: string }[]> = {
@@ -150,6 +147,8 @@ export function WineResult() {
   const [showScoreAnimation, setShowScoreAnimation] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [showCopied, setShowCopied] = useState(false);
+  /** Évite <Navigate> avant que l’état du routeur soit stable (lazy / Suspense). */
+  const [mounted, setMounted] = useState(false);
 
   const state = location.state as WineResultLocationState | null;
   const wineRaw = state?.wine ?? state?.wineData;
@@ -161,6 +160,7 @@ export function WineResult() {
   const fromProfile = state?.from === 'profile';
 
   useEffect(() => {
+    setMounted(true);
     const profile = localStorage.getItem('sommely_profile');
     if (profile) {
       try {
@@ -175,6 +175,16 @@ export function WineResult() {
   }, []);
 
   if (!wine) {
+    if (!mounted) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-cream font-body">
+          <div
+            className="w-8 h-8 rounded-full border-2 border-burgundy-dark border-t-transparent animate-spin"
+            aria-hidden
+          />
+        </div>
+      );
+    }
     return <Navigate to="/scan" replace />;
   }
 
