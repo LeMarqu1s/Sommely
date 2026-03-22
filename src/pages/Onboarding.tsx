@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Star, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -95,10 +95,19 @@ const TYPE_TO_MATCHSCORE: Record<string, string> = {
 
 // ─── COMPOSANT PRINCIPAL ──────────────────────────────────
 
-export function Onboarding() {
+export type OnboardingProps = {
+  /** Parcours « Changer mon profil » : pas d’étape prénom, prénom affiché en lecture seule. */
+  isProfileUpdate?: boolean;
+};
+
+export function Onboarding({ isProfileUpdate: isProfileUpdateProp }: OnboardingProps = {}) {
   const navigate = useNavigate();
-  const { user, refreshProfile, setIsOnboardingInProgress } = useAuth();
-  const [step, setStep] = useState(0);
+  const location = useLocation();
+  const isProfileUpdate = Boolean(
+    isProfileUpdateProp ?? (location.state as { isProfileUpdate?: boolean } | null)?.isProfileUpdate
+  );
+  const { user, profile, refreshProfile, setIsOnboardingInProgress } = useAuth();
+  const [step, setStep] = useState(() => (isProfileUpdate ? 2 : 0));
   const [direction, setDirection] = useState(1);
   const [data, setData] = useState<OnboardingData>({
     name: '',
@@ -110,6 +119,25 @@ export function Onboarding() {
     flavors: [],
     body: 5,
   });
+
+  useEffect(() => {
+    if (!isProfileUpdate) return;
+    let name = '';
+    try {
+      const raw = localStorage.getItem('sommely_profile');
+      if (raw) {
+        const p = JSON.parse(raw) as { firstName?: string; name?: string };
+        name = (p.firstName || p.name || '').trim();
+      }
+    } catch {
+      /* ignore */
+    }
+    if (!name && profile?.name) name = profile.name.trim();
+    if (!name && user?.user_metadata?.full_name) {
+      name = (user.user_metadata.full_name as string).split(' ')[0]?.trim() || '';
+    }
+    if (name) setData((d) => ({ ...d, name }));
+  }, [isProfileUpdate, profile?.name, user]);
 
   const goNext = () => {
     setDirection(1);
@@ -170,7 +198,7 @@ export function Onboarding() {
       localStorage.setItem('sommely_profile', JSON.stringify(tasteProfile));
       localStorage.setItem('sommely_onboarding_done', 'true');
     }
-    navigate('/home');
+    navigate(isProfileUpdate ? '/profile' : '/home');
   };
 
   const variants = {
@@ -235,6 +263,13 @@ export function Onboarding() {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="flex-1 flex flex-col"
           >
+            {isProfileUpdate && data.name.trim() && step >= 2 && step < 8 && (
+              <div className="mb-6 pb-4 border-b border-white/10 shrink-0">
+                <p className="text-white/45 text-xs uppercase tracking-wider mb-1">Votre prénom</p>
+                <p className="font-display text-2xl font-bold text-white">{data.name.trim().split(' ')[0]}</p>
+                <p className="text-white/35 text-xs mt-1">Affichage seul, non modifiable dans ce parcours</p>
+              </div>
+            )}
 
             {/* ══ ÉTAPE 0 : WELCOME ══ */}
             {step === 0 && (

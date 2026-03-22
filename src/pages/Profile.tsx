@@ -461,7 +461,7 @@ export function Profile() {
           <div className="px-6 py-4 border-b border-gray-light/20 flex items-center justify-between">
             <h2 className="font-display text-base font-bold text-black-wine">Mon profil de dégustation</h2>
             <button
-              onClick={() => navigate('/onboarding')}
+              onClick={() => navigate('/onboarding', { state: { isProfileUpdate: true } })}
               className="text-xs text-burgundy-dark font-semibold bg-transparent border-none cursor-pointer hover:underline"
             >
               Modifier
