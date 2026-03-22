@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Logo } from '../components/Logo';
 import {
@@ -16,7 +16,7 @@ import {
   ExternalLink,
   type LucideIcon,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import type { WineAnalysis } from '../lib/openai';
 import {
@@ -143,12 +143,9 @@ function maxGardeYearsFromText(text: string): number {
 export function WineResult() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [showScoreAnimation, setShowScoreAnimation] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [showCopied, setShowCopied] = useState(false);
 
   const state = location.state as WineResultLocationState | null;
+  /** Scanner : `wine` ; profil / alias : `wineData` */
   const wineRaw = state?.wine ?? state?.wineData;
   const wine: WineDisplay | undefined = isValidWineForResult(wineRaw) ? (wineRaw as WineDisplay) : undefined;
   const score = state?.score ?? 75;
@@ -156,6 +153,19 @@ export function WineResult() {
 
   const stateNav = state;
   const fromProfile = state?.from === 'profile';
+
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [showScoreAnimation, setShowScoreAnimation] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [showCopied, setShowCopied] = useState(false);
+
+  /** Sans vin valide → redirection vers /scan (pas de Navigate au rendu, pas de deps [navigate]) */
+  useLayoutEffect(() => {
+    if (!wine) {
+      navigate('/scan', { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- uniquement quand le vin disparaît
+  }, [wine]);
 
   useEffect(() => {
     const profile = localStorage.getItem('sommely_profile');
@@ -172,7 +182,7 @@ export function WineResult() {
   }, []);
 
   if (!wine) {
-    return <Navigate to="/scan" replace />;
+    return null;
   }
 
   const scoreInfo = getScoreInfo(score);
