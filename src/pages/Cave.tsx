@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus, Bell, Trash2, RefreshCw, DollarSign, BarChart2, Package, X, Filter, Camera } from 'lucide-react';
+import { ArrowLeft, Plus, Bell, Trash2, DollarSign, BarChart2, X, Filter, Camera } from 'lucide-react';
 import { canAddToCave } from '../utils/subscription';
-import { fetchOpenAI } from '../lib/openai';
+import { estimateCaveBottleAtAdd } from '../lib/openai';
 import { PaywallModal } from '../components/PaywallModal';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -18,6 +18,17 @@ import {
 // ─── TYPES ────────────────────────────────────────────────
 
 interface PriceHistory { date: string; price: number; event?: string; }
+
+/** N’affiche que les entrées réelles (achat, estimation au scan, mise à jour manuelle). */
+function filterRealPriceHistory(ph: PriceHistory[]): PriceHistory[] {
+  return ph.filter((h) => {
+    const ev = (h.event || '').trim();
+    if (!ev) return true;
+    if (ev === "Prix d'achat" || ev === 'Estimation au scan') return true;
+    if (ev.startsWith('Mise à jour manuelle')) return true;
+    return false;
+  });
+}
 
 interface CaveBottle {
   id: string; name: string; year: number; region: string; type: string;
@@ -57,23 +68,24 @@ function sc(s: CaveBottle['status']) {
 function genHistory(bottles: CaveBottle[]): CaveValuePoint[] {
   const pts: CaveValuePoint[] = [];
   const now = new Date();
+  const totalValue = Math.round(bottles.reduce((s, b) => s + b.estimatedCurrentValue * b.quantity, 0));
+  const totalCost = Math.round(bottles.reduce((s, b) => s + b.purchasePrice * b.quantity, 0));
   for (let i = 11; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const f = 1 - i * 0.007 + (Math.sin(i) * 0.005);
     pts.push({
       month: d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }),
-      totalValue: Math.round(bottles.reduce((s, b) => s + b.estimatedCurrentValue * f * b.quantity, 0)),
-      totalCost: Math.round(bottles.reduce((s, b) => s + b.purchasePrice * b.quantity, 0)),
+      totalValue,
+      totalCost,
     });
   }
-  if (pts.length > 0) pts[pts.length - 1].totalValue = Math.round(bottles.reduce((s, b) => s + b.estimatedCurrentValue * b.quantity, 0));
   return pts;
 }
 
 // ─── MAPPING DB ↔ APP ─────────────────────────────────────
 
 function rowToBottle(r: CaveBottleRow): CaveBottle {
-  const ph = Array.isArray(r.price_history) ? r.price_history : [];
+  const phRaw = Array.isArray(r.price_history) ? r.price_history : [];
+  const ph = filterRealPriceHistory(phRaw as PriceHistory[]);
   return {
     id: r.id,
     name: r.name,
@@ -85,9 +97,9 @@ function rowToBottle(r: CaveBottleRow): CaveBottle {
     quantity: r.quantity,
     purchasePrice: Number(r.price_paid),
     estimatedCurrentValue: Number(r.current_price),
-    priceHistory: ph as PriceHistory[],
+    priceHistory: ph,
     lastPriceUpdate: r.last_price_update ?? todayStr(),
-    priceVariation24h: Number(r.price_variation_24h ?? 0),
+    priceVariation24h: 0,
     drinkFrom: r.drink_from ?? new Date().getFullYear() + 2,
     drinkUntil: r.drink_until ?? new Date().getFullYear() + 8,
     peakYear: r.peak_year ?? new Date().getFullYear() + 4,
@@ -96,7 +108,7 @@ function rowToBottle(r: CaveBottleRow): CaveBottle {
       drinkUntil: r.drink_until ?? undefined,
       peakYear: r.peak_year ?? undefined,
     }),
-    alert: (r.alert as CaveBottle['alert']) ?? null,
+    alert: null,
     notes: r.notes ?? undefined,
     addedDate: r.added_at?.split('T')[0] ?? todayStr(),
     location: r.location ?? undefined,
@@ -175,15 +187,12 @@ export function Cave() {
   const [sortBy, setSortBy] = useState<'gain' | 'status' | 'year' | 'name'>('gain');
   const [form, setForm] = useState(EMPTY);
   const [isAdding, setIsAdding] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
   const [history, setHistory] = useState<CaveValuePoint[]>([]);
   const [alerts, setAlerts] = useState<CaveBottle[]>([]);
   const [showAlerts, setShowAlerts] = useState(false);
   const [sellData, setSellData] = useState<{ b: CaveBottle; cost: number; value: number; gross: number; fees: number; net: number; netPct: number; future: number; ytp: number } | null>(null);
   const projectionRef = useRef<HTMLDivElement>(null);
-  const [lastUpdate, setLastUpdate] = useState('');
   const [showPaywall, setShowPaywall] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const totalBottleCount = bottles.reduce((s, b) => s + b.quantity, 0);
@@ -218,22 +227,6 @@ export function Cave() {
 
   const canAdd = !!user && canAddToCave(subscriptionState, totalBottleCount);
 
-  const fetchCaveData = useCallback(async () => {
-    if (!user?.id) return;
-    let mounted = true;
-    const { data } = await getCaveBottles(user.id);
-    if (!mounted) return;
-    const ws = (data || []).map(rowToBottle).map(b => ({ ...b, status: getStatus(b) }));
-    setBottles(ws);
-    setHistory(genHistory(ws));
-    setAlerts(ws.filter(b => b.alert || Math.abs(b.priceVariation24h) >= 5));
-    const lu = localStorage.getItem('sommely_cave_update') || '';
-    setLastUpdate(lu);
-    const stale = !lu || Date.now() - new Date(lu).getTime() > 86400000;
-    if (stale && ws.length > 0) updatePrices(ws);
-    return () => { mounted = false; };
-  }, [user?.id]);
-
   useEffect(() => {
     if (!user?.id) {
       setBottles([]);
@@ -247,14 +240,10 @@ export function Cave() {
       const ws = (data || []).map(rowToBottle).map(b => ({ ...b, status: getStatus(b) }));
       setBottles(ws);
       setHistory(genHistory(ws));
-      setAlerts(ws.filter(b => b.alert || Math.abs(b.priceVariation24h) >= 5));
-      const lu = localStorage.getItem('sommely_cave_update') || '';
-      setLastUpdate(lu);
-      const stale = !lu || Date.now() - new Date(lu).getTime() > 86400000;
-      if (stale && ws.length > 0) updatePrices(ws);
+      setAlerts(ws.filter(b => b.alert));
     });
     return () => { mounted = false; };
-  }, [user?.id, refreshKey]);
+  }, [user?.id]);
 
   useEffect(() => {
     const prefill = (location.state as { prefill?: Partial<typeof EMPTY> })?.prefill;
@@ -271,7 +260,7 @@ export function Cave() {
       const next = bottles.filter(x => x.id !== b.id);
       setBottles(next.map(x => ({ ...x, status: getStatus(x) })));
       setHistory(genHistory(next));
-      setAlerts(next.filter(x => x.alert || Math.abs(x.priceVariation24h) >= 5));
+      setAlerts(next.filter(x => x.alert));
       setSelected(null);
     } else {
       await updateCaveBottle(user.id, b.id, { quantity: qty });
@@ -288,55 +277,8 @@ export function Cave() {
     const next = bottles.filter(x => x.id !== b.id);
     setBottles(next.map(x => ({ ...x, status: getStatus(x) })));
     setHistory(genHistory(next));
-    setAlerts(next.filter(x => x.alert || Math.abs(x.priceVariation24h) >= 5));
+    setAlerts(next.filter(x => x.alert));
     setSelected(null);
-  };
-
-  const updatePrices = async (list: CaveBottle[]) => {
-    if (!user?.id || isUpdating || list.length === 0) return;
-    setIsUpdating(true);
-    try {
-      const wines = list.map(b => `id:${b.id} | "${b.name}" ${b.year} | acheté ${b.purchasePrice}€ | actuel ${b.estimatedCurrentValue}€`).join('\n');
-      const res = await fetchOpenAI({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: 'Expert marché vins fins. JSON uniquement.' },
-          { role: 'user', content: `Date: ${new Date().toLocaleDateString('fr-FR')}\nMets à jour les prix de ces vins selon le marché actuel:\n${wines}\n\nJSON:\n{"updates":[{"id":"...","newPrice":0,"variation24h":0.0,"trend":"hausse","reason":"..."}]}` },
-        ],
-        max_tokens: 600, temperature: 0.1, response_format: { type: 'json_object' },
-      });
-      const data = await res.json();
-      const result = JSON.parse(data.choices?.[0]?.message?.content || '{}');
-      if (result.updates) {
-        const now = todayStr();
-        const updated = list.map(b => {
-          const u = result.updates.find((x: { id: string }) => x.id === b.id);
-          if (!u) return b;
-          const newP = u.newPrice || b.estimatedCurrentValue;
-          const variation = ((newP - b.estimatedCurrentValue) / b.estimatedCurrentValue) * 100;
-          return { ...b, estimatedCurrentValue: newP, priceVariation24h: u.variation24h || 0, lastPriceUpdate: now, alert: Math.abs(variation) >= 15 ? (variation > 0 ? 'hausse' : 'baisse') : null, priceHistory: [...b.priceHistory, ...(Math.abs(newP - b.estimatedCurrentValue) > 1 ? [{ date: now, price: newP, event: u.reason }] : [])].slice(-20) } as CaveBottle;
-        });
-        for (const b of updated) {
-          const u = result.updates.find((x: { id: string }) => x.id === b.id);
-          if (u) {
-            await updateCaveBottle(user.id, b.id, {
-              current_price: b.estimatedCurrentValue,
-              price_variation_24h: b.priceVariation24h,
-              last_price_update: b.lastPriceUpdate,
-              alert: b.alert,
-              price_history: b.priceHistory,
-            });
-          }
-        }
-        setBottles(updated.map(b => ({ ...b, status: getStatus(b) })));
-        setHistory(genHistory(updated));
-        setAlerts(updated.filter(b => b.alert || Math.abs(b.priceVariation24h) >= 5));
-        const lu = new Date().toISOString();
-        localStorage.setItem('sommely_cave_update', lu);
-        setLastUpdate(lu);
-        if (updated.filter(b => b.alert).length > 0) setShowAlerts(true);
-      }
-    } catch (e) { console.error(e); } finally { setIsUpdating(false); }
   };
 
   const addBottle = async () => {
@@ -348,24 +290,47 @@ export function Cave() {
       return;
     }
     setIsAdding(true);
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
     try {
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('Timeout 15s')), 15000);
       });
-      const fetchPromise = fetchOpenAI({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'Expert vins fins. JSON uniquement.' },
-          { role: 'user', content: `Vin: "${form.name}" ${form.year} ${form.region} | Achat: ${purchasePriceNum}€\nJSON:\n{"estimatedCurrentValue":0,"drinkFrom":0,"drinkUntil":0,"peakYear":0,"grapes":"","appellation":"","agingNote":""}` },
+      const ai = await Promise.race([
+        estimateCaveBottleAtAdd({
+          name: form.name,
+          year: Number(form.year),
+          region: form.region,
+          type: form.type,
+          purchasePrice: purchasePriceNum,
+        }),
+        timeoutPromise,
+      ]);
+      const est = Math.round(ai.estimatedCurrentValue);
+      const nb: CaveBottle = {
+        id: '',
+        name: form.name,
+        year: Number(form.year),
+        region: form.region,
+        type: form.type,
+        appellation: form.appellation || ai.appellation || '',
+        grapes: form.grapes || ai.grapes || '',
+        quantity: quantityNum,
+        purchasePrice: purchasePriceNum,
+        estimatedCurrentValue: est,
+        priceHistory: [
+          { date: todayStr(), price: purchasePriceNum, event: "Prix d'achat" },
+          { date: todayStr(), price: est, event: 'Estimation au scan' },
         ],
-        max_tokens: 200, temperature: 0.1, response_format: { type: 'json_object' },
-      });
-      const res = await Promise.race([fetchPromise, timeoutPromise]);
-      const data = await res.json();
-      const ai = JSON.parse(data.choices?.[0]?.message?.content || '{}');
-      const nb: CaveBottle = { id: '', name: form.name, year: Number(form.year), region: form.region, type: form.type, appellation: form.appellation || ai.appellation || '', grapes: form.grapes || ai.grapes || '', quantity: quantityNum, purchasePrice: purchasePriceNum, estimatedCurrentValue: ai.estimatedCurrentValue || Math.round(purchasePriceNum * 1.05), priceHistory: [{ date: todayStr(), price: purchasePriceNum, event: "Prix d'achat" }], lastPriceUpdate: todayStr(), priceVariation24h: 0, drinkFrom: ai.drinkFrom || new Date().getFullYear() + 2, drinkUntil: ai.drinkUntil || new Date().getFullYear() + 8, peakYear: ai.peakYear || new Date().getFullYear() + 4, status: 'trop_tot', alert: null, notes: form.notes || ai.agingNote || '', addedDate: todayStr(), location: form.location };
+        lastPriceUpdate: todayStr(),
+        priceVariation24h: 0,
+        drinkFrom: ai.drinkFrom || new Date().getFullYear() + 2,
+        drinkUntil: ai.drinkUntil || new Date().getFullYear() + 8,
+        peakYear: ai.peakYear || new Date().getFullYear() + 4,
+        status: 'trop_tot',
+        alert: null,
+        notes: form.notes || ai.agingNote || '',
+        addedDate: todayStr(),
+        location: form.location,
+      };
       nb.status = getStatus(nb);
       const { data: inserted } = await insertCaveBottle(user.id, bottleToInsert(nb));
       if (inserted) {
@@ -373,10 +338,36 @@ export function Cave() {
         newBottle.status = getStatus(newBottle);
         setBottles(prev => [...prev, newBottle]);
         setHistory(genHistory([...bottles, newBottle]));
-        setAlerts(prev => [...prev, newBottle].filter(b => b.alert || Math.abs(b.priceVariation24h) >= 5));
+        setAlerts(prev => [...prev, newBottle].filter(b => b.alert));
       }
     } catch {
-      const nb: CaveBottle = { id: '', name: form.name, year: Number(form.year), region: form.region, type: form.type, appellation: form.appellation, grapes: form.grapes, quantity: quantityNum, purchasePrice: purchasePriceNum, estimatedCurrentValue: Math.round(purchasePriceNum * 1.05), priceHistory: [{ date: todayStr(), price: purchasePriceNum, event: "Prix d'achat" }], lastPriceUpdate: todayStr(), priceVariation24h: 0, drinkFrom: new Date().getFullYear() + 2, drinkUntil: new Date().getFullYear() + 8, peakYear: new Date().getFullYear() + 4, status: 'trop_tot', alert: null, notes: form.notes, addedDate: todayStr(), location: form.location };
+      const est = Math.round(purchasePriceNum * 1.05);
+      const nb: CaveBottle = {
+        id: '',
+        name: form.name,
+        year: Number(form.year),
+        region: form.region,
+        type: form.type,
+        appellation: form.appellation,
+        grapes: form.grapes,
+        quantity: quantityNum,
+        purchasePrice: purchasePriceNum,
+        estimatedCurrentValue: est,
+        priceHistory: [
+          { date: todayStr(), price: purchasePriceNum, event: "Prix d'achat" },
+          { date: todayStr(), price: est, event: 'Estimation au scan' },
+        ],
+        lastPriceUpdate: todayStr(),
+        priceVariation24h: 0,
+        drinkFrom: new Date().getFullYear() + 2,
+        drinkUntil: new Date().getFullYear() + 8,
+        peakYear: new Date().getFullYear() + 4,
+        status: 'trop_tot',
+        alert: null,
+        notes: form.notes,
+        addedDate: todayStr(),
+        location: form.location,
+      };
       const { data: inserted } = await insertCaveBottle(user.id, bottleToInsert(nb));
       if (inserted) {
         const newBottle = rowToBottle(inserted);
@@ -385,7 +376,6 @@ export function Cave() {
         setHistory(genHistory([...bottles, newBottle]));
       }
     } finally {
-      clearTimeout(timeout);
       setIsAdding(false);
       setForm(EMPTY);
       setView('list');
@@ -433,7 +423,6 @@ export function Cave() {
         <div className="w-8" />
         <div className="flex items-center gap-2">
           <span className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Ma cave</span>
-          {isUpdating && <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}><RefreshCw size={12} color="#D4AF37" /></motion.div>}
         </div>
         <div className="flex items-center gap-2">
           {alerts.length > 0 && (
@@ -486,14 +475,14 @@ export function Cave() {
               </div>
               {alerts.map(b => {
                 const gp = Math.round(((b.estimatedCurrentValue - b.purchasePrice) / b.purchasePrice) * 100);
-                const up = b.priceVariation24h >= 0;
+                const up = gp >= 0;
                 return (
                   <div key={b.id} className={`rounded-2xl p-4 border ${up ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-semibold text-sm text-black-wine" style={{ wordBreak: 'break-word', whiteSpace: 'normal', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{b.name} {b.year}</p>
-                        <p className="text-xs text-gray-dark mt-0.5">{up ? '📈' : '📉'} {b.priceVariation24h > 0 ? '+' : ''}{b.priceVariation24h.toFixed(1)}% · Stock : {formatPrice(b.estimatedCurrentValue * b.quantity)}</p>
-                        <p className="text-xs font-bold mt-1" style={{ color: up ? '#2E7D32' : '#C62828' }}>{gp >= 0 ? '+' : ''}{gp}% depuis l'achat</p>
+                        <p className="text-xs text-gray-dark mt-0.5">Stock : {formatPrice(b.estimatedCurrentValue * b.quantity)}</p>
+                        <p className="text-xs font-bold mt-1" style={{ color: up ? '#2E7D32' : '#C62828' }}>{gp >= 0 ? '+' : ''}{gp}% depuis l&apos;achat (estim.)</p>
                       </div>
                       <button type="button" onClick={() => { setShowAlerts(false); simulateSell(b); }} className="flex-shrink-0 bg-burgundy-dark text-white text-xs px-3 py-1.5 rounded-full border-none cursor-pointer font-semibold">
                         Simuler vente
@@ -525,9 +514,6 @@ export function Cave() {
                 <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/5" />
                 <div className="flex items-start justify-between mb-1">
                   <p className="text-white/50 text-xs uppercase tracking-widest">Valeur totale</p>
-                  <button onClick={() => updatePrices(bottles)} disabled={isUpdating} className="bg-white/10 rounded-full px-2.5 py-1 border-none cursor-pointer flex items-center gap-1.5 hover:bg-white/20 transition-colors">
-                    <RefreshCw size={10} color="rgba(255,255,255,0.7)" /><span className="text-white/60 text-xs">Actualiser</span>
-                  </button>
                 </div>
                 <p className="font-display text-4xl font-bold mt-1 mb-1">{formatPrice(totalValue)}</p>
                 <div className="flex items-center gap-2 mb-5">
@@ -538,7 +524,7 @@ export function Cave() {
                 </div>
                 <div className="bg-white/5 rounded-2xl p-3 mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-white/50 text-xs">Évolution 12 mois</p>
+                    <p className="text-white/50 text-xs">Valeur vs coût (estimations figées au scan)</p>
                     <div className="flex items-center gap-3 text-xs text-white/30"><span>Valeur</span><span>Coût</span></div>
                   </div>
                   <MiniChart history={history} />
@@ -551,7 +537,6 @@ export function Cave() {
                     </div>
                   ))}
                 </div>
-                {lastUpdate && <p className="text-white/25 text-xs mt-3 text-center">Mis à jour : {new Date(lastUpdate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>}
               </div>
 
               {bottles.length > 0 && (
@@ -661,7 +646,6 @@ export function Cave() {
                   {filtered.map(b => {
                     const gp = Math.round(((b.estimatedCurrentValue - b.purchasePrice) / b.purchasePrice) * 100);
                     const conf = sc(b.status);
-                    const up = b.priceVariation24h >= 0;
                     return (
                       <motion.div key={b.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} onClick={() => { setSelected(b); setView('detail'); }} className="rounded-2xl border border-gray-light/30 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all" style={{ background: 'var(--bg-card)' }}>
                         <div className="flex items-start gap-3">
@@ -679,8 +663,6 @@ export function Cave() {
                             </div>
                             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${conf.bg}`} style={{ color: conf.color }}>{conf.label}</span>
-                              <span className={`text-xs font-medium ${up ? 'text-green-600' : 'text-red-600'}`}>{up ? '▲' : '▼'} {Math.abs(b.priceVariation24h).toFixed(1)}% auj.</span>
-                              {b.alert && <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${b.alert === 'hausse' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{b.alert === 'hausse' ? '🔥 Hausse' : '⚠️ Baisse'}</span>}
                             </div>
                           </div>
                         </div>
@@ -700,31 +682,30 @@ export function Cave() {
             const totalVal = selected.estimatedCurrentValue * selected.quantity;
             const totalCostB = selected.purchasePrice * selected.quantity;
             const gain = totalVal - totalCostB;
-            const up = selected.priceVariation24h >= 0;
+            const realHistory = filterRealPriceHistory(selected.priceHistory || []);
             return (
               <motion.div key="detail" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
                 <div className="rounded-3xl border border-gray-light/30 shadow-md overflow-hidden" style={{ background: 'var(--bg-card)' }}>
                   <div className={`px-5 py-3 border-b border-gray-light/20 flex items-center justify-between border ${conf.bg}`}>
                     <div className="flex items-center gap-2"><span className="text-lg">{conf.emoji}</span><span className="font-semibold text-sm" style={{ color: conf.color }}>{conf.label}</span></div>
-                    {selected.alert && <span className={`text-xs font-bold px-2 py-1 rounded-full ${selected.alert === 'hausse' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{selected.alert === 'hausse' ? '🔥 En hausse' : '⚠️ En baisse'}</span>}
                   </div>
                   <div className="p-5">
                     <h2 className="font-display text-xl font-bold text-black-wine mb-0.5">{selected.name}</h2>
                     <p className="text-gray-dark text-sm mb-4">{selected.year} · {selected.appellation || selected.region} · {selected.type}</p>
                     {selected.grapes && <p className="text-xs text-gray-dark mb-4">🍇 {selected.grapes}</p>}
 
-                    {/* Prix temps réel */}
+                    {/* Prix estimé (figé au scan) */}
                     <div className="bg-gradient-to-r from-burgundy-dark/5 to-gold/5 rounded-2xl p-4 mb-4 border border-burgundy-dark/10">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs font-bold text-gray-dark uppercase tracking-wide">Prix actuel estimé</p>
-                        <span className={`text-xs font-bold ${up ? 'text-green-600' : 'text-red-600'}`}>{up ? '▲' : '▼'} {Math.abs(selected.priceVariation24h).toFixed(1)}% auj.</span>
+                        <p className="text-xs font-bold text-gray-dark uppercase tracking-wide">Prix estimé (au moment du scan)</p>
                       </div>
                       <div className="flex items-baseline gap-3">
                         <p className="font-display text-3xl font-bold text-burgundy-dark">{selected.estimatedCurrentValue}€</p>
                         <p className="text-gray-dark text-sm">/ bouteille</p>
-                        <p className={`text-sm font-bold ml-auto ${gp >= 0 ? 'text-green-700' : 'text-red-700'}`}>{gp >= 0 ? '+' : ''}{gp}%</p>
+                        <p className={`text-sm font-bold ml-auto ${gp >= 0 ? 'text-green-700' : 'text-red-700'}`}>{gp >= 0 ? '+' : ''}{gp}% vs achat</p>
                       </div>
-                      <p className="text-xs text-gray-dark mt-1">Acheté {selected.purchasePrice}€ · {gain >= 0 ? '+' : ''}{formatPrice(gain)} gain total stock</p>
+                      <p className="text-[11px] text-gray-500 mt-2 leading-snug">Estimation indicative au moment du scan — non contractuelle</p>
+                      <p className="text-xs text-gray-dark mt-2">Acheté {selected.purchasePrice}€ · {gain >= 0 ? '+' : ''}{formatPrice(gain)} gain total stock</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 mb-4">
@@ -769,12 +750,12 @@ export function Cave() {
                       </div>
                     )}
 
-                    {/* Historique prix */}
-                    {selected.priceHistory?.length > 1 && (
+                    {/* Historique prix (événements réels uniquement) */}
+                    {realHistory.length > 0 && (
                       <div className="bg-cream rounded-xl p-3 mb-4">
                         <p className="text-xs font-bold text-gray-dark uppercase tracking-wide mb-2">Historique des prix</p>
                         <div className="space-y-1.5">
-                          {selected.priceHistory.slice(-5).map((ph, i) => (
+                          {realHistory.slice(-10).map((ph, i) => (
                             <div key={i} className="flex items-center justify-between text-xs">
                               <span className="text-gray-dark">{new Date(ph.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                               {ph.event && <span className="text-gray-dark/60 truncate mx-2 flex-1 text-center">{ph.event}</span>}
@@ -1032,7 +1013,7 @@ export function Cave() {
               <button type="button" onClick={addBottle} disabled={!form.name || !form.purchasePrice || isAdding} className="w-full py-5 bg-burgundy-dark text-white rounded-2xl font-bold text-base border-none cursor-pointer disabled:opacity-40 hover:bg-burgundy-medium active:scale-95 transition-all flex items-center justify-center gap-3 shadow-lg">
                 {isAdding ? (<><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-5 h-5 rounded-full border-2 border-white border-t-transparent" />L&apos;IA évalue ce vin...</>) : (<><Plus size={20} />Ajouter à ma cave</>)}
               </button>
-              <p className="text-xs text-gray-dark text-center pb-4">💡 L&apos;IA calcule automatiquement la valeur actuelle et la fenêtre de garde</p>
+              <p className="text-xs text-gray-dark text-center pb-4">💡 Estimation de valeur et fenêtre de garde au moment de l&apos;ajout (prix figés ensuite)</p>
             </div>
           </div>
         </div>
@@ -1042,7 +1023,7 @@ export function Cave() {
         isOpen={showPaywall}
         onClose={() => setShowPaywall(false)}
         feature="Cave illimitée"
-        description="Vous avez atteint la limite de 5 bouteilles en version gratuite. Passez à Pro pour gérer une cave illimitée avec prix dynamiques."
+        description="Vous avez atteint la limite de 5 bouteilles en version gratuite. Passez à Pro pour gérer une cave illimitée avec estimations au scan."
       />
     </div>
   );

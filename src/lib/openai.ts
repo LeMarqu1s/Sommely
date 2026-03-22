@@ -302,6 +302,56 @@ export async function analyzeWineMenu(imageBase64: string): Promise<MenuWineItem
   return arr.filter((w): w is MenuWineItem => w && typeof w.name === 'string');
 }
 
+// ─── ESTIMATION CAVE (UNE FOIS À L'AJOUT, PRIX FIGÉ EN BASE) ───
+
+export interface CaveBottleEstimateResult {
+  estimatedCurrentValue: number;
+  drinkFrom: number;
+  drinkUntil: number;
+  peakYear: number;
+  grapes: string;
+  appellation: string;
+  agingNote: string;
+}
+
+/** Estimation unique à l’ajout : stockée en DB, ne pas rappeler pour des « variations » quotidiennes. */
+export async function estimateCaveBottleAtAdd(params: {
+  name: string;
+  year: number;
+  region: string;
+  type: string;
+  purchasePrice: number;
+}): Promise<CaveBottleEstimateResult> {
+  const res = await fetchOpenAI({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: 'Expert vins fins. JSON uniquement. Une estimation de prix marché cohérente, pas de variation quotidienne fictive.' },
+      {
+        role: 'user',
+        content: `Vin: "${params.name}" ${params.year} ${params.region} ${params.type} | Achat: ${params.purchasePrice}€\nJSON:\n{"estimatedCurrentValue":0,"drinkFrom":0,"drinkUntil":0,"peakYear":0,"grapes":"","appellation":"","agingNote":""}`,
+      },
+    ],
+    max_tokens: 200,
+    temperature: 0,
+    response_format: { type: 'json_object' },
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error((data as { error?: { message?: string } }).error?.message || `Erreur ${res.status}`);
+  }
+  const raw = JSON.parse((data as { choices?: { message?: { content?: string } }[] }).choices?.[0]?.message?.content || '{}');
+  const y = new Date().getFullYear();
+  return {
+    estimatedCurrentValue: Math.max(0, Number(raw.estimatedCurrentValue) || Math.round(params.purchasePrice * 1.05)),
+    drinkFrom: Number(raw.drinkFrom) || y + 2,
+    drinkUntil: Number(raw.drinkUntil) || y + 8,
+    peakYear: Number(raw.peakYear) || y + 4,
+    grapes: String(raw.grapes || ''),
+    appellation: String(raw.appellation || ''),
+    agingNote: String(raw.agingNote || ''),
+  };
+}
+
 // ─── ANALYSE PRINCIPALE ───────────────────────────────────
 
 export async function analyzeWineLabel(imageBase64: string): Promise<WineAnalysis> {
