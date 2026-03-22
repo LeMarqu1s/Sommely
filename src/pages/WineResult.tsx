@@ -117,15 +117,33 @@ export function WineResult() {
 
   useEffect(() => {
     const profile = localStorage.getItem('sommely_profile');
-    if (profile) setUserProfile(JSON.parse(profile));
+    if (profile) {
+      try {
+        setUserProfile(JSON.parse(profile));
+      } catch {
+        /* profil local invalide */
+      }
+    }
 
     const timer = setTimeout(() => setShowScoreAnimation(true), 300);
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (!wine) {
+      navigate('/scan', { replace: true });
+    }
+  }, [wine, navigate]);
+
   if (!wine) {
-    navigate('/scan');
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cream font-body">
+        <div
+          className="w-8 h-8 rounded-full border-2 border-burgundy-dark border-t-transparent animate-spin"
+          aria-hidden
+        />
+      </div>
+    );
   }
 
   const scoreInfo = getScoreInfo(score);
