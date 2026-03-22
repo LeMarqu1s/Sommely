@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, Search, Zap, AlertCircle, X, RotateCcw, ChevronRight } from 'lucide-react';
-import { analyzeWineLabel, enrichWineData } from '../lib/openai';
+import { analyzeWineLabel, enrichWineData, type WineAnalysis } from '../lib/openai';
 import {
   calculatePersonalizedScore,
   generateDetailedExplanation,
@@ -11,7 +11,7 @@ import {
 import { canScan } from '../utils/subscription';
 import { PaywallModal } from '../components/PaywallModal';
 import { useAuth } from '../context/AuthContext';
-import { insertScan, updateProfile, getProfile, incrementSubscriptionTrialScan } from '../lib/supabase';
+import { insertScan, updateProfile, getProfile, incrementSubscriptionTrialScan, supabase } from '../lib/supabase';
 
 type ScanState = 'idle' | 'camera_active' | 'capturing' | 'analyzing' | 'error';
 
@@ -23,6 +23,94 @@ const ANALYSIS_STEPS = [
   { label: "🍷 Calcul de votre score...", emoji: '🍷' },
   { label: "✨ Finalisation...", emoji: '✨' },
 ];
+
+/** Clé de cache : minuscules, trim, espaces unifiés (aligné sur les scans en base). */
+function normalizeWineName(name: string): string {
+  return name.toLowerCase().trim().replace(/\s+/g, ' ');
+}
+
+function yearsMatchForCache(cachedYear: unknown, freshYear: number | undefined): boolean {
+  const cy = typeof cachedYear === 'number' ? cachedYear : undefined;
+  if (cy == null || freshYear == null) return true;
+  return cy === freshYear;
+}
+
+/**
+ * Premier scan enregistré (le plus ancien) pour ce nom / millésime — données « canoniques » réutilisées.
+ * Score et explications ne sont pas lus ici (recalculés côté client).
+ */
+async function findCanonicalCachedWine(
+  userId: string,
+  normalizedName: string,
+  freshYear: number | undefined
+): Promise<Record<string, unknown> | null> {
+  const { data, error } = await supabase
+    .from('scans')
+    .select('result')
+    .eq('user_id', userId)
+    .eq('type', 'bottle')
+    .order('created_at', { ascending: true })
+    .limit(200);
+  if (error || !data?.length) return null;
+  for (const row of data) {
+    const res = row.result as Record<string, unknown> | null;
+    if (!res || typeof res !== 'object') continue;
+    const w = (res.wine as Record<string, unknown>) || res;
+    const nm = normalizeWineName(String(w.name ?? res.name ?? ''));
+    if (nm !== normalizedName) continue;
+    if (!yearsMatchForCache(w.year, freshYear)) continue;
+    const wine = res.wine as Record<string, unknown> | undefined;
+    if (wine && typeof wine === 'object' && Object.keys(wine).length > 0) return wine;
+  }
+  return null;
+}
+
+/** Réapplique les champs « vin » figés depuis le cache ; garde la fraîcheur de lecture d’étiquette. */
+function mergeFreshWithCached(fresh: WineAnalysis, cached: Record<string, unknown>): WineAnalysis {
+  const merged = { ...fresh } as WineAnalysis & Record<string, unknown>;
+  const keys: (keyof WineAnalysis | string)[] = [
+    'name',
+    'chateau',
+    'domaine',
+    'producer',
+    'year',
+    'region',
+    'subRegion',
+    'appellation',
+    'country',
+    'village',
+    'type',
+    'grapes',
+    'alcohol',
+    'classification',
+    'dosage',
+    'tastingNotes',
+    'servingTemp',
+    'decanting',
+    'agingPotential',
+    'glassType',
+    'foodPairings',
+    'story',
+    'tips',
+    'bottlePrices',
+    'priceRange',
+  ];
+  for (const k of keys) {
+    const v = cached[k as string];
+    if (v !== undefined && v !== null && v !== '') {
+      (merged as Record<string, unknown>)[k as string] = v;
+    }
+  }
+  if (typeof merged.grapes === 'string') {
+    merged.grapes = (merged.grapes as string)
+      .split(/[,;]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  merged.confidence = fresh.confidence;
+  merged.labelReadability = fresh.labelReadability;
+  return merged as WineAnalysis;
+}
 
 export function Scanner() {
   const navigate = useNavigate();
@@ -262,7 +350,7 @@ export function Scanner() {
     }, TIMEOUT_MS);
 
     try {
-      const wineAnalysis = await analyzeWineLabel(base64);
+      let wineAnalysis = await analyzeWineLabel(base64);
 
       setAnalysisStep(ANALYSIS_STEPS.length - 1);
       setAnalysisProgress(100);
@@ -281,6 +369,19 @@ export function Scanner() {
         setScanState('error');
         setErrorMessage("L'IA n'a pas pu lire l'étiquette clairement. Réessayez avec une meilleure photo (plus proche, mieux éclairée).");
         return;
+      }
+
+      // Cache Supabase : réutiliser le premier enregistrement (même nom normalisé + millésime si connu) pour prix/région/cépages stables.
+      // Score + « pourquoi ce score » restent recalculés après avec le profil actuel.
+      if (user?.id) {
+        const cachedWine = await findCanonicalCachedWine(
+          user.id,
+          normalizeWineName(wineAnalysis.name.trim()),
+          wineAnalysis.year
+        );
+        if (cachedWine) {
+          wineAnalysis = mergeFreshWithCached(wineAnalysis, cachedWine);
+        }
       }
 
       // Enrichir avec données calculées
