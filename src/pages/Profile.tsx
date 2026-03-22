@@ -597,13 +597,13 @@ export function Profile() {
                   tabIndex={0}
                   onClick={() => {
                     const s = buildResultStateFromScanResult(scan.result);
-                    if (s) navigate('/result', { state: s });
+                    if (s) navigate('/result', { state: { ...s, from: 'profile' } });
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       const s = buildResultStateFromScanResult(scan.result);
-                      if (s) navigate('/result', { state: s });
+                      if (s) navigate('/result', { state: { ...s, from: 'profile' } });
                     }
                   }}
                   className="flex items-center gap-4 px-6 py-4 border-b border-gray-light/20 last:border-0 cursor-pointer hover:bg-cream/80 transition-colors"
@@ -664,13 +664,13 @@ export function Profile() {
                   tabIndex={0}
                   onClick={() => {
                     const s = buildResultStateFromFavorite(fav as Record<string, unknown>);
-                    if (s) navigate('/result', { state: s });
+                    if (s) navigate('/result', { state: { ...s, from: 'profile' } });
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       const s = buildResultStateFromFavorite(fav as Record<string, unknown>);
-                      if (s) navigate('/result', { state: s });
+                      if (s) navigate('/result', { state: { ...s, from: 'profile' } });
                     }
                   }}
                   className="flex items-center gap-4 px-6 py-4 border-b border-gray-light/20 last:border-0 cursor-pointer hover:bg-cream/80 transition-colors"

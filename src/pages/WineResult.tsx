@@ -33,6 +33,7 @@ type WineResultLocationState = {
   score?: number;
   scoreBreakdown?: ScoreBreakdown;
   explanation?: string;
+  from?: string;
 };
 
 /** Vin affiché : analyse + champs enrichis (Scanner / favoris). */
@@ -157,6 +158,7 @@ export function WineResult() {
   const { formatPrice } = useTheme();
 
   const stateNav = state;
+  const fromProfile = state?.from === 'profile';
 
   useEffect(() => {
     const profile = localStorage.getItem('sommely_profile');
@@ -334,7 +336,7 @@ export function WineResult() {
     <div className="min-h-screen bg-cream font-body text-black-wine ">
       <div className="sticky top-0 z-10 bg-cream/95 backdrop-blur-md border-b border-gray-light/30 px-6 py-4 flex items-center justify-between">
         <button
-          onClick={() => navigate('/scan')}
+          onClick={() => (fromProfile ? navigate('/profile') : navigate(-1))}
           className="flex items-center gap-2 bg-transparent border-none cursor-pointer"
           aria-label="Retour"
         >
