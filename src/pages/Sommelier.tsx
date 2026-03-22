@@ -17,11 +17,11 @@ interface Message {
 
 const QUICK_SUGGESTIONS = [
   { emoji: '🍽️', label: 'Accord pour ce soir', contextKey: 'Accord pour ce soir', placeholder: 'Quel plat préparez-vous ce soir ?' },
-  { emoji: '🍾', label: 'Ma cave — quoi ouvrir ?', contextKey: 'Ma cave', placeholder: 'Quelle bouteille souhaitez-vous ouvrir ?' },
-  { emoji: '🎁', label: 'Cadeau — quel budget ?', contextKey: 'Cadeau', placeholder: 'Quel est votre budget et l\'occasion ?' },
-  { emoji: '📋', label: 'Au resto — que commander ?', contextKey: 'Au resto', placeholder: 'Quel type de cuisine ou quelle carte ?' },
+  { emoji: '🍾', label: 'Ma cave : quoi ouvrir ?', contextKey: 'Ma cave', placeholder: 'Quelle bouteille souhaitez-vous ouvrir ?' },
+  { emoji: '🎁', label: 'Cadeau : quel budget ?', contextKey: 'Cadeau', placeholder: 'Quel est votre budget et l\'occasion ?' },
+  { emoji: '📋', label: 'Au resto : que commander ?', contextKey: 'Au resto', placeholder: 'Quel type de cuisine ou quelle carte ?' },
   { emoji: '📈', label: 'Investissement vin', contextKey: 'Investissement', placeholder: 'Quel budget souhaitez-vous investir ?' },
-  { emoji: '🌍', label: 'Découverte — surprends-moi', contextKey: 'Découverte', placeholder: 'Quel style de vin aimez-vous en général ?' },
+  { emoji: '🌍', label: 'Découverte : surprends-moi', contextKey: 'Découverte', placeholder: 'Quel style de vin aimez-vous en général ?' },
 ];
 
 const DEFAULT_PLACEHOLDER = "Posez votre question à Antoine...";
