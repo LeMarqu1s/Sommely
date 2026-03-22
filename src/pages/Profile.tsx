@@ -5,7 +5,6 @@ import {
   Wine,
   Settings,
   Crown,
-  Edit3,
   Star,
   Heart,
   Clock,
@@ -340,14 +339,6 @@ export function Profile() {
                   {firstName.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={openTasteModal}
-                className="flex items-center gap-1.5 bg-cream border border-gray-light rounded-full px-3 py-1.5 text-xs text-gray-dark hover:text-burgundy-dark transition-colors cursor-pointer"
-              >
-                <Edit3 size={12} />
-                Modifier mes goûts
-              </button>
             </div>
 
             <h1 className="font-display text-xl font-bold text-black-wine mb-0.5">Bonjour, {firstName} ! 👋</h1>
@@ -362,8 +353,19 @@ export function Profile() {
                 <Zap size={14} color={subInfo.color} />
               )}
               <span className="text-xs font-bold" style={{ color: subInfo.color }}>
-                {subInfo.label}
-                    {subscriptionTier === 'free' && ` · ${scansRemaining} scan${scansRemaining > 1 ? 's' : ''} restant ce mois`}
+                {subscription?.status === 'active'
+                  ? 'Pro · Scans illimités'
+                  : subscriptionState.isTrial
+                    ? `Essai gratuit · J-${subscriptionState.daysLeftInTrial}`
+                    : !subscriptionState.isPro &&
+                        subscriptionState.trialEndsAt &&
+                        new Date(subscriptionState.trialEndsAt) <= new Date()
+                      ? 'Essai terminé'
+                      : <>
+                          {subInfo.label}
+                          {subscriptionTier === 'free' &&
+                            ` · ${scansRemaining} scan${scansRemaining > 1 ? 's' : ''} restant ce mois`}
+                        </>}
               </span>
             </div>
           </div>
