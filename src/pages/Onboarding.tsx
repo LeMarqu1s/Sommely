@@ -633,7 +633,7 @@ export function Onboarding({ isProfileUpdate: isProfileUpdateProp }: OnboardingP
                   type="button"
                   className="w-full max-w-xs py-5 bg-gold text-black-wine rounded-2xl font-bold text-lg border-none cursor-pointer shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
-                  Découvrir Sommely 🍷
+                  {isProfileUpdate ? 'Mettre à jour mon profil' : 'Découvrir Sommely 🍷'}
                 </motion.button>
               </div>
             )}
