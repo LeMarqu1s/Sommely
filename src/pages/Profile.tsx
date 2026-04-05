@@ -1006,7 +1006,7 @@ export function Profile() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/60 flex items-end justify-center z-[60] px-6 pb-24" onClick={() => setShowNotifications(false)}>
             <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="rounded-3xl p-6 w-full max-w-lg" style={{ background: 'var(--bg-card)' }} onClick={e => e.stopPropagation()}>
               <h3 className="font-display text-xl font-bold text-black-wine mb-3">🔔 Notifications</h3>
-              <p className="text-gray-dark text-sm mb-5">Les notifications push arrivent dans la prochaine version. Vous serez alerté quand vos vins atteignent leur apogée et quand les prix bougent.</p>
+              <p className="text-gray-dark text-sm mb-5">Gérez vos préférences de notifications. Vous serez alerté quand vos vins atteignent leur apogée et quand les prix bougent.</p>
               <button onClick={() => setShowNotifications(false)} className="w-full py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm border-none cursor-pointer">Fermer</button>
             </motion.div>
           </motion.div>

@@ -607,7 +607,7 @@ export function Scanner() {
                 <Camera size={48} color="#D4AF37" />
               </motion.div>
               <h2 style={{ fontFamily: 'DM Serif Display, serif', fontSize: '1.5rem', fontWeight: 700, color: 'white', marginBottom: 8 }}>Capture en cours...</h2>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>Envoi à l&apos;IA GPT-4o</p>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>Envoi à l&apos;IA Sommely</p>
             </div>
           </>
         )}
@@ -794,7 +794,7 @@ export function Scanner() {
 
               <h1 className="font-display font-bold text-white mb-2 text-center" style={{ fontSize: '1.5rem', letterSpacing: '-0.03em' }}>Scanner une bouteille</h1>
               <p className="text-center text-sm mb-6 leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>
-                GPT-4o identifie l&apos;étiquette et calcule<br/>votre score personnalisé en 3 secondes.
+                IA Sommely identifie l&apos;étiquette et calcule<br/>votre score personnalisé en 3 secondes.
               </p>
 
               <button
@@ -863,7 +863,7 @@ export function Scanner() {
                 </div>
               </div>
               <h2 className="font-display text-2xl font-bold text-white mb-2">Analyse IA en cours</h2>
-              <p className="text-white/40 text-xs mb-6">{ANALYSIS_STEPS[analysisStep]?.label || 'GPT-4o Vision lit votre étiquette...'}</p>
+              <p className="text-white/40 text-xs mb-6">{ANALYSIS_STEPS[analysisStep]?.label || 'IA Sommely lit votre étiquette...'}</p>
               <div className="w-full bg-white/10 rounded-full h-1.5 mb-6 overflow-hidden">
                 <motion.div className="h-full bg-gradient-to-r from-burgundy-dark to-gold rounded-full" animate={{ width: `${analysisProgress}%` }} transition={{ duration: 0.5 }} />
               </div>

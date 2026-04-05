@@ -796,7 +796,7 @@ export function WineResult() {
             </p>
             <h3 className="font-display text-xl font-bold text-white mb-2">Passez à Premium</h3>
             <p className="text-white/70 text-sm mb-4 leading-relaxed">
-              Scans illimités, gestion de cave IA, sommelier 24h/24 pour seulement 29,99 € par an.
+              Scans illimités, gestion de cave IA, sommelier 24h/24 pour seulement 47,99 € par an.
             </p>
             <button
               onClick={() => navigate('/premium')}

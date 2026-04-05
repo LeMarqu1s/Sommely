@@ -42,9 +42,9 @@ import { useTheme } from '../context/ThemeContext';
 
 const HOOKS = [
   'Votre beau-père choisit toujours le vin ? Plus pour longtemps.',
-  "85% des gens ne savent pas ce qu'ils boivent. Vous, si.",
-  'Ce resto vous fait payer ce vin 300% plus cher. On vous dit lequel.',
-  "Vivino vous donne le score de 2 millions d'inconnus. Nous, le vôtre.",
+  "Beaucoup de monde hésite au rayon vin. Avec votre profil, vous voyez plus clair.",
+  'Au restaurant, la même bouteille peut coûter bien plus qu’en caviste. On vous aide à repérer les écarts.',
+  "Les applis généralistes notent pour tout le monde. Sommely, c’est votre score, adapté à vous.",
   'Scannez avant de commander. Ou continuez à dire "je prends le même".',
 ];
 
@@ -349,7 +349,7 @@ export function Home() {
               Scanner une bouteille
             </h2>
             <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
-              GPT-4o identifie l&apos;étiquette · Score personnalisé en 3 secondes
+              IA Sommely identifie l&apos;étiquette · Score personnalisé en 3 secondes
             </p>
             <div className="flex items-center gap-2 mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
               <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>Appuyer pour commencer</span>

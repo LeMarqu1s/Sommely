@@ -58,6 +58,12 @@ async function sendPushDedup(supabase, profileRow, title, body, url) {
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
+  const cronSecret = process.env.CRON_SECRET;
+  const authHeader = req.headers['authorization'];
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   if (!supabaseUrl || !supabaseServiceKey || !process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
     return res.status(500).json({ error: 'Config manquante' });
   }
@@ -65,6 +71,7 @@ export default async function handler(req, res) {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
+  const monthDay = today.slice(5); // "MM-DD"
   const dayOfWeek = now.getDay();
   const isFriday = dayOfWeek === 5;
 
@@ -118,7 +125,7 @@ export default async function handler(req, res) {
   }
 
   // ─── Noël (1–25 déc)
-  if (today >= '12-01' && today <= '12-25') {
+  if (monthDay >= '12-01' && monthDay <= '12-25') {
     const christmas = TRIGGERS.find((x) => x.type === 'christmas');
     if (christmas) {
       const { data: profiles } = await supabase
@@ -132,7 +139,7 @@ export default async function handler(req, res) {
   }
 
   // ─── Saint-Valentin (14 fév)
-  if (today === '02-14') {
+  if (monthDay === '02-14') {
     const valentine = TRIGGERS.find((x) => x.type === 'valentine');
     if (valentine) {
       const { data: profiles } = await supabase
@@ -157,7 +164,7 @@ export default async function handler(req, res) {
       const bd = p.birthday;
       if (!bd) continue;
       const bdStr = typeof bd === 'string' ? bd.slice(5) : '';
-      if (bdStr === today.slice(5)) {
+      if (bdStr === monthDay) {
         await sendPushDedup(supabase, p, birthday.title, personalize(birthday.body, p), birthday.url);
       }
     }
