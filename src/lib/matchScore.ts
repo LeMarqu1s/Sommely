@@ -65,12 +65,11 @@ export function calculatePersonalizedScore(
   userProfile: UserProfile | null
 ): ScoreBreakdown {
   if (!userProfile) {
-    const baseScore = Math.floor(Math.random() * 25) + 65;
     return {
-      total: baseScore,
+      total: 50,
       typeMatch: 0, budgetMatch: 0, intensityMatch: 0,
       aromaMatch: 0, sweetnessMatch: 0, regionBonus: 0,
-      explanation: [],
+      explanation: ['Complétez votre profil pour un score personnalisé'],
     };
   }
 

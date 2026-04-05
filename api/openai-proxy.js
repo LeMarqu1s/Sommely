@@ -149,7 +149,7 @@ async function applyWinePriceCacheToResponse(data) {
 export default async function handler(req, res) {
   // CORS : sommely.shop uniquement
   const origin = req.headers.origin || '';
-  const allowedOrigins = ['https://sommely.shop', 'https://www.sommely.shop', 'http://localhost:5173', 'http://localhost:3000'];
+  const allowedOrigins = ['https://sommely.shop', 'https://www.sommely.shop', 'http://localhost:5173', 'http://localhost:3000', 'capacitor://localhost', 'ionic://localhost', 'http://localhost'];
   if (allowedOrigins.some(o => origin.startsWith(o) || origin === o)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
