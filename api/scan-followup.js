@@ -13,6 +13,12 @@ webpush.setVapidDetails(
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
+  const cronSecret = process.env.CRON_SECRET;
+  const authHeader = req.headers['authorization'];
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   if (!supabaseUrl || !supabaseServiceKey || !process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
     return res.status(500).json({ error: 'Config manquante' });
   }
