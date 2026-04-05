@@ -106,7 +106,7 @@ export function Premium() {
           </div>
           <h1 className="font-display text-3xl font-bold text-black-wine mb-2">Devenez un expert du vin</h1>
           <p className="text-gray-dark text-sm leading-relaxed">
-            Le seul outil qui combine IA, cave personnelle et sommelier 24h/24. Ce que Vivino ne fera jamais.
+            Le seul outil qui combine IA, cave personnelle et sommelier 24h/24. Ce que les autres apps ne feront jamais.
           </p>
         </motion.div>
 
@@ -116,7 +116,7 @@ export function Premium() {
           <div className="flex gap-3 overflow-x-auto pb-1 -mx-1">
             <div className="flex-shrink-0 w-[min(260px,75vw)] bg-white rounded-2xl border border-gray-light/30 p-4 shadow-sm">
               <p className="text-lg mb-1">🎯</p>
-              <p className="font-semibold text-black-wine text-sm mb-0.5">Score GPT-4o personnalisé</p>
+              <p className="font-semibold text-black-wine text-sm mb-0.5">Score IA personnalisé</p>
               <p className="text-xs text-gray-dark">Pas une note générique. Un score calculé selon VOS goûts exacts.</p>
             </div>
             <div className="flex-shrink-0 w-[min(260px,75vw)] bg-white rounded-2xl border border-gray-light/30 p-4 shadow-sm">
@@ -194,7 +194,7 @@ export function Premium() {
               <span style={{ fontSize: 15, color: '#9E9E9E', marginLeft: 2 }}>/an</span>
             </div>
             <div style={{ fontSize: 13, color: '#2E7D32', marginTop: 4 }}>
-              Soit 4€/mois · Économisez 12€/an
+              Soit 4€/mois · Économisez 60€/an
             </div>
             {selectedPlan === 'annual' && (
               <div className="absolute right-3 bottom-3 w-5 h-5 rounded-full bg-burgundy-dark flex items-center justify-center">

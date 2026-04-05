@@ -12,7 +12,7 @@ webpush.setVapidDetails(
 
 const TRIGGERS = [
   { type: 'inactive_3d', days: 3, title: 'Sommely', body: "{{first_name}}, votre cave virtuelle s'ennuie. 🍷", url: '/cave' },
-  { type: 'inactive_7d', days: 7, title: 'Sommely', body: "{{first_name}}, Vivino vous a peut-être manqué. Nous non.", url: '/' },
+  { type: 'inactive_7d', days: 7, title: 'Sommely', body: "{{first_name}}, les autres apps vous ont peut-être manqué. Nous non.", url: '/' },
   { type: 'inactive_14d', days: 14, title: 'Sommely', body: "Le vin d'hier soir au resto... vous auriez pu le scanner. 😏", url: '/scan' },
   { type: 'inactive_30d', days: 30, title: 'Sommely', body: "Un mois sans Sommely. On espère que vous avez survécu aux cartes des vins.", url: '/' },
   { type: 'trial_2d', title: '⏰ Sommely Pro', body: "{{first_name}}, votre trial expire dans 48h. 47,99€/an = moins qu'une mauvaise bouteille.", url: '/premium' },

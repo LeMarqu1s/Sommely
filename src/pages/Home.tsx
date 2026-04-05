@@ -404,7 +404,7 @@ export function Home() {
             <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>Fonctionnalités</p>
             <div className="flex items-center gap-1">
               <Zap size={11} fill="#D4AF37" color="#D4AF37" />
-              <span className="text-xs font-medium" style={{ color: '#D4AF37' }}>Introuvable sur Vivino</span>
+              <span className="text-xs font-medium" style={{ color: '#D4AF37' }}>Introuvable ailleurs</span>
             </div>
           </div>
           <div className="space-y-2.5">
