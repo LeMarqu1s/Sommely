@@ -18,6 +18,7 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS birthday DATE;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_scan_at TIMESTAMPTZ;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS total_scans INT DEFAULT 0;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS push_enabled BOOLEAN DEFAULT true;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_push_at TIMESTAMPTZ;
 
 -- RLS pour push_subscriptions (client upsert avec auth)
 ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;

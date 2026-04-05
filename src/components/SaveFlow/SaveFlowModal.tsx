@@ -4,7 +4,7 @@ import { StepLossAversion } from './steps/StepLossAversion';
 import { StepAlternatives } from './steps/StepAlternatives';
 import { StepExitSurvey, type ExitReason } from './steps/StepExitSurvey';
 import { StepFinalConfirm } from './steps/StepFinalConfirm';
-import { getScansCountTotal, getCaveBottles, getProfile, insertFeedback } from '../../lib/supabase';
+import { getScansCountTotal, getCaveBottles, getProfile, insertFeedback, supabase } from '../../lib/supabase';
 
 const getApiBase = () => {
   const url = import.meta.env.VITE_API_BASE;
@@ -89,9 +89,14 @@ export function SaveFlowModal({
     }
     try {
       const base = getApiBase();
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
       const res = await fetch(`${base}/api/stripe-retention`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ action, subscriptionId }),
       });
       const data = await res.json();

@@ -17,7 +17,6 @@ import { MenuScanner } from './pages/MenuScanner';
 import { FoodPairing } from './pages/FoodPairing';
 import { Premium } from './pages/Premium';
 import { CaveMeal } from './pages/CaveMeal';
-import { WineShop } from './pages/WineShop';
 import { SommelierButton } from './components/SommelierButton';
 import { Profile } from './pages/Profile';
 import { AuthCallback } from './pages/AuthCallback';
@@ -92,7 +91,6 @@ function AppContent({ onReady }: { onReady?: () => void }) {
           <Route path="/premium" element={<Premium />} />
           <Route path="/sommelier" element={<Sommelier />} />
           <Route path="/cave-meal" element={<CaveMeal />} />
-          {/* <Route path="/shop" element={<WineShop />} /> */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/success" element={<Success />} />
           <Route path="/privacy" element={<Privacy />} />

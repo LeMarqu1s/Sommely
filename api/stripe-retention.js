@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   if (req.method !== 'POST') {
@@ -42,6 +42,35 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'action invalide' });
   }
 
+  const authHeaderRaw = req.headers.authorization || req.headers['authorization'];
+  const authStr = Array.isArray(authHeaderRaw) ? authHeaderRaw[0] : String(authHeaderRaw || '');
+  if (!authStr.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const accessToken = authStr.slice(7);
+
+  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+    return res.status(500).json({ error: 'Configuration Supabase manquante' });
+  }
+
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
+  const { data: { user }, error: authUserErr } = await supabaseAuth.auth.getUser(accessToken);
+  if (authUserErr || !user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const { data: ownedSub } = await supabase
+    .from('subscriptions')
+    .select('user_id')
+    .eq('stripe_subscription_id', subscriptionId)
+    .maybeSingle();
+  if (!ownedSub?.user_id || ownedSub.user_id !== user.id) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
   let Stripe;
   try {
     Stripe = (await import('stripe')).default;
@@ -56,23 +85,11 @@ export default async function handler(req, res) {
       const trialEnd = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
       await stripe.subscriptions.update(subscriptionId, { trial_end: trialEnd });
 
-      if (supabaseUrl && supabaseServiceKey) {
-        const { createClient } = await import('@supabase/supabase-js');
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
-        const { data: sub } = await supabase
-          .from('subscriptions')
-          .select('user_id')
-          .eq('stripe_subscription_id', subscriptionId)
-          .single();
-        if (sub?.user_id) {
-          const userId = sub.user_id;
-          await supabase
-            .from('subscriptions')
-            .update({ status: 'paused' })
-            .eq('user_id', userId)
-            .eq('stripe_subscription_id', subscriptionId);
-        }
-      }
+      await supabase
+        .from('subscriptions')
+        .update({ status: 'paused' })
+        .eq('user_id', ownedSub.user_id)
+        .eq('stripe_subscription_id', subscriptionId);
 
       return res.status(200).json({ success: true });
     }
@@ -80,21 +97,10 @@ export default async function handler(req, res) {
     if (action === 'discount') {
       await stripe.subscriptions.update(subscriptionId, { coupon: 'SOMMELY_SAVE50_3M' });
 
-      if (supabaseUrl && supabaseServiceKey) {
-        const { createClient } = await import('@supabase/supabase-js');
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
-        const { data: sub } = await supabase
-          .from('subscriptions')
-          .select('user_id')
-          .eq('stripe_subscription_id', subscriptionId)
-          .single();
-        if (sub?.user_id) {
-          await supabase
-            .from('profiles')
-            .update({ discount_used: true })
-            .eq('id', sub.user_id);
-        }
-      }
+      await supabase
+        .from('profiles')
+        .update({ discount_used: true })
+        .eq('id', ownedSub.user_id);
 
       return res.status(200).json({ success: true });
     }
@@ -102,22 +108,11 @@ export default async function handler(req, res) {
     if (action === 'cancel') {
       await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: true });
 
-      if (supabaseUrl && supabaseServiceKey) {
-        const { createClient } = await import('@supabase/supabase-js');
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
-        const { data: sub } = await supabase
-          .from('subscriptions')
-          .select('user_id')
-          .eq('stripe_subscription_id', subscriptionId)
-          .single();
-        if (sub?.user_id) {
-          await supabase
-            .from('subscriptions')
-            .update({ status: 'cancelled' })
-            .eq('user_id', sub.user_id)
-            .eq('stripe_subscription_id', subscriptionId);
-        }
-      }
+      await supabase
+        .from('subscriptions')
+        .update({ status: 'cancelled' })
+        .eq('user_id', ownedSub.user_id)
+        .eq('stripe_subscription_id', subscriptionId);
 
       return res.status(200).json({ success: true });
     }

@@ -1169,7 +1169,7 @@ export function Profile() {
                 }}
                 className="w-full py-3.5 border-2 border-red-200 text-red-600 rounded-2xl font-semibold text-sm bg-transparent cursor-pointer"
               >
-                Supprimer mon compte
+                Se déconnecter et supprimer mes données locales
               </button>
               <button onClick={() => setShowSettings(false)} className="w-full py-3.5 bg-burgundy-dark text-white rounded-2xl font-semibold text-sm border-none cursor-pointer">Fermer</button>
             </motion.div>

@@ -105,6 +105,8 @@ export function Sommelier() {
     const messageText = text || input.trim();
     if (!messageText || isLoading) return;
 
+    const contextForPrompt = activeContext;
+
     setShowSuggestions(false);
     setInput('');
     setActiveContext(null);
@@ -135,8 +137,8 @@ export function Sommelier() {
               .toFixed(0)}€`
         : "\n\nCAVE : L'utilisateur n'a pas encore de bouteilles dans sa cave.";
 
-      const activeContextLine = activeContext
-        ? `\n\nCONTEXTE ACTIF : L'utilisateur veut parler de : ${activeContext}. Adapte ta première réponse à ce contexte précis.`
+      const activeContextLine = contextForPrompt
+        ? `\n\nCONTEXTE ACTIF : L'utilisateur veut parler de : ${contextForPrompt}. Adapte ta première réponse à ce contexte précis.`
         : '';
 
       const tasteProfile = (authProfile?.taste_profile as Record<string, unknown>) || profile || {};

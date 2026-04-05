@@ -147,9 +147,13 @@ export default async function handler(req, res) {
               ? `https://${process.env.VERCEL_URL}`
               : 'https://sommely.shop';
           try {
+            const pushHeaders = { 'Content-Type': 'application/json' };
+            if (process.env.CRON_SECRET) {
+              pushHeaders.Authorization = `Bearer ${process.env.CRON_SECRET}`;
+            }
             await fetch(`${baseUrl}/api/send-push`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: pushHeaders,
               body: JSON.stringify({
                 user_id: referrer.id,
                 title: '🍷 Sommely',

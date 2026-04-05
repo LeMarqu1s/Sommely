@@ -321,9 +321,14 @@ export async function applyReferralCode(
   }
 
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const pushHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (session?.access_token) {
+      pushHeaders.Authorization = `Bearer ${session.access_token}`;
+    }
     await fetch('/api/send-push', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: pushHeaders,
       body: JSON.stringify({
         user_id: referrer.id,
         title: '🔔 Sommely',

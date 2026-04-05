@@ -13,13 +13,13 @@ webpush.setVapidDetails(
 const TRIGGERS = [
   { type: 'inactive_3d', days: 3, title: 'Sommely', body: "{{first_name}}, votre cave virtuelle s'ennuie. 🍷", url: '/cave' },
   { type: 'inactive_7d', days: 7, title: 'Sommely', body: "{{first_name}}, Vivino vous a peut-être manqué. Nous non.", url: '/' },
-  { type: 'inactive_14d', days: 14, title: 'Sommely', body: "Le vin d'hier soir au resto... vous auriez pu le scanner. 😏", url: '/scanner' },
+  { type: 'inactive_14d', days: 14, title: 'Sommely', body: "Le vin d'hier soir au resto... vous auriez pu le scanner. 😏", url: '/scan' },
   { type: 'inactive_30d', days: 30, title: 'Sommely', body: "Un mois sans Sommely. On espère que vous avez survécu aux cartes des vins.", url: '/' },
   { type: 'trial_2d', title: '⏰ Sommely Pro', body: "{{first_name}}, votre trial expire dans 48h. 47,99€/an = moins qu'une mauvaise bouteille.", url: '/premium' },
-  { type: 'friday_reminder', title: 'Sommely 🍷', body: "C'est vendredi {{first_name}}. Ce soir il faudra choisir un vin. On est là.", url: '/scanner' },
+  { type: 'friday_reminder', title: 'Sommely 🍷', body: "C'est vendredi {{first_name}}. Ce soir il faudra choisir un vin. On est là.", url: '/scan' },
   { type: 'christmas', title: '🎄 Sommely', body: "Il reste 30 jours pour ne pas offrir une bouteille que personne ne veut.", url: '/' },
-  { type: 'valentine', title: '❤️ Sommely', body: "Un 91/100 selon son profil > des fleurs. On vérifie ?", url: '/scanner' },
-  { type: 'birthday', title: '🎂 Sommely', body: "Joyeux anniversaire {{first_name}} ! Offrez-vous une belle bouteille ce soir.", url: '/scanner' },
+  { type: 'valentine', title: '❤️ Sommely', body: "Un 91/100 selon son profil > des fleurs. On vérifie ?", url: '/scan' },
+  { type: 'birthday', title: '🎂 Sommely', body: "Joyeux anniversaire {{first_name}} ! Offrez-vous une belle bouteille ce soir.", url: '/scan' },
 ];
 
 function personalize(text, profile) {
@@ -28,7 +28,7 @@ function personalize(text, profile) {
 
 async function sendPush(supabase, userId, title, body, url) {
   const { data: subs } = await supabase.from('push_subscriptions').select('*').eq('user_id', userId);
-  if (!subs?.length) return;
+  if (!subs?.length) return false;
   const payload = JSON.stringify({ title, body, url: url || '/' });
   await Promise.allSettled(
     subs.map((sub) =>
@@ -38,6 +38,21 @@ async function sendPush(supabase, userId, title, body, url) {
       )
     )
   );
+  return true;
+}
+
+/** Au plus un push marketing / 7 jours par utilisateur (profiles.last_push_at). */
+async function sendPushDedup(supabase, profileRow, title, body, url) {
+  const weekMs = 7 * 86400000;
+  const last = profileRow.last_push_at ? new Date(profileRow.last_push_at) : null;
+  if (last && last.getTime() > Date.now() - weekMs) return;
+  const sent = await sendPush(supabase, profileRow.id, title, body, url);
+  if (sent) {
+    await supabase
+      .from('profiles')
+      .update({ last_push_at: new Date().toISOString() })
+      .eq('id', profileRow.id);
+  }
 }
 
 export default async function handler(req, res) {
@@ -57,12 +72,12 @@ export default async function handler(req, res) {
   const inactiveTriggers = TRIGGERS.filter((x) => x.days).sort((a, b) => (b.days || 0) - (a.days || 0));
   const { data: allProfiles } = await supabase
     .from('profiles')
-    .select('id, first_name, name, last_scan_at, created_at')
+    .select('id, first_name, name, last_scan_at, created_at, last_push_at')
     .or('push_enabled.eq.true,push_enabled.is.null');
   for (const p of allProfiles || []) {
     const lastActivity = p.last_scan_at ? new Date(p.last_scan_at) : new Date(p.created_at || 0);
     const t = inactiveTriggers.find((tr) => lastActivity < new Date(now.getTime() - (tr.days || 0) * 86400000));
-    if (t) await sendPush(supabase, p.id, t.title, personalize(t.body, p), t.url);
+    if (t) await sendPushDedup(supabase, p, t.title, personalize(t.body, p), t.url);
   }
 
   // ─── Trial 2 jours
@@ -78,9 +93,12 @@ export default async function handler(req, res) {
       .gte('trial_ends_at', now.toISOString());
     const userIds = [...new Set((subs || []).map((s) => s.user_id).filter(Boolean))];
     if (userIds.length) {
-      const { data: profiles } = await supabase.from('profiles').select('id, first_name, name').in('id', userIds);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, first_name, name, last_push_at')
+        .in('id', userIds);
       for (const p of profiles || []) {
-        await sendPush(supabase, p.id, trial2d.title, personalize(trial2d.body, p), trial2d.url);
+        await sendPushDedup(supabase, p, trial2d.title, personalize(trial2d.body, p), trial2d.url);
       }
     }
   }
@@ -89,9 +107,12 @@ export default async function handler(req, res) {
   if (isFriday) {
     const friday = TRIGGERS.find((x) => x.type === 'friday_reminder');
     if (friday) {
-      const { data: profiles } = await supabase.from('profiles').select('id, first_name, name').eq('push_enabled', true);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, first_name, name, last_push_at')
+        .eq('push_enabled', true);
       for (const p of profiles || []) {
-        await sendPush(supabase, p.id, friday.title, personalize(friday.body, p), friday.url);
+        await sendPushDedup(supabase, p, friday.title, personalize(friday.body, p), friday.url);
       }
     }
   }
@@ -100,9 +121,12 @@ export default async function handler(req, res) {
   if (today >= '12-01' && today <= '12-25') {
     const christmas = TRIGGERS.find((x) => x.type === 'christmas');
     if (christmas) {
-      const { data: profiles } = await supabase.from('profiles').select('id').eq('push_enabled', true);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, last_push_at')
+        .eq('push_enabled', true);
       for (const p of profiles || []) {
-        await sendPush(supabase, p.id, christmas.title, christmas.body, christmas.url);
+        await sendPushDedup(supabase, p, christmas.title, christmas.body, christmas.url);
       }
     }
   }
@@ -111,9 +135,12 @@ export default async function handler(req, res) {
   if (today === '02-14') {
     const valentine = TRIGGERS.find((x) => x.type === 'valentine');
     if (valentine) {
-      const { data: profiles } = await supabase.from('profiles').select('id').eq('push_enabled', true);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, last_push_at')
+        .eq('push_enabled', true);
       for (const p of profiles || []) {
-        await sendPush(supabase, p.id, valentine.title, valentine.body, valentine.url);
+        await sendPushDedup(supabase, p, valentine.title, valentine.body, valentine.url);
       }
     }
   }
@@ -123,7 +150,7 @@ export default async function handler(req, res) {
   if (birthday) {
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('id, first_name, name')
+      .select('id, first_name, name, birthday, last_push_at')
       .eq('push_enabled', true)
       .not('birthday', 'is', null);
     for (const p of profiles || []) {
@@ -131,7 +158,7 @@ export default async function handler(req, res) {
       if (!bd) continue;
       const bdStr = typeof bd === 'string' ? bd.slice(5) : '';
       if (bdStr === today.slice(5)) {
-        await sendPush(supabase, p.id, birthday.title, personalize(birthday.body, p), birthday.url);
+        await sendPushDedup(supabase, p, birthday.title, personalize(birthday.body, p), birthday.url);
       }
     }
   }

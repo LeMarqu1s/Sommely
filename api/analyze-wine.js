@@ -3,9 +3,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error: 'Missing API key' });
-
   const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'Missing key' });
 
   const { image, prompt } = req.body;
 
