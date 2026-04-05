@@ -1,6 +1,12 @@
+import { useState } from 'react';
 import { X, Star, Lock } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 import { redirectToCheckout } from '../utils/stripe';
 import { Logo } from './Logo';
+
+const isNative = Capacitor.isNativePlatform();
+const PREMIUM_WEB_URL = 'https://sommely.shop/premium';
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -10,6 +16,18 @@ interface PaywallModalProps {
 }
 
 export function PaywallModal({ isOpen, onClose, feature, description }: PaywallModalProps) {
+  const [opening, setOpening] = useState(false);
+
+  const openPremiumInBrowser = async () => {
+    setOpening(true);
+    try {
+      onClose();
+      await Browser.open({ url: PREMIUM_WEB_URL });
+    } finally {
+      setOpening(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -48,19 +66,39 @@ export function PaywallModal({ isOpen, onClose, feature, description }: PaywallM
                 ))}
               </ul>
             </div>
-            <button
-              onClick={() => { onClose(); redirectToCheckout('monthly'); }}
-              className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-bold border-none cursor-pointer shadow-lg active:scale-95 transition-all"
-            >
-              Débloquer · 8,99€/mois
-            </button>
+            {isNative ? (
+              <>
+                <p className="text-sm text-gray-dark text-center leading-relaxed mb-4">
+                  Pour vous abonner, rendez-vous sur sommely.shop
+                </p>
+                <button
+                  type="button"
+                  disabled={opening}
+                  onClick={() => void openPremiumInBrowser()}
+                  className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-bold border-none cursor-pointer shadow-lg active:scale-95 transition-all disabled:opacity-60"
+                >
+                  {opening ? 'Ouverture...' : 'Ouvrir sommely.shop'}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => { onClose(); void redirectToCheckout('monthly'); }}
+                  className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-bold border-none cursor-pointer shadow-lg active:scale-95 transition-all"
+                >
+                  Débloquer · 8,99€/mois
+                </button>
 
-            <button
-              onClick={() => { onClose(); redirectToCheckout('annual'); }}
-              className="w-full py-3 mt-2 border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm bg-transparent cursor-pointer active:scale-95 transition-all"
-            >
-              Ou 47,99€/an (4€/mois) · Meilleure valeur 🎯
-            </button>
+                <button
+                  type="button"
+                  onClick={() => { onClose(); void redirectToCheckout('annual'); }}
+                  className="w-full py-3 mt-2 border-2 border-burgundy-dark/20 text-burgundy-dark rounded-2xl font-semibold text-sm bg-transparent cursor-pointer active:scale-95 transition-all"
+                >
+                  Ou 47,99€/an (4€/mois) · Meilleure valeur 🎯
+                </button>
+              </>
+            )}
       </div>
     </div>
   );

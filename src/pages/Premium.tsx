@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 import { ArrowLeft, Check, Zap, Star, TrendingUp, Wine, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { redirectToCheckout } from '../utils/stripe';
 
 type Plan = 'monthly' | 'annual';
+
+const isNative = Capacitor.isNativePlatform();
+const PREMIUM_WEB_URL = 'https://sommely.shop/premium';
 
 export function Premium() {
   const navigate = useNavigate();
@@ -18,6 +23,15 @@ export function Premium() {
     setIsLoading(true);
     try {
       await redirectToCheckout(plan);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openPremiumInBrowser = async () => {
+    setIsLoading(true);
+    try {
+      await Browser.open({ url: PREMIUM_WEB_URL });
     } finally {
       setIsLoading(false);
     }
@@ -194,18 +208,36 @@ export function Premium() {
         <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs text-gray-dark">
           <span>✓ Trial 7 jours inclus</span>
           <span>✓ Annulable à tout moment</span>
-          <span>✓ Paiement sécurisé Stripe</span>
+          {!isNative && <span>✓ Paiement sécurisé Stripe</span>}
+          {isNative && <span>✓ Paiement sécurisé sur sommely.shop</span>}
         </div>
 
-        {/* CTA */}
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={() => handleSubscribe(selectedPlan)}
-          disabled={isLoading}
-          className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-bold text-base border-none cursor-pointer shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-60"
-        >
-          {isLoading ? 'Redirection...' : ctaLabel}
-        </motion.button>
+        {/* CTA — pas de Stripe in-app sur iOS/Android (stores) */}
+        {isNative ? (
+          <div className="space-y-3">
+            <p className="text-center text-sm text-gray-dark leading-relaxed px-1">
+              Pour vous abonner, rendez-vous sur sommely.shop
+            </p>
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.97 }}
+              onClick={() => void openPremiumInBrowser()}
+              disabled={isLoading}
+              className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-bold text-base border-none cursor-pointer shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-60"
+            >
+              {isLoading ? 'Ouverture...' : 'Ouvrir sommely.shop'}
+            </motion.button>
+          </div>
+        ) : (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => handleSubscribe(selectedPlan)}
+            disabled={isLoading}
+            className="w-full py-4 bg-burgundy-dark text-white rounded-2xl font-bold text-base border-none cursor-pointer shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-60"
+          >
+            {isLoading ? 'Redirection...' : ctaLabel}
+          </motion.button>
+        )}
 
         {/* Features */}
         <div className="bg-white rounded-2xl border border-gray-light/30 shadow-sm p-5">
